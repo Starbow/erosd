@@ -1,0 +1,97 @@
+package protobufs;
+
+enum Region {
+	NA = 1;
+	EU = 2;
+	KR = 3;
+	CN = 5;
+	SEA = 6;
+}
+
+message Handshake {
+	optional int64 id = 1;
+	optional string auth_key = 2;
+}
+
+message HandshakeResponse {
+	enum HandshakeStatus {
+		FAIL = 0;
+		SUCCESS = 1;
+	}
+	required HandshakeStatus status = 1;
+	optional UserStats user = 2;
+	optional int64 id = 3;
+	optional string auth_key = 4;
+	repeated Character character = 5;
+}
+
+message UserStats {
+	required string username = 1;
+	required int64 points = 2;
+	required int64 search_radius = 3;
+	required int64 wins = 4;
+	required int64 losses = 5;
+	repeated Map veto = 6;
+}
+
+message MapPool {
+	repeated Map map = 1;
+}
+
+message Map {
+	required Region region = 1;
+	required string battle_net_name = 2;
+	required int32 battle_net_id = 3;
+}
+
+message SimulationResult {
+	required UserStats opponent = 1;
+	required bool victory = 2;	
+	required double match_quality = 3;
+}
+
+message MatchmakingQueue {
+	required Region region = 1;
+	required int64 radius = 2;
+}
+
+message MatchmakingResult {
+	required int64 timespan = 1;
+	required double quality = 2;
+	required UserStats opponent = 3;
+	required string channel = 4;
+	required Map map = 5;
+}
+
+
+message LobbyInfo {
+	required int64 id = 1;
+	required string description = 2;
+	required bool passworded = 3;
+	optional string password = 4;
+	repeated UserStats users = 5;
+}
+
+message LobbyMessage {
+	required int64 id = 1;
+	optional UserStats sender = 2;
+	required string message = 3;
+}
+
+message ServerStats {
+	required int64 active_users = 1;
+	required int64 matchmaking_users = 2;
+	
+	repeated LobbyInfo lobby = 3;
+}
+
+message Character {
+	required Region region = 1;
+	required int32 subregion = 2;
+	required int32 profile_id = 3;
+	required string character_name = 4;
+	required int32 character_code = 5;
+	required string profile_link = 6;
+	optional bool verified = 7;
+	optional int32 verification_portrait = 8;
+}
