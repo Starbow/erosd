@@ -5,7 +5,6 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"container/list"
 	"fmt"
 	"github.com/Starbow/erosd/buffers"
 	"io"
@@ -17,18 +16,21 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
 var (
-	clientConnections *list.List     = list.New()
-	usernameValidator *regexp.Regexp = regexp.MustCompile(`^[a-zA-Z0-9_\-]{3,15}$`)
+	clientConnections map[int64]*ClientConnection = make(map[int64]*ClientConnection)
+	usernameValidator *regexp.Regexp              = regexp.MustCompile(`^[a-zA-Z0-9_\-]{3,15}$`)
+	connectionIdBase  int64                       = 0
 )
 
 const MAXIMUM_DATA_SIZE = 500 * 1024
 const READ_BUFFER_SIZE = 4096
 
 type ClientConnection struct {
+	id            int64 // Connection ID
 	conn          net.Conn
 	reader        *bufio.Reader
 	writer        *bufio.Writer
@@ -36,31 +38,38 @@ type ClientConnection struct {
 	superUser     bool // Maybe allow certain users special functions.
 	client        *Client
 
-	lastactive time.Time
-	lastPing   time.Time
-	lastPong   time.Time
+	lastactive        time.Time
+	lastPing          time.Time
+	lastPingChallenge string
+	latency           int64
+
+	lastPong time.Time
+
+	chatRooms map[string]*ChatRoom // List of rooms we're in.
 
 	sync.RWMutex
 }
 
 func NewClientConnection(conn net.Conn) (clientConn *ClientConnection) {
 	clientConn = &ClientConnection{
+		id:            atomic.AddInt64(&connectionIdBase, 1),
 		conn:          conn,
 		authenticated: false,
 		reader:        bufio.NewReader(conn),
 		writer:        bufio.NewWriter(conn),
+		chatRooms:     make(map[string]*ChatRoom),
 	}
 
-	clientConnections.PushBack(clientConn)
+	clientConnections[clientConn.id] = clientConn
 	return clientConn
 }
 
 func DisconnectClient(id int64, command string) {
-	for e := clientConnections.Front(); e != nil; e = e.Next() {
-		client := e.Value.(*ClientConnection)
-		if client.client.Id == id {
-			client.SendData(command, 0, []byte{})
-			client.conn.Close()
+	for _, v := range clientConnections {
+
+		if v.client.Id == id {
+			v.SendData(command, 0, []byte{})
+			v.Close()
 		}
 	}
 }
@@ -70,7 +79,7 @@ func DisconnectClient(id int64, command string) {
 func NewServerStats() protobufs.ServerStats {
 	var (
 		x         protobufs.ServerStats
-		connected int64 = int64(clientConnections.Len())
+		connected int64 = int64(len(clientConnections))
 		mm        int64 = int64(len(matchmaker.participants))
 	)
 	x.ActiveUsers = &connected
@@ -86,13 +95,8 @@ func (conn *ClientConnection) read() {
 	//Defer executes a function after this function returns.
 	defer func() {
 		// Handle removing the user from any matchmaking or lobbies they may be in
-		for e := clientConnections.Front(); e != nil; e = e.Next() {
-			if e.Value == conn {
-				clientConnections.Remove(e)
-				break
-			}
-		}
-		conn.conn.Close()
+		delete(clientConnections, conn.id)
+		conn.Close()
 
 		el, ok := matchmaker.participants[conn]
 		if ok {
@@ -100,6 +104,32 @@ func (conn *ClientConnection) read() {
 				matchmaker.unregister <- conn
 				el.abort <- true
 			}()
+		}
+	}()
+
+	go func() {
+		ticker := time.NewTicker(time.Second * 10)
+		for _ = range ticker.C {
+			if conn.client == nil {
+				// We're not authed after 10 seconds. Disconnect.
+				conn.Close()
+				return
+			}
+
+			if conn.lastPingChallenge != "" {
+				if time.Since(conn.lastPong).Seconds() > 30 {
+					// ping timeout
+					conn.Close()
+					return
+				}
+			}
+
+			conn.lastPing = time.Now()
+			conn.lastPingChallenge = fmt.Sprintf("%d", conn.lastPing.Second()*conn.lastPing.Minute())
+			err := conn.SendData("PNG", 0, []byte(conn.lastPingChallenge))
+			if err != nil {
+				return
+			}
 		}
 	}()
 
@@ -149,6 +179,12 @@ func (conn *ClientConnection) read() {
 			if event == "HSH" {
 				if !conn.OnHandshake(txid, data.Bytes()) {
 					return
+				} else {
+					stats := NewServerStats()
+					data, err := Marshal(&stats)
+					if err == nil {
+						conn.SendData("SSU", txid, data)
+					}
 				}
 			} else {
 				return
@@ -168,8 +204,20 @@ func (conn *ClientConnection) read() {
 				go conn.OnVerifyCharacter(txid, data.Bytes())
 			case "REP":
 				go conn.OnReplay(txid, data.Bytes())
-			case "UCN":
-				go conn.OnUserChangeName(txid, data.Bytes())
+			//case "UCN":
+			//	go conn.OnUserChangeName(txid, data.Bytes())
+			case "PNR":
+				go conn.OnPong(txid, data.Bytes())
+			case "UCJ":
+				go conn.OnChatJoin(txid, data.Bytes())
+			case "UCL":
+				go conn.OnChatLeave(txid, data.Bytes())
+			case "UCM":
+				go conn.OnChatMessage(txid, data.Bytes())
+			case "UPM":
+				go conn.OnPrivateMessage(txid, data.Bytes())
+			case "UCI":
+				go conn.OnChatIndex(txid, data.Bytes())
 			}
 		}
 	}
@@ -205,6 +253,14 @@ func (conn *ClientConnection) read() {
 // 309 - Player not found in database.
 // 310 - You didn't play your matchmade opponent. You have been forefeited from that game.
 // 401 - Can't queue on this region without a character on this region.
+// 501 - Chat room not joinable.
+// 502 - Bad password.
+// 503 - Can't create. Already exists.
+// 504 - Can't create. Room reserved.
+// 505 - Can't join. Max channel limit reached.
+// 506 - Can't send message. Not on channel.
+// 507 - Can't send message. User offline.
+// 508 - Can't send message. Missing fields.
 
 func ErrorCode(err error) string {
 	if err == ErrLadderClientNotInvolved {
@@ -225,11 +281,190 @@ func ErrorCode(err error) string {
 		return "309"
 	} else if err == ErrLadderWrongOpponent {
 		return "310"
+	} else if err == ErrChatRoomAlreadyExists {
+		return "503"
+	} else if err == ErrChatRoomReserved {
+		return "504"
 	} else {
 		return "106"
 	}
 }
 
+func (conn *ClientConnection) Close() {
+	conn.conn.Close()
+}
+
+func (conn *ClientConnection) OnChatJoin(txid int, data []byte) {
+	if int64(len(conn.chatRooms)) >= maxChatRooms {
+		conn.SendData("505", txid, []byte{})
+		return
+	}
+	var join protobufs.ChatRoomRequest
+	err := Unmarshal(data, &join)
+	if err != nil {
+		conn.Close()
+	}
+
+	key := cleanChatRoomName(join.GetRoom())
+	room, ok := chatRooms[key]
+	if ok {
+		if !room.joinable {
+			conn.SendData("501", txid, []byte{})
+			return
+		}
+
+		if room.password != "" && room.password != join.GetPassword() {
+			conn.SendData("502", txid, []byte{})
+			return
+		}
+
+		conn.SendData("UCJ", txid, []byte{})
+
+		room.join <- conn
+	} else {
+		room, err = NewChatRoom(join.GetRoom(), join.GetPassword(), true, false)
+		if err != nil {
+			conn.SendData(ErrorCode(err), txid, []byte(err.Error()))
+			return
+		}
+
+		conn.SendData("UCJ", txid, []byte{})
+	}
+}
+func (conn *ClientConnection) OnChatLeave(txid int, data []byte) {
+	var leave protobufs.ChatRoomRequest
+	err := Unmarshal(data, &leave)
+	if err != nil {
+		log.Println(err)
+		conn.Close()
+		return
+	}
+	key := cleanChatRoomName(leave.GetRoom())
+	room, ok := conn.chatRooms[key]
+	if ok {
+		room.leave <- conn
+	}
+
+	conn.SendData("UCL", txid, []byte{})
+
+}
+
+func (conn *ClientConnection) OnPrivateMessage(txid int, data []byte) {
+	var message protobufs.ChatMessage
+	err := Unmarshal(data, &message)
+	if err != nil {
+		conn.Close()
+	}
+
+	text := strings.TrimSpace(message.GetMessage())
+	target := strings.ToLower(strings.TrimSpace(message.GetTarget()))
+
+	if text == "" || target == "" {
+		conn.SendData("508", txid, []byte{})
+		return
+	}
+
+	var outMessage protobufs.ChatPrivateMessage
+
+	stat := conn.client.UserStatsMessage()
+
+	outMessage.Sender = &stat
+	outMessage.Message = &text
+	data, err = Marshal(&outMessage)
+
+	if err != nil {
+		conn.SendData(ErrorCode(err), txid, []byte{})
+		return
+	}
+
+	sent := false
+	for x := range clientConnections {
+		if clientConnections[x].client != nil && strings.ToLower(clientConnections[x].client.Username) == target {
+			go clientConnections[x].SendData("CHP", 0, data)
+			sent = true
+		}
+	}
+
+	if !sent {
+		conn.SendData("507", txid, []byte{})
+	} else {
+		conn.SendData("UPM", txid, []byte{})
+	}
+
+}
+
+func (conn *ClientConnection) OnChatMessage(txid int, data []byte) {
+	var message protobufs.ChatMessage
+	err := Unmarshal(data, &message)
+	if err != nil {
+		conn.Close()
+	}
+
+	key := cleanChatRoomName(message.GetTarget())
+	room, ok := conn.chatRooms[key]
+	if ok {
+		msg := room.ChatRoomMessageMessage(conn, &message)
+		room.message <- &msg
+	} else {
+		conn.SendData("506", txid, []byte{})
+	}
+}
+func (conn *ClientConnection) OnChatIndex(txid int, data []byte) {
+	// This process might be a bit intensive. Perhaps cache it?
+	var index protobufs.ChatRoomIndex
+
+	var rooms []*ChatRoom = make([]*ChatRoom, len(joinableChatRooms))
+
+	i := 0
+	for x := range joinableChatRooms {
+
+		rooms[i] = joinableChatRooms[x]
+		i++
+	}
+
+parent:
+	for x := range conn.chatRooms {
+		for y := range rooms {
+			if conn.chatRooms[x] == rooms[y] {
+				continue parent
+			}
+		}
+
+		rooms = append(rooms, conn.chatRooms[x])
+	}
+
+	var infos []*protobufs.ChatRoomInfo = make([]*protobufs.ChatRoomInfo, len(rooms))
+
+	i = 0
+	for x := range rooms {
+		info := rooms[x].ChatRoomInfoMessage(false)
+		infos[i] = &info
+		i++
+	}
+
+	index.Room = infos
+	data, err := Marshal(&index)
+	if err == nil {
+		conn.SendData("UCI", txid, data)
+	} else {
+		conn.SendData("106", txid, []byte{})
+	}
+}
+
+func (conn *ClientConnection) OnPong(txid int, data []byte) {
+
+	conn.lastPong = time.Now()
+	conn.latency = conn.lastPong.Sub(conn.lastPing).Nanoseconds() / 1000000
+
+	if conn.lastPingChallenge == "" || string(data) != conn.lastPingChallenge {
+		conn.Close()
+	} else {
+		conn.SendData("PNR", txid, []byte{})
+	}
+	conn.lastPingChallenge = ""
+}
+
+//TODO: Detmine if we're removing this.
 func (conn *ClientConnection) OnUserChangeName(txid int, data []byte) {
 	username := strings.TrimSpace(string(data))
 
@@ -250,7 +485,7 @@ func (conn *ClientConnection) OnUserChangeName(txid int, data []byte) {
 
 }
 
-//Add some sort of real logging at some point
+//TODO: Add some sort of real logging at some point
 func (conn *ClientConnection) OnReplay(txid int, data []byte) {
 	file, err := ioutil.TempFile("", "erosreplay")
 	if err != nil {
@@ -318,7 +553,7 @@ func (conn *ClientConnection) OnAddCharacter(txid int, data []byte) {
 
 	character := NewBattleNetCharacter(region, subregion, id, name)
 	character.ClientId = conn.client.Id
-	character.IsVerified = true
+	character.IsVerified = testMode
 	err = character.SetVerificationPortrait()
 
 	if err != nil {
@@ -395,6 +630,7 @@ func (conn *ClientConnection) OnQueueMatchmaking(txid int, data []byte) {
 				mapInfo := el.selectedMap.MapMessage()
 
 				res.Channel = &match.Channel
+				res.ChatRoom = &match.ChatRoom
 				res.Timespan = &elapsed
 				res.Quality = &match.Quality
 				res.Opponent = &opponentStats
@@ -402,6 +638,15 @@ func (conn *ClientConnection) OnQueueMatchmaking(txid int, data []byte) {
 
 				data, _ := Marshal(&res)
 				conn.SendData("MMR", txid, data)
+
+				log.Println("Should be joining", match.ChatRoom)
+				if match.ChatRoom != "" {
+					room, ok := chatRooms[cleanChatRoomName(match.ChatRoom)]
+					if ok && room != nil {
+						log.Println("Should definitely be joining", match.ChatRoom)
+						room.join <- conn
+					}
+				}
 			}
 		}()
 		conn.SendData("MMQ", txid, []byte{})
@@ -422,7 +667,10 @@ func (conn *ClientConnection) OnDequeueMatchmaking(txid int, data []byte) {
 }
 
 func (conn *ClientConnection) OnSimulation(txid int, data []byte) {
-
+	if !allowsimulations {
+		return
+	}
+	// This is a sqlite query. Wont work elsewhere.
 	row, err := dbMap.Select(&Client{}, "SELECT * FROM clients WHERE id != ? ORDER BY RANDOM() LIMIT 1;", conn.client.Id)
 
 	if len(row) == 0 {
@@ -475,39 +723,49 @@ func (conn *ClientConnection) OnSimulation(txid int, data []byte) {
 }
 
 func (conn *ClientConnection) OnHandshake(txid int, data []byte) bool {
+
+	var status protobufs.HandshakeResponse_HandshakeStatus = protobufs.HandshakeResponse_FAIL
+	var resp protobufs.HandshakeResponse
+	defer func() {
+
+		resp.Status = &status
+
+		data, err := Marshal(&resp)
+		if err == nil {
+			conn.SendData("HSH", txid, data)
+		}
+	}()
+
 	var hs protobufs.Handshake
-	log.Println(string(data))
 	err := Unmarshal(data, &hs)
 	if err != nil {
 		log.Println("wat", err)
+		return false
 	}
 
 	var client *Client
-	var resp protobufs.HandshakeResponse
-	var status protobufs.HandshakeResponse_HandshakeStatus = protobufs.HandshakeResponse_SUCCESS
-	resp.Status = &status
 
-	if hs.GetId() == 0 {
+	realUser := GetRealUser(hs.GetUsername(), hs.GetAuthKey())
+
+	if realUser == nil {
+		log.Println("bad auth", hs.GetUsername(), hs.GetAuthKey())
+		return false
+	}
+
+	client = clientCache.Get(realUser.Id)
+
+	if client == nil {
 		client = NewClient()
 
 		err := dbMap.Insert(client)
 		clientCache.clients[client.Id] = client
-		client.Username = fmt.Sprintf("Anonymous%d", client.Id)
+		client.Username = realUser.Username
+
 		dbMap.Update(client)
 
 		log.Printf("New client %+v %+v", *client, err)
-	} else {
-		client = clientCache.Get(hs.GetId())
-		if client == nil {
-			log.Println("Client not found")
-			return false
-		}
-		auth := hs.GetAuthKey()
-		if client.AuthKey != auth {
-			log.Println("bad uuth", client.AuthKey, auth)
-			return false
-		}
 	}
+
 	log.Printf("Client %+v", *client)
 	conn.client = client
 
@@ -515,23 +773,28 @@ func (conn *ClientConnection) OnHandshake(txid int, data []byte) bool {
 
 	resp.User = &user
 	resp.Id = &client.Id
-	resp.AuthKey = &client.AuthKey
-
-	data, err = Marshal(&resp)
-	conn.SendData("HSH", txid, data)
-	stats := NewServerStats()
-	data, err = Marshal(&stats)
-	conn.SendData("SSU", txid, data)
+	status = protobufs.HandshakeResponse_SUCCESS
 
 	return true
 }
 
-func (conn *ClientConnection) SendData(command string, txid int, data []byte) {
+func (conn *ClientConnection) SendData(command string, txid int, data []byte) error {
 	header := fmt.Sprintf("%s %d %d\n", command, txid, len(data))
 	log.Println("Send", header)
 	conn.Lock()
-	conn.writer.WriteString(header)
-	conn.writer.Write(data)
-	conn.writer.Flush()
-	conn.Unlock()
+	defer conn.Unlock()
+	_, err := conn.writer.WriteString(header)
+	if err != nil {
+		return err
+	}
+	_, err = conn.writer.Write(data)
+	if err != nil {
+		return err
+	}
+	err = conn.writer.Flush()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

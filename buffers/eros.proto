@@ -9,7 +9,7 @@ enum Region {
 }
 
 message Handshake {
-	optional int64 id = 1;
+	optional string username = 1;
 	optional string auth_key = 2;
 }
 
@@ -21,8 +21,7 @@ message HandshakeResponse {
 	required HandshakeStatus status = 1;
 	optional UserStats user = 2;
 	optional int64 id = 3;
-	optional string auth_key = 4;
-	repeated Character character = 5;
+	repeated Character character = 4;
 }
 
 message UserStats {
@@ -31,8 +30,9 @@ message UserStats {
 	required int64 search_radius = 3;
 	required int64 wins = 4;
 	required int64 losses = 5;
-	repeated Map veto = 6;
 }
+
+
 
 message MapPool {
 	repeated Map map = 1;
@@ -59,30 +59,56 @@ message MatchmakingResult {
 	required int64 timespan = 1;
 	required double quality = 2;
 	required UserStats opponent = 3;
-	required string channel = 4;
-	required Map map = 5;
+	required int64 opponent_latency = 4;
+	required string channel = 5;
+	required string chat_room = 6;
+	required Map map = 7;
 }
 
-
-message LobbyInfo {
-	required int64 id = 1;
-	required string description = 2;
+message ChatRoomInfo {
+	required string key = 1;
+	required string name = 2;
 	required bool passworded = 3;
-	optional string password = 4;
-	repeated UserStats users = 5;
+	required bool joinable = 4;
+	required bool fixed = 5;
+	required int64 users = 6;
+	repeated UserStats participant = 7;
 }
 
-message LobbyMessage {
-	required int64 id = 1;
-	optional UserStats sender = 2;
+message ChatRoomIndex {
+	repeated ChatRoomInfo room = 1;
+}
+
+message ChatMessage {
+	required string sender = 1;
+	required string target = 2;
 	required string message = 3;
+}
+
+message ChatRoomMessage {
+	required ChatRoomInfo room = 1;
+	required UserStats sender = 2;
+	required string message = 3;
+}
+
+message ChatPrivateMessage {
+	required UserStats sender = 1;
+	required string message = 2;
+}
+
+message ChatRoomUser {
+	required ChatRoomInfo room = 1;
+	required UserStats user = 2;
+}
+
+message ChatRoomRequest {
+	required string room = 1;
+	required string password = 2;
 }
 
 message ServerStats {
 	required int64 active_users = 1;
 	required int64 matchmaking_users = 2;
-	
-	repeated LobbyInfo lobby = 3;
 }
 
 message Character {

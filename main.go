@@ -10,10 +10,12 @@ import (
 )
 
 var (
-	randomSource rand.Source = rand.NewSource(time.Now().Unix())
-	listen       string
-	simulator    bool
-	matchmaker   *Matchmaker
+	randomSource     rand.Source = rand.NewSource(time.Now().Unix())
+	listen           string
+	simulator        bool
+	allowsimulations bool
+	matchmaker       *Matchmaker
+	testMode         bool
 )
 
 func random(min, max int) int {
@@ -81,7 +83,9 @@ func loadConfig() error {
 		config.AddSection("erosd")
 		config.AddOption("erosd", "listen", ":12345")
 		config.AddOption("erosd", "simulator", "false")
+		config.AddOption("erosd", "allowsimulations", "false")
 		config.AddOption("erosd", "python", "/usr/bin/python2.7")
+		config.AddOption("erosd", "testmode", "false")
 
 		config.AddSection("ladderdivisions")
 		config.AddOption("ladderdivisions", "divisions", "4")
@@ -93,13 +97,17 @@ func loadConfig() error {
 		config.AddOption("ladder", "startingpoints", "1250")
 		config.AddOption("ladder", "winpointsbase", "100")
 		config.AddOption("ladder", "winpointsincrement", "25")
-		config.AddOption("ladder", "losepointsincrement", "50")
+		config.AddOption("ladder", "losepointsbase", "50")
 		config.AddOption("ladder", "losepointsincrement", "12.5")
 		config.AddOption("ladder", "maxvetos", "3")
 
 		config.AddSection("database")
 		config.AddOption("database", "type", "sqlite3")
 		config.AddOption("database", "connection", "erosd.sqlite3")
+
+		config.AddSection("chat")
+		config.AddOption("chat", "fixedrooms", "Practice Partner Search (Bronze-Silver);Practice Partner Search (Gold-Platinum);Practice Partner Search")
+		config.AddOption("chat", "maxuserchats", "5")
 
 		err = config.WriteConfigFile("erosd.cfg", 0644, "Erosd Config")
 		if err != nil {
@@ -110,6 +118,8 @@ func loadConfig() error {
 	listen, _ = config.GetString("erosd", "listen")
 	simulator, _ = config.GetBool("erosd", "simulator")
 	pythonPath, _ = config.GetString("erosd", "python")
+	testMode, _ = config.GetBool("erosd", "testmode")
+	allowsimulations, _ = config.GetBool("erosd", "allowsimulations")
 
 	divisionCount, _ = config.GetInt64("ladderdivisions", "divisions")
 	subdivisionCount, _ = config.GetInt64("ladderdivisions", "subdivisions")
@@ -129,6 +139,11 @@ func loadConfig() error {
 	dbType, _ = config.GetString("database", "type")
 	dbConnectionString, _ = config.GetString("database", "connection")
 
+	cn, err := config.GetString("chat", "fixedrooms")
+	if err == nil {
+		fixedChatRooms = strings.Split(cn, ";")
+	}
+	maxChatRooms, _ = config.GetInt64("chat", "maxuserchats")
 	return nil
 }
 
@@ -163,6 +178,7 @@ func main() {
 	initClientCaches()
 	initBattleNet()
 	initMatchmaking()
+	initChat()
 
 	// start the matchmaker
 

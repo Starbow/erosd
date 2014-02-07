@@ -61,13 +61,14 @@ type MatchmakerPotentialMatch struct {
 }
 
 type MatchmakerMatch struct {
-	Id      int64
-	MapId   int64
-	AddTime int64
-	EndTime int64
-	Quality float64
-	Region  BattleNetRegion
-	Channel string
+	Id       int64
+	MapId    int64
+	AddTime  int64
+	EndTime  int64
+	Quality  float64
+	Region   BattleNetRegion
+	Channel  string
+	ChatRoom string
 }
 
 type MatchmakerMatchParticipant struct {
@@ -200,6 +201,7 @@ func (mm *Matchmaker) makeMatch(player1 *MatchmakerParticipant, player2 *Matchma
 
 	selectedMap := maps.Random(player1.region, player1.connection.client.Vetoes(), player2.connection.client.Vetoes())
 	battleNetChannel := fmt.Sprintf("eros%d%d%d%d", player1.region, player1.client.Id, player2.client.Id, rand.Intn(99))
+	erosChatRoom := cleanChatRoomName(fmt.Sprintf("MM%d%d%d", player1.region, player1.client.Id, player2.client.Id))
 
 	player1.opponent = player2
 	player2.opponent = player1
@@ -213,7 +215,18 @@ func (mm *Matchmaker) makeMatch(player1 *MatchmakerParticipant, player2 *Matchma
 	match.MapId = selectedMap.Id
 	match.Channel = battleNetChannel
 
-	err := dbMap.Insert(&match)
+	room, ok := chatRooms[erosChatRoom]
+	var err error
+	if !ok {
+		room, err = NewChatRoom(erosChatRoom, "", false, false)
+		log.Println("Error creating matchmaking chat", err, erosChatRoom)
+	}
+
+	if room != nil {
+		match.ChatRoom = erosChatRoom
+	}
+
+	err = dbMap.Insert(&match)
 	mm.matchCache[match.Id] = &match
 
 	if err == nil {
@@ -246,6 +259,7 @@ func (mm *Matchmaker) makeMatch(player1 *MatchmakerParticipant, player2 *Matchma
 	go func() {
 		player2.match <- &match
 	}()
+
 }
 
 // Matchmaking worker

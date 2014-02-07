@@ -75,29 +75,29 @@ func (cl *ClientLockoutManager) UnlockIds(id ...int64) {
 }
 
 type Client struct {
-	Id      int64
+	Id      int64 `db:"id"`
 	AuthKey string
 
 	//Nickname
-	Username string
+	Username string `db:"username"`
 
 	//Record TrueSkill for posterity
-	RatingMean   float64 // TrueSkill Mean
-	RatingStdDev float64 // TrueSkill Standard Deviation
+	RatingMean   float64 `db:"rating_mean"`   // TrueSkill Mean
+	RatingStdDev float64 `db:"rating_stddev"` // TrueSkill Standard Deviation
 
 	//Display this ranking to the world.
-	LadderPoints       int64 // iCCup ladder points
-	LadderSearchRadius int64 // Search Radius.
-	LadderSearchRegion BattleNetRegion
-	TotalQueueTime     float64
+	LadderPoints       int64           `db:"ladder_points"`        // iCCup ladder points
+	LadderSearchRadius int64           `db:"ladder_search_radius"` // Search Radius.
+	LadderSearchRegion BattleNetRegion `db:"ladder_search_region"`
+	TotalQueueTime     float64         `db:"ladder_total_queue_time"`
 
-	PendingMatchmakingId         int64
-	PendingMatchmakingOpponentId int64
+	PendingMatchmakingId         int64 `db:"matchmaking_pending_match_id"`
+	PendingMatchmakingOpponentId int64 `db:"matchmaking_pending_opponent_id"`
 
-	Wins      int64
-	Losses    int64
-	Forefeits int64
-	Walkovers int64
+	Wins      int64 `db:"ladder_wins"`
+	Losses    int64 `db:"ladder_losses"`
+	Forefeits int64 `db:"ladder_forefeits"`
+	Walkovers int64 `db:"ladder_walkovers"`
 }
 
 func NewClient() *Client {
@@ -145,7 +145,7 @@ func (c *ClientCache) Get(id int64) *Client {
 		defer c.Unlock()
 		var newClient Client
 
-		err := dbMap.SelectOne(&newClient, "SELECT * FROM clients WHERE Id=? LIMIT 1", id)
+		err := dbMap.SelectOne(&newClient, "SELECT * FROM clients WHERE id=? LIMIT 1", id)
 		if err != nil || newClient.Id == 0 {
 
 			return nil
@@ -206,6 +206,7 @@ func (c *Client) Defeat(o *Client) float64 {
 	if increase < 0 {
 		increase = 10
 	}
+
 	if decrease < 0 {
 		decrease = 0
 	}

@@ -14,6 +14,38 @@ var (
 	ErrDbInsert        error = errors.New("An error occured while writing to the database.")
 )
 
+// Website user in the database
+type RealUser struct {
+	Id        int64  `db:"id"`
+	Username  string `db:"username"`
+	AuthToken string `db:"authtoken"`
+}
+
+// Attempt to log in. Should probably rate limit this.
+func GetRealUser(username, authtoken string) *RealUser {
+	var user RealUser
+	err := dbMap.SelectOne(&user, "SELECT id, username, authtoken FROM user_user WHERE username=?", username)
+	if testMode {
+		// Test mode creates the user if it doesn't exist.
+		if err != nil || user.Id == 0 {
+			user.Username = username
+			user.AuthToken = authtoken
+			err = dbMap.Insert(&user)
+		}
+
+	}
+
+	if err != nil || user.Id == 0 {
+		return nil
+	}
+
+	if user.AuthToken != authtoken {
+		return nil
+	}
+
+	return &user
+}
+
 func initDb() (err error) {
 	// connect to db
 	db, err := sql.Open(dbType, dbConnectionString)
@@ -36,6 +68,10 @@ func initDb() (err error) {
 
 	dbMap.AddTableWithName(Map{}, "maps").SetKeys(true, "Id")
 	dbMap.AddTableWithName(MapVeto{}, "map_vetoes").SetKeys(true, "Id")
+
+	if testMode {
+		dbMap.AddTableWithName(RealUser{}, "user_user").SetKeys(true, "Id")
+	}
 
 	// create the tables.
 	err = dbMap.CreateTablesIfNotExists()

@@ -50,9 +50,9 @@ func broadcastMessage(command string, message proto.Message) {
 	if err != nil {
 		panic(err)
 	}
-	for e := clientConnections.Front(); e != nil; e = e.Next() {
-		client := e.Value.(*ClientConnection)
-		client.SendData(command, 0, data)
+	for _, v := range clientConnections {
+
+		go v.SendData(command, 0, data)
 	}
 }
 
@@ -63,10 +63,10 @@ func (c *Client) Broadcast(command string, message proto.Message) {
 	if err != nil {
 		panic(err)
 	}
-	for e := clientConnections.Front(); e != nil; e = e.Next() {
-		client := e.Value.(*ClientConnection)
-		if client.client.Id == c.Id {
-			client.SendData(command, 0, data)
+	for _, v := range clientConnections {
+
+		if v.client.Id == c.Id {
+			go v.SendData(command, 0, data)
 		}
 	}
 }

@@ -16,14 +16,12 @@ Installation
 Todo (Short Term)
 ==========
 - Reduce overall messyness.
-- Latency measurement with pings.
 - Commentify everything.
 - Map pool in the database.
 - Battle.net character management.
 - Veto management.
-- Chat rooms and private chat.
 - No-show support and match timeouts.
-- Lobbies?
+- Make use of database transactions.
 
 Todo (Long Term)
 ==========
