@@ -14,6 +14,7 @@ import (
 	"net"
 	"os"
 	"regexp"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -88,12 +89,24 @@ func NewServerStats() protobufs.ServerStats {
 	return x
 }
 
+func (conn *ClientConnection) panicRecovery(txid int) {
+	if r := recover(); r != nil {
+		fmt.Println("Recovered from a panic", r)
+		debug.PrintStack()
+
+		conn.SendData("106", txid, []byte{})
+		// Do we want to disconnect the client here? Might be safer.
+	}
+}
+
 // Handles sending out messages to everyone
 
 // Client data reader loop goroutine
 func (conn *ClientConnection) read() {
+	defer conn.panicRecovery(0)
 	//Defer executes a function after this function returns.
 	defer func() {
+
 		// Handle removing the user from any matchmaking or lobbies they may be in
 		delete(clientConnections, conn.id)
 		conn.Close()
@@ -261,7 +274,7 @@ func (conn *ClientConnection) read() {
 // 506 - Can't send message. Not on channel.
 // 507 - Can't send message. User offline.
 // 508 - Can't send message. Missing fields.
-
+// 509 - Can't create room. Name too short.
 func ErrorCode(err error) string {
 	if err == ErrLadderClientNotInvolved {
 		return "304"
@@ -285,6 +298,8 @@ func ErrorCode(err error) string {
 		return "503"
 	} else if err == ErrChatRoomReserved {
 		return "504"
+	} else if err == ErrChatRoomNameTooShort {
+		return "509"
 	} else {
 		return "106"
 	}
@@ -295,6 +310,8 @@ func (conn *ClientConnection) Close() {
 }
 
 func (conn *ClientConnection) OnChatJoin(txid int, data []byte) {
+	defer conn.panicRecovery(txid)
+
 	if int64(len(conn.chatRooms)) >= maxChatRooms {
 		conn.SendData("505", txid, []byte{})
 		return
@@ -332,6 +349,8 @@ func (conn *ClientConnection) OnChatJoin(txid int, data []byte) {
 	}
 }
 func (conn *ClientConnection) OnChatLeave(txid int, data []byte) {
+	defer conn.panicRecovery(txid)
+
 	var leave protobufs.ChatRoomRequest
 	err := Unmarshal(data, &leave)
 	if err != nil {
@@ -350,6 +369,8 @@ func (conn *ClientConnection) OnChatLeave(txid int, data []byte) {
 }
 
 func (conn *ClientConnection) OnPrivateMessage(txid int, data []byte) {
+	defer conn.panicRecovery(txid)
+
 	var message protobufs.ChatMessage
 	err := Unmarshal(data, &message)
 	if err != nil {
@@ -394,6 +415,8 @@ func (conn *ClientConnection) OnPrivateMessage(txid int, data []byte) {
 }
 
 func (conn *ClientConnection) OnChatMessage(txid int, data []byte) {
+	defer conn.panicRecovery(txid)
+
 	var message protobufs.ChatMessage
 	err := Unmarshal(data, &message)
 	if err != nil {
@@ -410,6 +433,8 @@ func (conn *ClientConnection) OnChatMessage(txid int, data []byte) {
 	}
 }
 func (conn *ClientConnection) OnChatIndex(txid int, data []byte) {
+	defer conn.panicRecovery(txid)
+
 	// This process might be a bit intensive. Perhaps cache it?
 	var index protobufs.ChatRoomIndex
 
@@ -452,6 +477,7 @@ parent:
 }
 
 func (conn *ClientConnection) OnPong(txid int, data []byte) {
+	defer conn.panicRecovery(txid)
 
 	conn.lastPong = time.Now()
 	conn.latency = conn.lastPong.Sub(conn.lastPing).Nanoseconds() / 1000000
@@ -466,6 +492,8 @@ func (conn *ClientConnection) OnPong(txid int, data []byte) {
 
 //TODO: Detmine if we're removing this.
 func (conn *ClientConnection) OnUserChangeName(txid int, data []byte) {
+	defer conn.panicRecovery(txid)
+
 	username := strings.TrimSpace(string(data))
 
 	if !usernameValidator.MatchString(username) {
@@ -487,6 +515,8 @@ func (conn *ClientConnection) OnUserChangeName(txid int, data []byte) {
 
 //TODO: Add some sort of real logging at some point
 func (conn *ClientConnection) OnReplay(txid int, data []byte) {
+	defer conn.panicRecovery(txid)
+
 	file, err := ioutil.TempFile("", "erosreplay")
 	if err != nil {
 		conn.SendData("104", txid, []byte{})
@@ -528,6 +558,8 @@ func (conn *ClientConnection) OnReplay(txid int, data []byte) {
 }
 
 func (conn *ClientConnection) OnAddCharacter(txid int, data []byte) {
+	defer conn.panicRecovery(txid)
+
 	if len(data) == 0 {
 		conn.SendData("201", txid, []byte{})
 		return
@@ -579,9 +611,12 @@ func (conn *ClientConnection) OnAddCharacter(txid int, data []byte) {
 	conn.SendData("CHA", txid, data)
 }
 func (conn *ClientConnection) OnVerifyCharacter(txid int, data []byte) {
+	defer conn.panicRecovery(txid)
 }
 
 func (conn *ClientConnection) OnQueueMatchmaking(txid int, data []byte) {
+	defer conn.panicRecovery(txid)
+
 	_, ok := matchmaker.participants[conn]
 	if !ok {
 
@@ -656,6 +691,8 @@ func (conn *ClientConnection) OnQueueMatchmaking(txid int, data []byte) {
 }
 
 func (conn *ClientConnection) OnDequeueMatchmaking(txid int, data []byte) {
+	defer conn.panicRecovery(txid)
+
 	el, ok := matchmaker.participants[conn]
 	if ok {
 		go func() {
@@ -723,6 +760,7 @@ func (conn *ClientConnection) OnSimulation(txid int, data []byte) {
 }
 
 func (conn *ClientConnection) OnHandshake(txid int, data []byte) bool {
+	defer conn.panicRecovery(txid)
 
 	var status protobufs.HandshakeResponse_HandshakeStatus = protobufs.HandshakeResponse_FAIL
 	var resp protobufs.HandshakeResponse
@@ -779,6 +817,7 @@ func (conn *ClientConnection) OnHandshake(txid int, data []byte) bool {
 }
 
 func (conn *ClientConnection) SendData(command string, txid int, data []byte) error {
+
 	header := fmt.Sprintf("%s %d %d\n", command, txid, len(data))
 	log.Println("Send", header)
 	conn.Lock()

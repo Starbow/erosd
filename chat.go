@@ -17,6 +17,7 @@ var (
 	maxChatRooms             int64 = 5
 	ErrChatRoomAlreadyExists error = errors.New("The chat room name specified already exists.")
 	ErrChatRoomReserved      error = errors.New("The chat room name is reserved.")
+	ErrChatRoomNameTooShort  error = errors.New("The chat room name is too short")
 	_                              = log.Ldate
 )
 
@@ -127,7 +128,10 @@ func (cr *ChatRoom) Broadcast(command string, message proto.Message) error {
 
 func NewChatRoom(name, password string, joinable, fixed bool) (cr *ChatRoom, err error) {
 	key := cleanChatRoomName(name)
-
+	if len(key) < 3 {
+		err = ErrChatRoomNameTooShort
+		return
+	}
 	if joinable && key[:2] == "mm" {
 		err = ErrChatRoomReserved
 		return
