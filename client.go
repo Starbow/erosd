@@ -27,6 +27,7 @@ type ClientCache struct {
 var clientCache *ClientCache
 var clientLockouts *ClientLockoutManager
 var clientVetoes map[int64][]*Map
+var clientCharacters map[int64][]*BattleNetCharacter
 
 func initClientCaches() {
 	clientCache = &ClientCache{
@@ -36,6 +37,7 @@ func initClientCaches() {
 		locks: make(map[int64]*sync.RWMutex),
 	}
 	clientVetoes = make(map[int64][]*Map)
+	clientCharacters = make(map[int64][]*BattleNetCharacter)
 }
 func (cl *ClientLockoutManager) LockId(id int64) {
 	cl.Lock()
@@ -282,4 +284,38 @@ func (c *Client) HasRegion(region BattleNetRegion) bool {
 	count, _ := dbMap.SelectInt("SELECT COUNT(*) FROM battle_net_characters WHERE ClientId=? and Region=?", c.Id, region)
 
 	return count > 0
+}
+
+func (c *Client) Characters() (characters []*BattleNetCharacter, err error) {
+	clientLockouts.LockId(c.Id)
+	defer clientLockouts.UnlockId(c.Id)
+
+	var ok bool = false
+	if characters, ok = clientCharacters[c.Id]; ok {
+		return
+	}
+
+	chars, err := dbMap.Select(&BattleNetCharacter{}, "SELECT * FROM battle_net_characters WHERE ClientId=?", c.Id)
+	if err != nil {
+		characters = nil
+		return
+	}
+
+	characters = make([]*BattleNetCharacter, len(chars))
+
+	clientCharacters[c.Id] = characters
+
+	characterCache.Lock()
+	for x := range chars {
+		character := chars[x].(*BattleNetCharacter)
+		characters[x] = character
+
+		characterCache.characterIds[character.Id] = character
+		characterCache.profileIds[character.ProfileIdString()] = character
+
+	}
+
+	characterCache.Unlock()
+
+	return
 }

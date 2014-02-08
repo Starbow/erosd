@@ -614,9 +614,10 @@ type Character struct {
 	ProfileId            *int32  `protobuf:"varint,3,req,name=profile_id" json:"profile_id,omitempty"`
 	CharacterName        *string `protobuf:"bytes,4,req,name=character_name" json:"character_name,omitempty"`
 	CharacterCode        *int32  `protobuf:"varint,5,req,name=character_code" json:"character_code,omitempty"`
-	ProfileLink          *string `protobuf:"bytes,6,req,name=profile_link" json:"profile_link,omitempty"`
-	Verified             *bool   `protobuf:"varint,7,opt,name=verified" json:"verified,omitempty"`
-	VerificationPortrait *int32  `protobuf:"varint,8,opt,name=verification_portrait" json:"verification_portrait,omitempty"`
+	ProfileLink          *string `protobuf:"bytes,6,opt,name=profile_link" json:"profile_link,omitempty"`
+	IngameProfileLink    *string `protobuf:"bytes,7,opt,name=ingame_profile_link" json:"ingame_profile_link,omitempty"`
+	Verified             *bool   `protobuf:"varint,8,opt,name=verified" json:"verified,omitempty"`
+	VerificationPortrait *int32  `protobuf:"varint,9,opt,name=verification_portrait" json:"verification_portrait,omitempty"`
 	XXX_unrecognized     []byte  `json:"-"`
 }
 
@@ -662,6 +663,13 @@ func (m *Character) GetCharacterCode() int32 {
 func (m *Character) GetProfileLink() string {
 	if m != nil && m.ProfileLink != nil {
 		return *m.ProfileLink
+	}
+	return ""
+}
+
+func (m *Character) GetIngameProfileLink() string {
+	if m != nil && m.IngameProfileLink != nil {
+		return *m.IngameProfileLink
 	}
 	return ""
 }

@@ -23,6 +23,9 @@ type RealUser struct {
 
 // Attempt to log in. Should probably rate limit this.
 func GetRealUser(username, authtoken string) *RealUser {
+	if username == "" || authtoken == "" {
+		return nil
+	}
 	var user RealUser
 	err := dbMap.SelectOne(&user, "SELECT id, username, authtoken FROM user_user WHERE username=?", username)
 	if testMode {

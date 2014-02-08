@@ -109,6 +109,9 @@ func (conn *ClientConnection) read() {
 
 		// Handle removing the user from any matchmaking or lobbies they may be in
 		delete(clientConnections, conn.id)
+		if conn.client != nil {
+			delete(clientCharacters, conn.client.Id)
+		}
 		conn.Close()
 
 		el, ok := matchmaker.participants[conn]
@@ -211,9 +214,9 @@ func (conn *ClientConnection) read() {
 				go conn.OnQueueMatchmaking(txid, data.Bytes())
 			case "MMD":
 				go conn.OnDequeueMatchmaking(txid, data.Bytes())
-			case "CHA":
+			case "BNA":
 				go conn.OnAddCharacter(txid, data.Bytes())
-			case "CHV":
+			case "BNV":
 				go conn.OnVerifyCharacter(txid, data.Bytes())
 			case "REP":
 				go conn.OnReplay(txid, data.Bytes())
@@ -253,6 +256,7 @@ func (conn *ClientConnection) read() {
 // 201 - Bad character info
 // 202 - Character already exists
 // 203 - Error while communicating with Battle.net
+// 204 - Verification failed.
 
 // 301 - Error processing replay
 // 302 - Error while processing match result
@@ -607,11 +611,58 @@ func (conn *ClientConnection) OnAddCharacter(txid int, data []byte) {
 	characterCache.Unlock()
 
 	payload := character.CharacterMessage()
-	data, _ = Marshal(&payload)
-	conn.SendData("CHA", txid, data)
+	data, _ = Marshal(payload)
+	conn.SendData("BNA", txid, data)
 }
 func (conn *ClientConnection) OnVerifyCharacter(txid int, data []byte) {
 	defer conn.panicRecovery(txid)
+
+	if len(data) == 0 {
+		conn.SendData("201", txid, []byte{})
+		return
+	}
+
+	region, subregion, id, _ := ParseBattleNetProfileUrl(string(data))
+
+	if region == BATTLENET_REGION_UNKNOWN {
+		conn.SendData("201", txid, []byte{})
+		return
+	}
+
+	character := characterCache.Get(region, subregion, id)
+	if character == nil {
+		conn.SendData("201", txid, []byte{})
+		return
+	}
+
+	if character.ClientId != conn.client.Id {
+		conn.SendData("201", txid, []byte{})
+		return
+	}
+
+	ok, err := character.CheckVerificationPortrait()
+	if err != nil {
+		log.Println(err)
+		conn.SendData("203", txid, []byte{})
+		return
+	}
+
+	if !ok {
+		conn.SendData("204", txid, []byte{})
+		return
+	} else {
+		character.IsVerified = true
+		_, err = dbMap.Update(character)
+		if err != nil {
+			conn.SendData("102", txid, []byte{})
+			log.Println(err)
+			return
+		}
+	}
+
+	payload := character.CharacterMessage()
+	data, _ = Marshal(payload)
+	conn.SendData("BNV", txid, data)
 }
 
 func (conn *ClientConnection) OnQueueMatchmaking(txid int, data []byte) {
@@ -808,6 +859,18 @@ func (conn *ClientConnection) OnHandshake(txid int, data []byte) bool {
 	conn.client = client
 
 	var user protobufs.UserStats = client.UserStatsMessage()
+
+	characters, err := client.Characters()
+
+	if err == nil {
+		var characterMessages []*protobufs.Character = make([]*protobufs.Character, len(characters))
+
+		for x := range characters {
+			characterMessages[x] = characters[x].CharacterMessage()
+		}
+
+		resp.Character = characterMessages
+	}
 
 	resp.User = &user
 	resp.Id = &client.Id

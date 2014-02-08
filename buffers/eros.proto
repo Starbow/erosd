@@ -117,7 +117,8 @@ message Character {
 	required int32 profile_id = 3;
 	required string character_name = 4;
 	required int32 character_code = 5;
-	required string profile_link = 6;
-	optional bool verified = 7;
-	optional int32 verification_portrait = 8;
+	optional string profile_link = 6;
+	optional string ingame_profile_link = 7;
+	optional bool verified = 8;
+	optional int32 verification_portrait = 9;
 }

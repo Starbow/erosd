@@ -185,6 +185,16 @@ func (c *BattleNetCharacter) ApiUrl() string {
 	return fmt.Sprintf("http://%s/api/sc2/profile/%d/%d/%s/", domain, c.ProfileId, c.SubRegion, c.CharacterName)
 }
 
+func (c *BattleNetCharacter) Url() string {
+	domain := c.Region.Domain()
+	language := c.Region.Language()
+	if domain == "" {
+		return ""
+	}
+
+	return fmt.Sprintf("http://%s/sc2/%s/profile/%d/%d/%s/", domain, language, c.ProfileId, c.SubRegion, c.CharacterName)
+}
+
 // Get the current portrait offset.
 func (c *BattleNetCharacter) GetPortrait() (portrait int, err error) {
 	url := c.ApiUrl()
@@ -247,7 +257,7 @@ func (c *BattleNetCharacter) CheckVerificationPortrait() (bool, error) {
 	return (c.VerificationRequestedPortrait == current), nil
 }
 
-func (c *BattleNetCharacter) CharacterMessage() protobufs.Character {
+func (c *BattleNetCharacter) CharacterMessage() *protobufs.Character {
 	var (
 		character protobufs.Character
 		region    protobufs.Region = protobufs.Region(c.Region)
@@ -255,6 +265,7 @@ func (c *BattleNetCharacter) CharacterMessage() protobufs.Character {
 		profileid int32            = int32(c.ProfileId)
 		portrait  int32            = int32(c.VerificationRequestedPortrait)
 		code      int32            = int32(c.CharacterCode)
+		link      string           = c.Url()
 	)
 
 	character.Region = &region
@@ -262,11 +273,12 @@ func (c *BattleNetCharacter) CharacterMessage() protobufs.Character {
 	character.ProfileId = &profileid
 	character.CharacterName = &c.CharacterName
 	character.CharacterCode = &code
-	character.ProfileLink = &c.InGameProfileLink
+	character.IngameProfileLink = &c.InGameProfileLink
+	character.ProfileLink = &link
 	character.Verified = &c.IsVerified
 	character.VerificationPortrait = &portrait
 
-	return character
+	return &character
 
 }
 
