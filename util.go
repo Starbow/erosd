@@ -52,7 +52,7 @@ func broadcastMessage(command string, message proto.Message) {
 	}
 	for _, v := range clientConnections {
 
-		go v.SendData(command, 0, data)
+		go v.SendServerMessage(command, data)
 	}
 }
 
@@ -66,7 +66,7 @@ func (c *Client) Broadcast(command string, message proto.Message) {
 	for _, v := range clientConnections {
 
 		if v.client.Id == c.Id {
-			go v.SendData(command, 0, data)
+			go v.SendServerMessage(command, data)
 		}
 	}
 }

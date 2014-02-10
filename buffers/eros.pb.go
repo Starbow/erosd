@@ -158,6 +158,8 @@ type UserStats struct {
 	SearchRadius     *int64  `protobuf:"varint,3,req,name=search_radius" json:"search_radius,omitempty"`
 	Wins             *int64  `protobuf:"varint,4,req,name=wins" json:"wins,omitempty"`
 	Losses           *int64  `protobuf:"varint,5,req,name=losses" json:"losses,omitempty"`
+	Forefeits        *int64  `protobuf:"varint,6,req,name=forefeits" json:"forefeits,omitempty"`
+	Walkovers        *int64  `protobuf:"varint,7,req,name=walkovers" json:"walkovers,omitempty"`
 	XXX_unrecognized []byte  `json:"-"`
 }
 
@@ -196,6 +198,20 @@ func (m *UserStats) GetWins() int64 {
 func (m *UserStats) GetLosses() int64 {
 	if m != nil && m.Losses != nil {
 		return *m.Losses
+	}
+	return 0
+}
+
+func (m *UserStats) GetForefeits() int64 {
+	if m != nil && m.Forefeits != nil {
+		return *m.Forefeits
+	}
+	return 0
+}
+
+func (m *UserStats) GetWalkovers() int64 {
+	if m != nil && m.Walkovers != nil {
+		return *m.Walkovers
 	}
 	return 0
 }

@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/coopernurse/gorp"
-	_ "github.com/mattn/go-sqlite3"
+	"github.com/mattn/go-sqlite3"
 )
 
 var (
@@ -12,6 +12,7 @@ var (
 	dbType             string
 	dbConnectionString string
 	ErrDbInsert        error = errors.New("An error occured while writing to the database.")
+	_                        = sqlite3.ErrError
 )
 
 // Website user in the database

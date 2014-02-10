@@ -30,6 +30,8 @@ message UserStats {
 	required int64 search_radius = 3;
 	required int64 wins = 4;
 	required int64 losses = 5;
+	required int64 forefeits = 6;
+	required int64 walkovers = 7;
 }
 
 

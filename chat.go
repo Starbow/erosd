@@ -120,7 +120,7 @@ func (cr *ChatRoom) Broadcast(command string, message proto.Message) error {
 	defer cr.RUnlock()
 
 	for x := range cr.members {
-		go cr.members[x].SendData(command, 0, data)
+		go cr.members[x].SendServerMessage(command, data)
 	}
 
 	return nil

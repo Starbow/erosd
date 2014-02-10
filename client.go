@@ -269,6 +269,8 @@ func (c *Client) UserStatsMessage() protobufs.UserStats {
 	user.SearchRadius = &c.LadderSearchRadius
 	user.Wins = &c.Wins
 	user.Losses = &c.Losses
+	user.Walkovers = &c.Walkovers
+	user.Forefeits = &c.Forefeits
 
 	return user
 }
