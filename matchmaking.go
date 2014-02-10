@@ -32,6 +32,7 @@ type Matchmaker struct {
 	callback               chan bool
 	unregister             chan *ClientConnection
 	participants           map[*ClientConnection]*MatchmakerParticipant
+	regionParticipants     map[BattleNetRegion]map[*ClientConnection]*MatchmakerParticipant
 	matchCache             map[int64]*MatchmakerMatch
 	matchParticipantCache  map[int64]*MatchmakerMatchParticipant
 	matchParticipantsCache map[int64][]*MatchmakerMatchParticipant
@@ -83,10 +84,17 @@ type MatchmakerMatchParticipant struct {
 
 func initMatchmaking() {
 	matchmaker = &Matchmaker{
-		register:               make(chan *ClientConnection, 256),
-		callback:               make(chan bool, 256),
-		unregister:             make(chan *ClientConnection),
-		participants:           make(map[*ClientConnection]*MatchmakerParticipant),
+		register:     make(chan *ClientConnection, 256),
+		callback:     make(chan bool, 256),
+		unregister:   make(chan *ClientConnection),
+		participants: make(map[*ClientConnection]*MatchmakerParticipant),
+		regionParticipants: map[BattleNetRegion]map[*ClientConnection]*MatchmakerParticipant{
+			BATTLENET_REGION_NA:  make(map[*ClientConnection]*MatchmakerParticipant),
+			BATTLENET_REGION_EU:  make(map[*ClientConnection]*MatchmakerParticipant),
+			BATTLENET_REGION_KR:  make(map[*ClientConnection]*MatchmakerParticipant),
+			BATTLENET_REGION_CN:  make(map[*ClientConnection]*MatchmakerParticipant),
+			BATTLENET_REGION_SEA: make(map[*ClientConnection]*MatchmakerParticipant),
+		},
 		matchCache:             make(map[int64]*MatchmakerMatch),
 		matchParticipantCache:  make(map[int64]*MatchmakerMatchParticipant),
 		matchParticipantsCache: make(map[int64][]*MatchmakerMatchParticipant),
@@ -183,6 +191,7 @@ func (mm *Matchmaker) EndMatch(id int64, participant ...*Client) {
 
 			participant[x].PendingMatchmakingId = 0
 			participant[x].PendingMatchmakingOpponentId = 0
+			participant[x].PendingMatchmakingRegion = 0
 		}
 
 		dbMap.Update(match)
@@ -275,6 +284,8 @@ func (mm *Matchmaker) run() {
 			case <-ticker.C:
 				// Maintain a list of participants we've already looped through.
 				// Any comparisons against them will be duplicate.
+
+				//TODO: We can use the regional map if required in the future.
 				complete := make([]*MatchmakerParticipant, 0, len(mm.participants))
 				for k, v := range mm.participants {
 					if v.matching {
@@ -329,12 +340,24 @@ func (mm *Matchmaker) run() {
 				}
 			case client := <-mm.register:
 				delete(mm.participants, client)
+				delete(mm.regionParticipants[BATTLENET_REGION_NA], client)
+				delete(mm.regionParticipants[BATTLENET_REGION_EU], client)
+				delete(mm.regionParticipants[BATTLENET_REGION_KR], client)
+				delete(mm.regionParticipants[BATTLENET_REGION_CN], client)
+				delete(mm.regionParticipants[BATTLENET_REGION_SEA], client)
+
 				mm.participants[client] = NewMatchmakerParticipant(client)
+				mm.regionParticipants[client.client.LadderSearchRegion][client] = mm.participants[client]
 				go func() {
 					mm.callback <- true
 				}()
 			case client := <-mm.unregister:
 				delete(mm.participants, client)
+				delete(mm.regionParticipants[BATTLENET_REGION_NA], client)
+				delete(mm.regionParticipants[BATTLENET_REGION_EU], client)
+				delete(mm.regionParticipants[BATTLENET_REGION_KR], client)
+				delete(mm.regionParticipants[BATTLENET_REGION_CN], client)
+				delete(mm.regionParticipants[BATTLENET_REGION_SEA], client)
 			}
 
 		}

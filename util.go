@@ -3,6 +3,7 @@ package main
 import (
 	"code.google.com/p/goprotobuf/proto"
 	"errors"
+	"github.com/Starbow/erosd/buffers"
 	"log"
 	"strconv"
 	"strings"
@@ -69,4 +70,40 @@ func (c *Client) Broadcast(command string, message proto.Message) {
 			go v.SendServerMessage(command, data)
 		}
 	}
+}
+
+// Generates server stats protocol buffer message. This should be elsewhere maybe.
+
+func NewMatchmakingStats(region BattleNetRegion) *protobufs.MatchmakingStats {
+	var (
+		stats       protobufs.MatchmakingStats
+		protoRegion protobufs.Region = protobufs.Region(region)
+		searching   int64            = 0
+	)
+	if _, ok := matchmaker.regionParticipants[region]; ok {
+		searching = int64(len(matchmaker.regionParticipants[region]))
+	}
+
+	stats.Region = &protoRegion
+	stats.SearchingUsers = &searching
+	return &stats
+}
+
+func NewServerStats() *protobufs.ServerStats {
+	var (
+		x         protobufs.ServerStats
+		connected int64 = int64(len(clientConnections))
+		mm        int64 = int64(len(matchmaker.participants))
+	)
+	x.ActiveUsers = &connected
+	x.SearchingUsers = &mm
+	x.Region = []*protobufs.MatchmakingStats{
+		NewMatchmakingStats(BATTLENET_REGION_NA),
+		NewMatchmakingStats(BATTLENET_REGION_EU),
+		NewMatchmakingStats(BATTLENET_REGION_KR),
+		NewMatchmakingStats(BATTLENET_REGION_CN),
+		NewMatchmakingStats(BATTLENET_REGION_SEA),
+	}
+
+	return &x
 }

@@ -60,7 +60,7 @@ func (cs *ClientSimulation) Run() {
 
 					winnerOldPoints := winner.LadderPoints
 					loserOldPoints := loser.LadderPoints
-					winner.Defeat(loser)
+					winner.Defeat(loser, BATTLENET_REGION_NA)
 
 					if SIMULATOR_IS_CHATTY {
 						log.Printf("%s defeated %s. Rating change %d -> %d and %d -> %d respectively", winner.Username, loser.Username, winnerOldPoints, winner.LadderPoints, loserOldPoints, loser.LadderPoints)

@@ -600,10 +600,35 @@ func (m *ChatRoomRequest) GetPassword() string {
 	return ""
 }
 
+type MatchmakingStats struct {
+	Region           *Region `protobuf:"varint,1,req,name=region,enum=protobufs.Region" json:"region,omitempty"`
+	SearchingUsers   *int64  `protobuf:"varint,2,req,name=searching_users" json:"searching_users,omitempty"`
+	XXX_unrecognized []byte  `json:"-"`
+}
+
+func (m *MatchmakingStats) Reset()         { *m = MatchmakingStats{} }
+func (m *MatchmakingStats) String() string { return proto.CompactTextString(m) }
+func (*MatchmakingStats) ProtoMessage()    {}
+
+func (m *MatchmakingStats) GetRegion() Region {
+	if m != nil && m.Region != nil {
+		return *m.Region
+	}
+	return Region_NA
+}
+
+func (m *MatchmakingStats) GetSearchingUsers() int64 {
+	if m != nil && m.SearchingUsers != nil {
+		return *m.SearchingUsers
+	}
+	return 0
+}
+
 type ServerStats struct {
-	ActiveUsers      *int64 `protobuf:"varint,1,req,name=active_users" json:"active_users,omitempty"`
-	MatchmakingUsers *int64 `protobuf:"varint,2,req,name=matchmaking_users" json:"matchmaking_users,omitempty"`
-	XXX_unrecognized []byte `json:"-"`
+	ActiveUsers      *int64              `protobuf:"varint,1,req,name=active_users" json:"active_users,omitempty"`
+	SearchingUsers   *int64              `protobuf:"varint,2,req,name=searching_users" json:"searching_users,omitempty"`
+	Region           []*MatchmakingStats `protobuf:"bytes,3,rep,name=region" json:"region,omitempty"`
+	XXX_unrecognized []byte              `json:"-"`
 }
 
 func (m *ServerStats) Reset()         { *m = ServerStats{} }
@@ -617,11 +642,18 @@ func (m *ServerStats) GetActiveUsers() int64 {
 	return 0
 }
 
-func (m *ServerStats) GetMatchmakingUsers() int64 {
-	if m != nil && m.MatchmakingUsers != nil {
-		return *m.MatchmakingUsers
+func (m *ServerStats) GetSearchingUsers() int64 {
+	if m != nil && m.SearchingUsers != nil {
+		return *m.SearchingUsers
 	}
 	return 0
+}
+
+func (m *ServerStats) GetRegion() []*MatchmakingStats {
+	if m != nil {
+		return m.Region
+	}
+	return nil
 }
 
 type Character struct {

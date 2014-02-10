@@ -87,14 +87,21 @@ type Client struct {
 	RatingMean   float64 `db:"rating_mean"`   // TrueSkill Mean
 	RatingStdDev float64 `db:"rating_stddev"` // TrueSkill Standard Deviation
 
+	LadderPoints    int64 `db:"ladder_points"`     // Global ladder points
+	LadderPointsNA  int64 `db:"ladder_points_na"`  // NA ladder points
+	LadderPointsEU  int64 `db:"ladder_points_eu"`  // EU ladder points
+	LadderPointsKR  int64 `db:"ladder_points_kr"`  // KR ladder points
+	LadderPointsCN  int64 `db:"ladder_points_cn"`  // CN ladder points
+	LadderPointsSEA int64 `db:"ladder_points_sea"` // SEA ladder points
+
 	//Display this ranking to the world.
-	LadderPoints       int64           `db:"ladder_points"`        // iCCup ladder points
 	LadderSearchRadius int64           `db:"ladder_search_radius"` // Search Radius.
 	LadderSearchRegion BattleNetRegion `db:"ladder_search_region"`
 	TotalQueueTime     float64         `db:"ladder_total_queue_time"`
 
 	PendingMatchmakingId         int64 `db:"matchmaking_pending_match_id"`
 	PendingMatchmakingOpponentId int64 `db:"matchmaking_pending_opponent_id"`
+	PendingMatchmakingRegion     int64 `db:"matchmaking_pending_region"`
 
 	Wins      int64 `db:"ladder_wins"`
 	Losses    int64 `db:"ladder_losses"`
@@ -103,14 +110,20 @@ type Client struct {
 }
 
 func NewClient() *Client {
-	var client Client
+	client := &Client{
+		RatingMean:         25,
+		RatingStdDev:       float64(25) / float64(3),
+		LadderSearchRadius: 1,
+		LadderPoints:       ladderStartingPoints,
+		LadderPointsNA:     ladderStartingPoints,
+		LadderPointsEU:     ladderStartingPoints,
+		LadderPointsKR:     ladderStartingPoints,
+		LadderPointsCN:     ladderStartingPoints,
+		LadderPointsSEA:    ladderStartingPoints,
+	}
 	client.setRandomAuthKey()
-	client.LadderPoints = ladderStartingPoints
-	client.LadderSearchRadius = 1
-	client.RatingMean = 25
-	client.RatingStdDev = float64(25) / float64(3)
 
-	return &client
+	return client
 }
 
 func (c *Client) Vetoes() []*Map {
@@ -170,8 +183,25 @@ func (c *Client) setRandomAuthKey() {
 	c.AuthKey = base64.StdEncoding.EncodeToString(rnd)[:64]
 }
 
+func (c *Client) GetLadderPoints(region BattleNetRegion) int64 {
+	switch region {
+	case BATTLENET_REGION_NA:
+		return c.LadderPointsNA
+	case BATTLENET_REGION_EU:
+		return c.LadderPointsEU
+	case BATTLENET_REGION_KR:
+		return c.LadderPointsKR
+	case BATTLENET_REGION_CN:
+		return c.LadderPointsCN
+	case BATTLENET_REGION_SEA:
+		return c.LadderPointsSEA
+	default:
+		return 0
+	}
+}
+
 // Have Client c defeat Client o and update their ratings.
-func (c *Client) Defeat(o *Client) float64 {
+func (c *Client) Defeat(o *Client, region BattleNetRegion) float64 {
 
 	// Calculate the TrueSkill
 	player1 := skills.NewPlayer(c.Id)
@@ -202,27 +232,21 @@ func (c *Client) Defeat(o *Client) float64 {
 	// Update points
 	// GetDifference(2000, 1000) would return -1
 	// GetDifference(2000, 3000) would return 1
-	difference := divisions.GetDifference(c.LadderPoints, o.LadderPoints)
-	increase := ladderWinPointsBase + int64((ladderWinPointsIncrement * float64(difference)))
-	decrease := ladderLosePointsBase - (int64((ladderLosePointsIncrement * float64(difference))) * -1)
-	if increase < 0 {
-		increase = 10
+
+	switch region {
+	case BATTLENET_REGION_NA:
+		c.LadderPointsNA, o.LadderPointsNA = calculateNewPoints(c.LadderPointsNA, o.LadderPointsNA)
+	case BATTLENET_REGION_EU:
+		c.LadderPointsEU, o.LadderPointsEU = calculateNewPoints(c.LadderPointsEU, o.LadderPointsEU)
+	case BATTLENET_REGION_KR:
+		c.LadderPointsKR, o.LadderPointsKR = calculateNewPoints(c.LadderPointsKR, o.LadderPointsKR)
+	case BATTLENET_REGION_CN:
+		c.LadderPointsCN, o.LadderPointsCN = calculateNewPoints(c.LadderPointsCN, o.LadderPointsCN)
+	case BATTLENET_REGION_SEA:
+		c.LadderPointsSEA, o.LadderPointsSEA = calculateNewPoints(c.LadderPointsSEA, o.LadderPointsSEA)
 	}
 
-	if decrease < 0 {
-		decrease = 0
-	}
-
-	c.LadderPoints += increase
-	o.LadderPoints -= decrease
-
-	if c.LadderPoints < 0 {
-		c.LadderPoints = 0
-	}
-
-	if o.LadderPoints < 0 {
-		o.LadderPoints = 0
-	}
+	c.LadderPoints, o.LadderPoints = calculateNewPoints(c.LadderPoints, o.LadderPoints)
 
 	return quality
 }
@@ -230,7 +254,7 @@ func (c *Client) Defeat(o *Client) float64 {
 func (c *Client) ForefeitMatchmadeMatch() {
 	if c.PendingMatchmakingId > 0 {
 		opponent := clientCache.Get(c.PendingMatchmakingOpponentId)
-		opponent.Defeat(c)
+		opponent.Defeat(c, BattleNetRegion(c.PendingMatchmakingRegion))
 		c.Forefeits += 1
 		opponent.Walkovers += 1
 		matchmaker.EndMatch(c.PendingMatchmakingId, c, opponent)

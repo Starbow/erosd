@@ -108,9 +108,15 @@ message ChatRoomRequest {
 	required string password = 2;
 }
 
+message MatchmakingStats {
+	required Region region = 1;
+	required int64 searching_users = 2;
+}
+
 message ServerStats {
 	required int64 active_users = 1;
-	required int64 matchmaking_users = 2;
+	required int64 searching_users = 2;
+	repeated MatchmakingStats region = 3;
 }
 
 message Character {

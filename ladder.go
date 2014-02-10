@@ -218,6 +218,7 @@ type MatchResult struct {
 	MapId             int64 // Map
 	MatchmakerMatchId int64
 	DateTime          int64 // unix
+	Region            BattleNetRegion
 }
 
 type MatchResultPlayer struct {
@@ -313,6 +314,7 @@ func NewMatchResult(replay *Replay, client *Client) (result *MatchResult, player
 	res.DateTime = replay.UnixTimestamp
 	res.MapId = m.Id
 	res.MatchmakerMatchId = client.PendingMatchmakingId
+	res.Region = region
 
 	if player.Victory {
 		opponentClient := clientCache.Get(opponent.ClientId)
@@ -354,7 +356,7 @@ func NewMatchResult(replay *Replay, client *Client) (result *MatchResult, player
 		player.PointsBefore = client.LadderPoints
 		opponent.PointsBefore = opponentClient.LadderPoints
 
-		client.Defeat(opponentClient)
+		client.Defeat(opponentClient, region)
 
 		player.PointsAfter = client.LadderPoints
 		opponent.PointsAfter = opponentClient.LadderPoints
@@ -378,6 +380,32 @@ func NewMatchResult(replay *Replay, client *Client) (result *MatchResult, player
 
 		go client.BroadcastStatsMessage()
 		go opponentClient.BroadcastStatsMessage()
+	}
+
+	return
+}
+
+func calculateNewPoints(winner, loser int64) (winnerNew, loserNew int64) {
+	difference := divisions.GetDifference(winner, loser)
+	increase := ladderWinPointsBase + int64((ladderWinPointsIncrement * float64(difference)))
+	decrease := ladderLosePointsBase - (int64((ladderLosePointsIncrement * float64(difference))) * -1)
+	if increase < 0 {
+		increase = 10
+	}
+
+	if decrease < 0 {
+		decrease = 0
+	}
+
+	winnerNew = winner + increase
+	loserNew = loser - decrease
+
+	if winnerNew < 0 {
+		winnerNew = 0
+	}
+
+	if loserNew < 0 {
+		loserNew = 0
 	}
 
 	return

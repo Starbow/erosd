@@ -34,7 +34,7 @@ func broadcastRunner() {
 	go func() {
 		for _ = range ticker.C {
 			x := NewServerStats()
-			broadcastMessage("SSU", &x)
+			broadcastMessage("SSU", x)
 		}
 	}()
 }

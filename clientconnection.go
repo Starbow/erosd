@@ -75,20 +75,6 @@ func DisconnectClient(id int64, command string) {
 	}
 }
 
-// Generates server stats protocol buffer message. This should be elsewhere maybe.
-
-func NewServerStats() protobufs.ServerStats {
-	var (
-		x         protobufs.ServerStats
-		connected int64 = int64(len(clientConnections))
-		mm        int64 = int64(len(matchmaker.participants))
-	)
-	x.ActiveUsers = &connected
-	x.MatchmakingUsers = &mm
-
-	return x
-}
-
 func (conn *ClientConnection) panicRecovery(txid int) {
 	if r := recover(); r != nil {
 		fmt.Println("Recovered from a panic", r)
@@ -196,7 +182,7 @@ func (conn *ClientConnection) read() {
 					return
 				} else {
 					stats := NewServerStats()
-					data, err := Marshal(&stats)
+					data, err := Marshal(stats)
 					if err == nil {
 						conn.SendServerMessage("SSU", data)
 					}
@@ -705,6 +691,7 @@ func (conn *ClientConnection) OnQueueMatchmaking(txid int, data []byte) {
 
 				conn.client.PendingMatchmakingId = match.Id
 				conn.client.PendingMatchmakingOpponentId = opponent.client.Id
+				conn.client.PendingMatchmakingRegion = int64(match.Region)
 
 				dbMap.Update(conn.client)
 
@@ -755,22 +742,29 @@ func (conn *ClientConnection) OnDequeueMatchmaking(txid int, data []byte) {
 
 func (conn *ClientConnection) OnSimulation(txid int, data []byte) {
 	if !allowsimulations {
+		conn.SendResponseMessage("105", txid, []byte{})
 		return
 	}
 	// This is a sqlite query. Wont work elsewhere.
 	row, err := dbMap.Select(&Client{}, "SELECT * FROM clients WHERE id != ? ORDER BY RANDOM() LIMIT 1;", conn.client.Id)
 
 	if len(row) == 0 {
+		conn.SendResponseMessage("101", txid, []byte{})
 		return
 	}
 	client := (row[0]).(*Client)
-
+	if len(data) == 0 {
+		conn.SendResponseMessage("106", txid, []byte{})
+		return
+	}
 	if err == nil {
 		var victor int = rand.Intn(2)
-		if len(data) == 1 {
-			if data[0] == 'w' {
+		var region BattleNetRegion = BattleNetRegion(data[0])
+
+		if len(data) == 2 {
+			if data[1] == 'w' {
 				victor = 0
-			} else if data[0] == 'l' {
+			} else if data[1] == 'l' {
 				victor = 1
 			}
 		}
@@ -792,7 +786,7 @@ func (conn *ClientConnection) OnSimulation(txid int, data []byte) {
 			loser = conn.client
 			victory = false
 		}
-		quality := winner.Defeat(loser)
+		quality := winner.Defeat(loser, region)
 
 		res.Victory = &victory
 		res.Opponent = &opponentStats
@@ -805,7 +799,7 @@ func (conn *ClientConnection) OnSimulation(txid int, data []byte) {
 
 		stats := conn.client.UserStatsMessage()
 		data, _ = Marshal(&stats)
-		conn.SendResponseMessage("USU", txid, data)
+		conn.SendServerMessage("USU", data)
 	}
 }
 
