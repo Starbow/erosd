@@ -73,8 +73,7 @@ func (cs *ClientSimulation) Run() {
 
 func NewClientSimulation(points, radius int64) *ClientSimulation {
 	id := atomic.AddInt64(&simulationIdBase, 1)
-	client := NewClient()
-	client.Id = id
+	client := NewClient(id)
 	client.Username = fmt.Sprintf("User%d", id)
 	client.LadderPoints = points
 	client.LadderSearchRadius = radius

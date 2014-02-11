@@ -837,7 +837,7 @@ func (conn *ClientConnection) OnHandshake(txid int, data []byte) bool {
 	client = clientCache.Get(realUser.Id)
 
 	if client == nil {
-		client = NewClient()
+		client = NewClient(realUser.Id)
 
 		err := dbMap.Insert(client)
 		clientCache.clients[client.Id] = client

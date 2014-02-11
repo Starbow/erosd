@@ -3,8 +3,6 @@ package main
 // Client model logic. A client can be considered a User.
 
 import (
-	"crypto/rand"
-	"encoding/base64"
 	"github.com/ChrisHines/GoSkills/skills"
 	"github.com/ChrisHines/GoSkills/skills/trueskill"
 	"github.com/Starbow/erosd/buffers"
@@ -77,8 +75,7 @@ func (cl *ClientLockoutManager) UnlockIds(id ...int64) {
 }
 
 type Client struct {
-	Id      int64 `db:"id"`
-	AuthKey string
+	Id int64 `db:"id"`
 
 	//Nickname
 	Username string `db:"username"`
@@ -109,8 +106,9 @@ type Client struct {
 	Walkovers int64 `db:"ladder_walkovers"`
 }
 
-func NewClient() *Client {
+func NewClient(id int64) *Client {
 	client := &Client{
+		Id:                 id,
 		RatingMean:         25,
 		RatingStdDev:       float64(25) / float64(3),
 		LadderSearchRadius: 1,
@@ -121,7 +119,6 @@ func NewClient() *Client {
 		LadderPointsCN:     ladderStartingPoints,
 		LadderPointsSEA:    ladderStartingPoints,
 	}
-	client.setRandomAuthKey()
 
 	return client
 }
@@ -173,14 +170,6 @@ func (c *ClientCache) Get(id int64) *Client {
 	}
 
 	return client
-}
-
-// Set the client's auth key to something random
-func (c *Client) setRandomAuthKey() {
-	rnd := make([]byte, 64)
-	rand.Read(rnd)
-
-	c.AuthKey = base64.StdEncoding.EncodeToString(rnd)[:64]
 }
 
 func (c *Client) GetLadderPoints(region BattleNetRegion) int64 {

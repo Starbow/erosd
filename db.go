@@ -60,7 +60,7 @@ func initDb() (err error) {
 	dbMap = &gorp.DbMap{Db: db, Dialect: gorp.SqliteDialect{}}
 
 	// add tables
-	dbMap.AddTableWithName(Client{}, "clients").SetKeys(true, "Id")
+	dbMap.AddTableWithName(Client{}, "clients").SetKeys(false, "Id")
 	dbMap.AddTableWithName(BattleNetCharacter{}, "battle_net_characters").SetKeys(true, "Id")
 
 	dbMap.AddTableWithName(MatchResult{}, "match_results").SetKeys(true, "Id")

@@ -109,9 +109,9 @@ func (region BattleNetRegion) Language() string {
 	case BATTLENET_REGION_NA, BATTLENET_REGION_EU, BATTLENET_REGION_SEA:
 		return "en"
 	case BATTLENET_REGION_KR:
-		return "kr"
+		return "ko"
 	case BATTLENET_REGION_CN:
-		return "cn"
+		return "zh"
 	}
 
 	return ""
