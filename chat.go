@@ -165,7 +165,7 @@ func NewChatRoom(name, password string, joinable, fixed bool) (cr *ChatRoom, err
 	return
 }
 
-func (ch *ChatRoom) ChatRoomInfoMessage(detailed bool) protobufs.ChatRoomInfo {
+func (ch *ChatRoom) ChatRoomInfoMessage(detailed bool) *protobufs.ChatRoomInfo {
 
 	var (
 		chat       protobufs.ChatRoomInfo
@@ -181,22 +181,25 @@ func (ch *ChatRoom) ChatRoomInfoMessage(detailed bool) protobufs.ChatRoomInfo {
 	chat.Users = &users
 
 	if detailed {
-		// add participants
+		chat.Participant = make([]*protobufs.UserStats, 0, users)
+		for x := range ch.members {
+			chat.Participant = append(chat.Participant, ch.members[x].client.UserStatsMessage())
+		}
 	}
 
-	return chat
+	return &chat
 
 }
 
 func (ch *ChatRoom) ChatRoomUserMessage(client *ClientConnection) protobufs.ChatRoomUser {
 
 	var (
-		chat protobufs.ChatRoomInfo = ch.ChatRoomInfoMessage(false)
-		user protobufs.UserStats    = client.client.UserStatsMessage()
+		chat *protobufs.ChatRoomInfo = ch.ChatRoomInfoMessage(false)
+		user *protobufs.UserStats    = client.client.UserStatsMessage()
 		join protobufs.ChatRoomUser
 	)
-	join.Room = &chat
-	join.User = &user
+	join.Room = chat
+	join.User = user
 
 	return join
 
@@ -205,12 +208,12 @@ func (ch *ChatRoom) ChatRoomUserMessage(client *ClientConnection) protobufs.Chat
 func (ch *ChatRoom) ChatRoomMessageMessage(client *ClientConnection, message *protobufs.ChatMessage) protobufs.ChatRoomMessage {
 
 	var (
-		chat protobufs.ChatRoomInfo = ch.ChatRoomInfoMessage(false)
-		user protobufs.UserStats    = client.client.UserStatsMessage()
+		chat *protobufs.ChatRoomInfo = ch.ChatRoomInfoMessage(false)
+		user *protobufs.UserStats    = client.client.UserStatsMessage()
 		msg  protobufs.ChatRoomMessage
 	)
-	msg.Room = &chat
-	msg.Sender = &user
+	msg.Room = chat
+	msg.Sender = user
 	messageString := message.GetMessage()
 	msg.Message = &messageString
 	return msg

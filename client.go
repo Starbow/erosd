@@ -275,7 +275,7 @@ func (c *Client) IsOnMap(id int64) bool {
 }
 
 // Generate a UserStats protocol buffer message from this client.
-func (c *Client) UserStatsMessage() protobufs.UserStats {
+func (c *Client) UserStatsMessage() *protobufs.UserStats {
 	var user protobufs.UserStats
 	user.Points = &c.LadderPoints
 	user.Username = &c.Username
@@ -285,13 +285,13 @@ func (c *Client) UserStatsMessage() protobufs.UserStats {
 	user.Walkovers = &c.Walkovers
 	user.Forefeits = &c.Forefeits
 
-	return user
+	return &user
 }
 
 // Broadcast a stats message to this client if they are connected.
 func (c *Client) BroadcastStatsMessage() {
 	message := c.UserStatsMessage()
-	c.Broadcast("USU", &message)
+	c.Broadcast("USU", message)
 }
 
 // Check if the client can queue in this region.

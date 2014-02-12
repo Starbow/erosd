@@ -194,7 +194,7 @@ type Map struct {
 	InRankedPool  bool
 }
 
-func (m *Map) MapMessage() protobufs.Map {
+func (m *Map) MapMessage() *protobufs.Map {
 	var (
 		msg    protobufs.Map
 		region protobufs.Region = protobufs.Region(m.Region)
@@ -204,7 +204,7 @@ func (m *Map) MapMessage() protobufs.Map {
 	msg.BattleNetName = &m.BattleNetName
 	msg.BattleNetId = &id
 
-	return msg
+	return &msg
 }
 
 type MapVeto struct {

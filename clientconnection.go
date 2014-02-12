@@ -100,12 +100,18 @@ func (conn *ClientConnection) read() {
 		}
 		conn.Close()
 
+		// Dequeue from matchmaking if we're in it.
 		el, ok := matchmaker.participants[conn]
 		if ok {
 			go func() {
 				matchmaker.unregister <- conn
 				el.abort <- true
 			}()
+		}
+
+		// Leave all channels.
+		for x := range conn.chatRooms {
+			conn.chatRooms[x].leave <- conn
 		}
 	}()
 
@@ -255,6 +261,7 @@ func (conn *ClientConnection) read() {
 // 309 - Player not found in database.
 // 310 - You didn't play your matchmade opponent. You have been forefeited from that game.
 // 401 - Can't queue on this region without a character on this region.
+// 402 - The matchmaking request was cancelled.
 // 501 - Chat room not joinable.
 // 502 - Bad password.
 // 503 - Can't create. Already exists.
@@ -324,7 +331,10 @@ func (conn *ClientConnection) OnChatJoin(txid int, data []byte) {
 			return
 		}
 
-		conn.SendResponseMessage("UCJ", txid, []byte{})
+		info := room.ChatRoomInfoMessage(true)
+		data, _ := Marshal(info)
+
+		conn.SendResponseMessage("UCJ", txid, data)
 
 		room.join <- conn
 	} else {
@@ -378,7 +388,7 @@ func (conn *ClientConnection) OnPrivateMessage(txid int, data []byte) {
 
 	stat := conn.client.UserStatsMessage()
 
-	outMessage.Sender = &stat
+	outMessage.Sender = stat
 	outMessage.Message = &text
 	data, err = Marshal(&outMessage)
 
@@ -417,6 +427,7 @@ func (conn *ClientConnection) OnChatMessage(txid int, data []byte) {
 	if ok {
 		msg := room.ChatRoomMessageMessage(conn, &message)
 		room.message <- &msg
+		conn.SendResponseMessage("UCM", txid, []byte{})
 	} else {
 		conn.SendResponseMessage("506", txid, []byte{})
 	}
@@ -451,8 +462,7 @@ parent:
 
 	i = 0
 	for x := range rooms {
-		info := rooms[x].ChatRoomInfoMessage(false)
-		infos[i] = &info
+		infos[i] = rooms[x].ChatRoomInfoMessage(false)
 		i++
 	}
 
@@ -684,6 +694,7 @@ func (conn *ClientConnection) OnQueueMatchmaking(txid int, data []byte) {
 			select {
 			case <-el.abort:
 				// We've been cancelled somewhere. Abort out.
+				conn.SendResponseMessage("402", txid, data)
 				return
 			case match := <-el.match:
 				opponent := el.opponent
@@ -705,8 +716,8 @@ func (conn *ClientConnection) OnQueueMatchmaking(txid int, data []byte) {
 				res.ChatRoom = &match.ChatRoom
 				res.Timespan = &elapsed
 				res.Quality = &match.Quality
-				res.Opponent = &opponentStats
-				res.Map = &mapInfo
+				res.Opponent = opponentStats
+				res.Map = mapInfo
 
 				data, _ := Marshal(&res)
 				conn.SendResponseMessage("MMR", txid, data)
@@ -771,7 +782,7 @@ func (conn *ClientConnection) OnSimulation(txid int, data []byte) {
 
 		var (
 			res           protobufs.SimulationResult
-			opponentStats protobufs.UserStats = client.UserStatsMessage()
+			opponentStats *protobufs.UserStats = client.UserStatsMessage()
 			winner        *Client
 			loser         *Client
 			victory       bool
@@ -789,7 +800,7 @@ func (conn *ClientConnection) OnSimulation(txid int, data []byte) {
 		quality := winner.Defeat(loser, region)
 
 		res.Victory = &victory
-		res.Opponent = &opponentStats
+		res.Opponent = opponentStats
 		res.MatchQuality = &quality
 
 		dbMap.Update(winner, loser)
@@ -798,7 +809,7 @@ func (conn *ClientConnection) OnSimulation(txid int, data []byte) {
 		conn.SendResponseMessage("SIM", txid, data)
 
 		stats := conn.client.UserStatsMessage()
-		data, _ = Marshal(&stats)
+		data, _ = Marshal(stats)
 		conn.SendServerMessage("USU", data)
 	}
 }
@@ -851,7 +862,7 @@ func (conn *ClientConnection) OnHandshake(txid int, data []byte) bool {
 	log.Printf("Client %+v", *client)
 	conn.client = client
 
-	var user protobufs.UserStats = client.UserStatsMessage()
+	var user *protobufs.UserStats = client.UserStatsMessage()
 
 	characters, err := client.Characters()
 
@@ -865,7 +876,7 @@ func (conn *ClientConnection) OnHandshake(txid int, data []byte) bool {
 		resp.Character = characterMessages
 	}
 
-	resp.User = &user
+	resp.User = user
 	resp.Id = &client.Id
 	status = protobufs.HandshakeResponse_SUCCESS
 
