@@ -15,10 +15,10 @@ Installation
 
 Todo (Short Term)
 ==========
+- Better stats model.
 - Reduce overall messyness.
 - Commentify everything.
 - Map pool in the database.
-- Battle.net character management.
 - Veto management.
 - No-show support and match timeouts.
 - Make use of database transactions.

@@ -13,6 +13,11 @@ message Handshake {
 	optional string auth_key = 2;
 }
 
+message Division {
+	required string name = 1;
+	required int64 points = 2;
+}
+
 message HandshakeResponse {
 	enum HandshakeStatus {
 		FAIL = 0;
@@ -22,6 +27,7 @@ message HandshakeResponse {
 	optional UserStats user = 2;
 	optional int64 id = 3;
 	repeated Character character = 4;
+	repeated Division division = 5;
 }
 
 message UserStats {
@@ -124,9 +130,25 @@ message Character {
 	required int32 subregion = 2;
 	required int32 profile_id = 3;
 	required string character_name = 4;
-	required int32 character_code = 5;
+	optional int32 character_code = 5;
 	optional string profile_link = 6;
 	optional string ingame_profile_link = 7;
 	optional bool verified = 8;
 	optional int32 verification_portrait = 9;
+}
+
+message MatchParticipant {
+	optional UserStats user = 1;
+	optional Character character = 2;
+	required int64 points_before = 3;
+	required int64 points_after = 4;
+	required int64 points_difference = 5;
+	required bool victory = 6;	
+	required string race = 7;
+}
+
+message MatchResult {
+	required Region region = 1;
+	required Map map = 2;
+	repeated MatchParticipant participant = 3;
 }

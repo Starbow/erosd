@@ -26,6 +26,14 @@ type Division struct {
 	Points int64
 }
 
+func (d *Division) DivisionMessage() *protobufs.Division {
+	var division protobufs.Division
+	division.Name = &d.Name
+	division.Points = &d.Points
+
+	return &division
+}
+
 type Divisions []Division
 type Maps map[int64]*Map
 
@@ -427,4 +435,49 @@ func NewMatchResultPlayer(replay *Replay, player *ReplayPlayer) (matchplayer *Ma
 	mrp.Victory = player.Victory == "Win"
 
 	return &mrp, nil
+}
+
+func (mr *MatchResult) MatchResultMessage(players []*MatchResultPlayer) *protobufs.MatchResult {
+	var (
+		message    protobufs.MatchResult
+		region     protobufs.Region = protobufs.Region(mr.Region)
+		mapMessage *protobufs.Map   = maps[mr.MapId].MapMessage()
+	)
+
+	message.Region = &region
+	message.Map = mapMessage
+	message.Participant = make([]*protobufs.MatchParticipant, 0, len(players))
+
+	for x := range players {
+		message.Participant = append(message.Participant, players[x].MatchParticipantMessage())
+	}
+
+	return &message
+}
+
+func (mrp *MatchResultPlayer) MatchParticipantMessage() *protobufs.MatchParticipant {
+	var (
+		message   protobufs.MatchParticipant
+		client    *Client
+		character *BattleNetCharacter
+	)
+
+	client = clientCache.Get(mrp.ClientId)
+	character = characterCache.GetId(mrp.CharacterId)
+
+	message.PointsBefore = &mrp.PointsBefore
+	message.PointsAfter = &mrp.PointsAfter
+	message.PointsDifference = &mrp.PointsDifference
+	message.Victory = &mrp.Victory
+	message.Race = &mrp.Race
+
+	if client != nil {
+		message.User = client.UserStatsMessage()
+	}
+
+	if character != nil {
+		message.Character = character.CharacterMessage()
+	}
+
+	return &message
 }

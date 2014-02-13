@@ -112,11 +112,36 @@ func (m *Handshake) GetAuthKey() string {
 	return ""
 }
 
+type Division struct {
+	Name             *string `protobuf:"bytes,1,req,name=name" json:"name,omitempty"`
+	Points           *int64  `protobuf:"varint,2,req,name=points" json:"points,omitempty"`
+	XXX_unrecognized []byte  `json:"-"`
+}
+
+func (m *Division) Reset()         { *m = Division{} }
+func (m *Division) String() string { return proto.CompactTextString(m) }
+func (*Division) ProtoMessage()    {}
+
+func (m *Division) GetName() string {
+	if m != nil && m.Name != nil {
+		return *m.Name
+	}
+	return ""
+}
+
+func (m *Division) GetPoints() int64 {
+	if m != nil && m.Points != nil {
+		return *m.Points
+	}
+	return 0
+}
+
 type HandshakeResponse struct {
 	Status           *HandshakeResponse_HandshakeStatus `protobuf:"varint,1,req,name=status,enum=protobufs.HandshakeResponse_HandshakeStatus" json:"status,omitempty"`
 	User             *UserStats                         `protobuf:"bytes,2,opt,name=user" json:"user,omitempty"`
 	Id               *int64                             `protobuf:"varint,3,opt,name=id" json:"id,omitempty"`
 	Character        []*Character                       `protobuf:"bytes,4,rep,name=character" json:"character,omitempty"`
+	Division         []*Division                        `protobuf:"bytes,5,rep,name=division" json:"division,omitempty"`
 	XXX_unrecognized []byte                             `json:"-"`
 }
 
@@ -148,6 +173,13 @@ func (m *HandshakeResponse) GetId() int64 {
 func (m *HandshakeResponse) GetCharacter() []*Character {
 	if m != nil {
 		return m.Character
+	}
+	return nil
+}
+
+func (m *HandshakeResponse) GetDivision() []*Division {
+	if m != nil {
+		return m.Division
 	}
 	return nil
 }
@@ -661,7 +693,7 @@ type Character struct {
 	Subregion            *int32  `protobuf:"varint,2,req,name=subregion" json:"subregion,omitempty"`
 	ProfileId            *int32  `protobuf:"varint,3,req,name=profile_id" json:"profile_id,omitempty"`
 	CharacterName        *string `protobuf:"bytes,4,req,name=character_name" json:"character_name,omitempty"`
-	CharacterCode        *int32  `protobuf:"varint,5,req,name=character_code" json:"character_code,omitempty"`
+	CharacterCode        *int32  `protobuf:"varint,5,opt,name=character_code" json:"character_code,omitempty"`
 	ProfileLink          *string `protobuf:"bytes,6,opt,name=profile_link" json:"profile_link,omitempty"`
 	IngameProfileLink    *string `protobuf:"bytes,7,opt,name=ingame_profile_link" json:"ingame_profile_link,omitempty"`
 	Verified             *bool   `protobuf:"varint,8,opt,name=verified" json:"verified,omitempty"`
@@ -734,6 +766,102 @@ func (m *Character) GetVerificationPortrait() int32 {
 		return *m.VerificationPortrait
 	}
 	return 0
+}
+
+type MatchParticipant struct {
+	User             *UserStats `protobuf:"bytes,1,opt,name=user" json:"user,omitempty"`
+	Character        *Character `protobuf:"bytes,2,opt,name=character" json:"character,omitempty"`
+	PointsBefore     *int64     `protobuf:"varint,3,req,name=points_before" json:"points_before,omitempty"`
+	PointsAfter      *int64     `protobuf:"varint,4,req,name=points_after" json:"points_after,omitempty"`
+	PointsDifference *int64     `protobuf:"varint,5,req,name=points_difference" json:"points_difference,omitempty"`
+	Victory          *bool      `protobuf:"varint,6,req,name=victory" json:"victory,omitempty"`
+	Race             *string    `protobuf:"bytes,7,req,name=race" json:"race,omitempty"`
+	XXX_unrecognized []byte     `json:"-"`
+}
+
+func (m *MatchParticipant) Reset()         { *m = MatchParticipant{} }
+func (m *MatchParticipant) String() string { return proto.CompactTextString(m) }
+func (*MatchParticipant) ProtoMessage()    {}
+
+func (m *MatchParticipant) GetUser() *UserStats {
+	if m != nil {
+		return m.User
+	}
+	return nil
+}
+
+func (m *MatchParticipant) GetCharacter() *Character {
+	if m != nil {
+		return m.Character
+	}
+	return nil
+}
+
+func (m *MatchParticipant) GetPointsBefore() int64 {
+	if m != nil && m.PointsBefore != nil {
+		return *m.PointsBefore
+	}
+	return 0
+}
+
+func (m *MatchParticipant) GetPointsAfter() int64 {
+	if m != nil && m.PointsAfter != nil {
+		return *m.PointsAfter
+	}
+	return 0
+}
+
+func (m *MatchParticipant) GetPointsDifference() int64 {
+	if m != nil && m.PointsDifference != nil {
+		return *m.PointsDifference
+	}
+	return 0
+}
+
+func (m *MatchParticipant) GetVictory() bool {
+	if m != nil && m.Victory != nil {
+		return *m.Victory
+	}
+	return false
+}
+
+func (m *MatchParticipant) GetRace() string {
+	if m != nil && m.Race != nil {
+		return *m.Race
+	}
+	return ""
+}
+
+type MatchResult struct {
+	Region           *Region             `protobuf:"varint,1,req,name=region,enum=protobufs.Region" json:"region,omitempty"`
+	Map              *Map                `protobuf:"bytes,2,req,name=map" json:"map,omitempty"`
+	Participant      []*MatchParticipant `protobuf:"bytes,3,rep,name=participant" json:"participant,omitempty"`
+	XXX_unrecognized []byte              `json:"-"`
+}
+
+func (m *MatchResult) Reset()         { *m = MatchResult{} }
+func (m *MatchResult) String() string { return proto.CompactTextString(m) }
+func (*MatchResult) ProtoMessage()    {}
+
+func (m *MatchResult) GetRegion() Region {
+	if m != nil && m.Region != nil {
+		return *m.Region
+	}
+	return Region_NA
+}
+
+func (m *MatchResult) GetMap() *Map {
+	if m != nil {
+		return m.Map
+	}
+	return nil
+}
+
+func (m *MatchResult) GetParticipant() []*MatchParticipant {
+	if m != nil {
+		return m.Participant
+	}
+	return nil
 }
 
 func init() {

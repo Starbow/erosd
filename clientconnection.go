@@ -207,8 +207,10 @@ func (conn *ClientConnection) read() {
 				go conn.OnDequeueMatchmaking(txid, data.Bytes())
 			case "BNA":
 				go conn.OnAddCharacter(txid, data.Bytes())
-			case "BNV":
-				go conn.OnVerifyCharacter(txid, data.Bytes())
+			case "BNU":
+				go conn.OnUpdateCharacter(txid, data.Bytes())
+			case "BNR":
+				go conn.OnRemoveCharacter(txid, data.Bytes())
 			case "REP":
 				go conn.OnReplay(txid, data.Bytes())
 			//case "UCN":
@@ -549,11 +551,16 @@ func (conn *ClientConnection) OnReplay(txid int, data []byte) {
 		return
 	}
 
-	if result != nil {
-		log.Printf("%+v", *result)
-		log.Printf("%+v", *players[0])
-		log.Printf("%+v", *players[1])
+	if result == nil {
+		conn.SendResponseMessage("301", txid, []byte{})
+		return
 	}
+
+	message := result.MatchResultMessage(players)
+
+	data, _ = Marshal(message)
+
+	conn.SendResponseMessage("REP", txid, data)
 }
 
 func (conn *ClientConnection) OnAddCharacter(txid int, data []byte) {
@@ -578,13 +585,13 @@ func (conn *ClientConnection) OnAddCharacter(txid int, data []byte) {
 	}
 
 	if count > 0 {
-		//conn.SendResponseMessage("202", txid, []byte{})
-		//return
+		conn.SendResponseMessage("202", txid, []byte{})
+		return
 	}
 
 	character := NewBattleNetCharacter(region, subregion, id, name)
 	character.ClientId = conn.client.Id
-	character.IsVerified = testMode
+	character.IsVerified = false
 	err = character.SetVerificationPortrait()
 
 	if err != nil {
@@ -609,7 +616,7 @@ func (conn *ClientConnection) OnAddCharacter(txid int, data []byte) {
 	data, _ = Marshal(payload)
 	conn.SendResponseMessage("BNA", txid, data)
 }
-func (conn *ClientConnection) OnVerifyCharacter(txid int, data []byte) {
+func (conn *ClientConnection) OnUpdateCharacter(txid int, data []byte) {
 	defer conn.panicRecovery(txid)
 
 	if len(data) == 0 {
@@ -617,14 +624,16 @@ func (conn *ClientConnection) OnVerifyCharacter(txid int, data []byte) {
 		return
 	}
 
-	region, subregion, id, _ := ParseBattleNetProfileUrl(string(data))
+	var character_message protobufs.Character
 
-	if region == BATTLENET_REGION_UNKNOWN {
+	err := Unmarshal(data, &character_message)
+
+	if err != nil {
 		conn.SendResponseMessage("201", txid, []byte{})
 		return
 	}
 
-	character := characterCache.Get(region, subregion, id)
+	character := characterCache.Get(BattleNetRegion(character_message.GetRegion()), int(character_message.GetSubregion()), int(character_message.GetProfileId()))
 	if character == nil {
 		conn.SendResponseMessage("201", txid, []byte{})
 		return
@@ -635,18 +644,37 @@ func (conn *ClientConnection) OnVerifyCharacter(txid int, data []byte) {
 		return
 	}
 
-	ok, err := character.CheckVerificationPortrait()
-	if err != nil {
-		log.Println(err)
-		conn.SendResponseMessage("203", txid, []byte{})
-		return
+	updated := false
+	if !character.IsVerified {
+		ok, err := character.CheckVerificationPortrait()
+		if err != nil {
+			log.Println(err)
+			conn.SendResponseMessage("203", txid, []byte{})
+			return
+		}
+
+		if !ok {
+			conn.SendResponseMessage("204", txid, []byte{})
+			return
+		} else {
+			character.IsVerified = true
+			updated = true
+		}
 	}
 
-	if !ok {
-		conn.SendResponseMessage("204", txid, []byte{})
-		return
-	} else {
-		character.IsVerified = true
+	if character_message.GetIngameProfileLink() != "" && character.InGameProfileLink != character_message.GetIngameProfileLink() {
+		if inGameProfileRegex.MatchString(character_message.GetIngameProfileLink()) {
+			character.InGameProfileLink = character_message.GetIngameProfileLink()
+			updated = true
+		}
+	}
+
+	if character_message.GetCharacterCode() != 0 && character.CharacterCode != int(character_message.GetCharacterCode()) {
+		character.CharacterCode = int(character_message.GetCharacterCode())
+		updated = true
+	}
+
+	if updated {
 		_, err = dbMap.Update(character)
 		if err != nil {
 			conn.SendResponseMessage("102", txid, []byte{})
@@ -657,7 +685,45 @@ func (conn *ClientConnection) OnVerifyCharacter(txid int, data []byte) {
 
 	payload := character.CharacterMessage()
 	data, _ = Marshal(payload)
-	conn.SendResponseMessage("BNV", txid, data)
+	conn.SendResponseMessage("BNU", txid, data)
+}
+
+func (conn *ClientConnection) OnRemoveCharacter(txid int, data []byte) {
+	defer conn.panicRecovery(txid)
+
+	if len(data) == 0 {
+		conn.SendResponseMessage("201", txid, []byte{})
+		return
+	}
+
+	var character_message protobufs.Character
+
+	err := Unmarshal(data, &character_message)
+
+	if err != nil {
+		conn.SendResponseMessage("201", txid, []byte{})
+		return
+	}
+
+	character := characterCache.Get(BattleNetRegion(character_message.GetRegion()), int(character_message.GetSubregion()), int(character_message.GetProfileId()))
+	if character == nil {
+		conn.SendResponseMessage("201", txid, []byte{})
+		return
+	}
+
+	if character.ClientId != conn.client.Id {
+		conn.SendResponseMessage("201", txid, []byte{})
+		return
+	}
+
+	_, err = dbMap.Delete(character)
+	if err != nil {
+		conn.SendResponseMessage("102", txid, []byte{})
+		log.Println(err)
+		return
+	}
+
+	conn.SendResponseMessage("BNR", txid, []byte{})
 }
 
 func (conn *ClientConnection) OnQueueMatchmaking(txid int, data []byte) {
@@ -878,6 +944,11 @@ func (conn *ClientConnection) OnHandshake(txid int, data []byte) bool {
 
 	resp.User = user
 	resp.Id = &client.Id
+	resp.Division = make([]*protobufs.Division, 0, len(divisions))
+
+	for x := range divisions {
+		resp.Division = append(resp.Division, divisions[x].DivisionMessage())
+	}
 	status = protobufs.HandshakeResponse_SUCCESS
 
 	return true
