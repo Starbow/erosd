@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/coopernurse/gorp"
 	"github.com/mattn/go-sqlite3"
+        _ "github.com/go-sql-driver/mysql"
 )
 
 var (
@@ -57,8 +58,12 @@ func initDb() (err error) {
 		return
 	}
 	// construct a gorp DbMap
-
-	dbMap = &gorp.DbMap{Db: db, Dialect: gorp.SqliteDialect{}}
+	switch dbType {
+	case "sqlite3":
+		dbMap = &gorp.DbMap{Db: db, Dialect: gorp.SqliteDialect{}}
+	case "mysql":
+		dbMap = &gorp.DbMap{Db: db, Dialect: gorp.MySQLDialect{"InnoDB", "UTF8"}}
+	}
 
 	// add tables
 	dbMap.AddTableWithName(Client{}, "clients").SetKeys(false, "Id")
