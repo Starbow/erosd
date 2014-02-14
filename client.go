@@ -3,8 +3,6 @@ package main
 // Client model logic. A client can be considered a User.
 
 import (
-	"github.com/ChrisHines/GoSkills/skills"
-	"github.com/ChrisHines/GoSkills/skills/trueskill"
 	"github.com/Starbow/erosd/buffers"
 	"log"
 	"sync"
@@ -26,6 +24,7 @@ var clientCache *ClientCache
 var clientLockouts *ClientLockoutManager
 var clientVetoes map[int64][]*Map
 var clientCharacters map[int64][]*BattleNetCharacter
+var clientRegionStats map[int64]map[BattleNetRegion]*ClientRegionStats
 
 func initClientCaches() {
 	clientCache = &ClientCache{
@@ -36,6 +35,7 @@ func initClientCaches() {
 	}
 	clientVetoes = make(map[int64][]*Map)
 	clientCharacters = make(map[int64][]*BattleNetCharacter)
+	clientRegionStats = make(map[int64]map[BattleNetRegion]*ClientRegionStats)
 }
 func (cl *ClientLockoutManager) LockId(id int64) {
 	cl.Lock()
@@ -84,21 +84,33 @@ type Client struct {
 	RatingMean   float64 `db:"rating_mean"`   // TrueSkill Mean
 	RatingStdDev float64 `db:"rating_stddev"` // TrueSkill Standard Deviation
 
-	LadderPoints    int64 `db:"ladder_points"`     // Global ladder points
-	LadderPointsNA  int64 `db:"ladder_points_na"`  // NA ladder points
-	LadderPointsEU  int64 `db:"ladder_points_eu"`  // EU ladder points
-	LadderPointsKR  int64 `db:"ladder_points_kr"`  // KR ladder points
-	LadderPointsCN  int64 `db:"ladder_points_cn"`  // CN ladder points
-	LadderPointsSEA int64 `db:"ladder_points_sea"` // SEA ladder points
+	LadderPoints int64 `db:"ladder_points"` // Global ladder points
 
 	//Display this ranking to the world.
 	LadderSearchRadius int64           `db:"ladder_search_radius"` // Search Radius.
 	LadderSearchRegion BattleNetRegion `db:"ladder_search_region"`
-	TotalQueueTime     float64         `db:"ladder_total_queue_time"`
 
 	PendingMatchmakingId         int64 `db:"matchmaking_pending_match_id"`
 	PendingMatchmakingOpponentId int64 `db:"matchmaking_pending_opponent_id"`
 	PendingMatchmakingRegion     int64 `db:"matchmaking_pending_region"`
+
+	Wins      int64 `db:"ladder_wins"`
+	Losses    int64 `db:"ladder_losses"`
+	Forefeits int64 `db:"ladder_forefeits"`
+	Walkovers int64 `db:"ladder_walkovers"`
+}
+
+type ClientRegionStats struct {
+	Id       int64 `db:"id"`
+	ClientId int64 `db:"client_id"`
+
+	Region BattleNetRegion `db:"region"`
+
+	//Record TrueSkill for posterity
+	RatingMean   float64 `db:"rating_mean"`   // TrueSkill Mean
+	RatingStdDev float64 `db:"rating_stddev"` // TrueSkill Standard Deviation
+
+	LadderPoints int64 `db:"ladder_points"` // ladder points
 
 	Wins      int64 `db:"ladder_wins"`
 	Losses    int64 `db:"ladder_losses"`
@@ -113,11 +125,6 @@ func NewClient(id int64) *Client {
 		RatingStdDev:       float64(25) / float64(3),
 		LadderSearchRadius: 1,
 		LadderPoints:       ladderStartingPoints,
-		LadderPointsNA:     ladderStartingPoints,
-		LadderPointsEU:     ladderStartingPoints,
-		LadderPointsKR:     ladderStartingPoints,
-		LadderPointsCN:     ladderStartingPoints,
-		LadderPointsSEA:    ladderStartingPoints,
 	}
 
 	return client
@@ -173,69 +180,41 @@ func (c *ClientCache) Get(id int64) *Client {
 }
 
 func (c *Client) GetLadderPoints(region BattleNetRegion) int64 {
-	switch region {
-	case BATTLENET_REGION_NA:
-		return c.LadderPointsNA
-	case BATTLENET_REGION_EU:
-		return c.LadderPointsEU
-	case BATTLENET_REGION_KR:
-		return c.LadderPointsKR
-	case BATTLENET_REGION_CN:
-		return c.LadderPointsCN
-	case BATTLENET_REGION_SEA:
-		return c.LadderPointsSEA
-	default:
+	stats, err := c.RegionStats(region)
+	if err != nil {
 		return 0
+	} else {
+		return stats.LadderPoints
 	}
 }
 
 // Have Client c defeat Client o and update their ratings.
 func (c *Client) Defeat(o *Client, region BattleNetRegion) float64 {
 
-	// Calculate the TrueSkill
-	player1 := skills.NewPlayer(c.Id)
-	player2 := skills.NewPlayer(o.Id)
-
-	team1 := skills.NewTeam()
-	team2 := skills.NewTeam()
-
-	team1.AddPlayer(*player1, skills.NewRating(c.RatingMean, c.RatingStdDev))
-	team2.AddPlayer(*player2, skills.NewRating(o.RatingMean, o.RatingStdDev))
-
-	teams := []skills.Team{team1, team2}
-
-	var calc trueskill.TwoPlayerCalc
-	ratings := calc.CalcNewRatings(skills.DefaultGameInfo, teams, 1, 2)
-	quality := calc.CalcMatchQual(skills.DefaultGameInfo, teams)
-
-	c.RatingMean = ratings[*player1].Mean()
-	c.RatingStdDev = ratings[*player1].Stddev()
-
-	o.RatingMean = ratings[*player2].Mean()
-	o.RatingStdDev = ratings[*player2].Stddev()
-
 	// Update W/L
 	c.Wins += 1
 	o.Losses += 1
 
-	// Update points
-	// GetDifference(2000, 1000) would return -1
-	// GetDifference(2000, 3000) would return 1
+	var quality float64
+	c.RatingMean, c.RatingStdDev, o.RatingMean, o.RatingStdDev, quality = calculateNewRating(c.Id, o.Id, c.RatingMean, c.RatingStdDev, o.RatingMean, o.RatingStdDev)
+	c.LadderPoints, o.LadderPoints = calculateNewPoints(c.LadderPoints, o.LadderPoints)
 
-	switch region {
-	case BATTLENET_REGION_NA:
-		c.LadderPointsNA, o.LadderPointsNA = calculateNewPoints(c.LadderPointsNA, o.LadderPointsNA)
-	case BATTLENET_REGION_EU:
-		c.LadderPointsEU, o.LadderPointsEU = calculateNewPoints(c.LadderPointsEU, o.LadderPointsEU)
-	case BATTLENET_REGION_KR:
-		c.LadderPointsKR, o.LadderPointsKR = calculateNewPoints(c.LadderPointsKR, o.LadderPointsKR)
-	case BATTLENET_REGION_CN:
-		c.LadderPointsCN, o.LadderPointsCN = calculateNewPoints(c.LadderPointsCN, o.LadderPointsCN)
-	case BATTLENET_REGION_SEA:
-		c.LadderPointsSEA, o.LadderPointsSEA = calculateNewPoints(c.LadderPointsSEA, o.LadderPointsSEA)
+	regionStats, err := c.RegionStats(region)
+
+	if err != nil {
+		return quality
+	}
+	opponentRegionStats, err := c.RegionStats(region)
+	if err != nil {
+		return quality
 	}
 
-	c.LadderPoints, o.LadderPoints = calculateNewPoints(c.LadderPoints, o.LadderPoints)
+	regionStats.RatingMean, regionStats.RatingStdDev, opponentRegionStats.RatingMean, opponentRegionStats.RatingStdDev, quality = calculateNewRating(c.Id, o.Id, regionStats.RatingMean, regionStats.RatingStdDev, opponentRegionStats.RatingMean, opponentRegionStats.RatingStdDev)
+	regionStats.LadderPoints, opponentRegionStats.LadderPoints = calculateNewPoints(regionStats.LadderPoints, opponentRegionStats.LadderPoints)
+	regionStats.Wins += 1
+	opponentRegionStats.Losses += 1
+
+	dbMap.Update(regionStats, opponentRegionStats)
 
 	return quality
 }
@@ -284,6 +263,17 @@ func (c *Client) UserStatsMessage() *protobufs.UserStats {
 	user.Losses = &c.Losses
 	user.Walkovers = &c.Walkovers
 	user.Forefeits = &c.Forefeits
+	user.Region = make([]*protobufs.UserRegionStats, 0, len(ladderActiveRegions))
+
+	log.Println(ladderActiveRegions)
+	for _, region := range ladderActiveRegions {
+		stats, err := c.RegionStats(region)
+		if stats != nil && err == nil {
+			user.Region = append(user.Region, stats.UserRegionStatsMessage())
+		} else {
+			log.Println(region, err, stats)
+		}
+	}
 
 	return &user
 }
@@ -327,10 +317,56 @@ func (c *Client) Characters() (characters []*BattleNetCharacter, err error) {
 
 		characterCache.characterIds[character.Id] = character
 		characterCache.profileIds[character.ProfileIdString()] = character
-
 	}
 
 	characterCache.Unlock()
 
 	return
+}
+
+func (c *Client) RegionStats(region BattleNetRegion) (regionStats *ClientRegionStats, err error) {
+	clientLockouts.LockId(c.Id)
+	defer clientLockouts.UnlockId(c.Id)
+
+	var ok bool = false
+	if _, ok = clientRegionStats[c.Id]; !ok {
+		clientRegionStats[c.Id] = make(map[BattleNetRegion]*ClientRegionStats)
+	}
+
+	if regionStats, ok = clientRegionStats[c.Id][region]; ok {
+		return
+	}
+
+	var stats ClientRegionStats
+
+	err = dbMap.SelectOne(&stats, "SELECT * FROM client_region_stats WHERE client_id=? and region=?", c.Id, int64(region))
+	if err != nil || stats.Id == 0 {
+		stats.ClientId = c.Id
+		stats.Forefeits = 0
+		stats.Losses = 0
+		stats.LadderPoints = ladderStartingPoints
+		stats.RatingMean = 25
+		stats.RatingStdDev = float64(24) / float64(3)
+		stats.Walkovers = 0
+		stats.Wins = 0
+		stats.Region = region
+
+		err = dbMap.Insert(&stats)
+	}
+
+	clientRegionStats[c.Id][region] = &stats
+	return &stats, nil
+}
+
+func (crs *ClientRegionStats) UserRegionStatsMessage() *protobufs.UserRegionStats {
+	var stats protobufs.UserRegionStats
+	var region protobufs.Region = protobufs.Region(crs.Region)
+	stats.Points = &crs.LadderPoints
+	stats.Wins = &crs.Wins
+	stats.Losses = &crs.Losses
+	stats.Walkovers = &crs.Walkovers
+	stats.Forefeits = &crs.Forefeits
+	stats.Region = &region
+
+	return &stats
 }

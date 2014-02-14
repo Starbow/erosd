@@ -3,6 +3,8 @@ package main
 import (
 	"errors"
 	"fmt"
+	"github.com/ChrisHines/GoSkills/skills"
+	"github.com/ChrisHines/GoSkills/skills/trueskill"
 	"github.com/Starbow/erosd/buffers"
 	"log"
 	"math/rand"
@@ -76,12 +78,13 @@ var (
 	divisionCount             int64
 	subdivisionCount          int64
 	divisionPoints            int64
-	ladderStartingPoints      int64   = 1250
-	ladderWinPointsBase       int64   = 100
-	ladderLosePointsBase      int64   = 50
-	ladderWinPointsIncrement  float64 = 25
-	ladderLosePointsIncrement float64 = 12.5
-	ladderMaxMapVetos         int64   = 3
+	ladderStartingPoints      int64             = 1250
+	ladderWinPointsBase       int64             = 100
+	ladderLosePointsBase      int64             = 50
+	ladderWinPointsIncrement  float64           = 25
+	ladderLosePointsIncrement float64           = 12.5
+	ladderMaxMapVetos         int64             = 3
+	ladderActiveRegions       []BattleNetRegion = []BattleNetRegion{BATTLENET_REGION_NA, BATTLENET_REGION_EU}
 )
 
 // Create divisions. There will be [subdivisionCount] subdivisions per division.
@@ -315,8 +318,8 @@ func NewMatchResult(replay *Replay, client *Client) (result *MatchResult, player
 	// We're only going to accept replays from the victor.
 	// In future this should be changed to match games against the start time
 	// I made a nice client-ID based mutex manager just for this purpose.
-	clientLockouts.LockIds(player.ClientId, opponent.ClientId)
-	clientLockouts.UnlockIds(player.ClientId, opponent.ClientId)
+	//clientLockouts.LockIds(player.ClientId, opponent.ClientId)
+	//clientLockouts.UnlockIds(player.ClientId, opponent.ClientId)
 
 	var res MatchResult
 	res.DateTime = replay.UnixTimestamp
@@ -361,13 +364,29 @@ func NewMatchResult(replay *Replay, client *Client) (result *MatchResult, player
 		player.MatchId = res.Id
 		opponent.MatchId = res.Id
 
-		player.PointsBefore = client.LadderPoints
-		opponent.PointsBefore = opponentClient.LadderPoints
+		playerRegion, _ := client.RegionStats(region)
+		opponentRegion, _ := opponentClient.RegionStats(region)
+
+		// Fetch region stats for stats purposes.
+		// Use global if we can't fetch them.
+
+		if playerRegion == nil || opponentRegion == nil {
+			player.PointsBefore = client.LadderPoints
+			opponent.PointsBefore = opponentClient.LadderPoints
+		} else {
+			player.PointsBefore = playerRegion.LadderPoints
+			opponent.PointsBefore = opponentRegion.LadderPoints
+		}
 
 		client.Defeat(opponentClient, region)
 
-		player.PointsAfter = client.LadderPoints
-		opponent.PointsAfter = opponentClient.LadderPoints
+		if playerRegion == nil || opponentRegion == nil {
+			player.PointsAfter = client.LadderPoints
+			opponent.PointsAfter = opponentClient.LadderPoints
+		} else {
+			player.PointsAfter = playerRegion.LadderPoints
+			opponent.PointsAfter = opponentRegion.LadderPoints
+		}
 
 		player.PointsDifference = player.PointsAfter - player.PointsBefore
 		opponent.PointsDifference = player.PointsAfter - player.PointsBefore
@@ -394,6 +413,10 @@ func NewMatchResult(replay *Replay, client *Client) (result *MatchResult, player
 }
 
 func calculateNewPoints(winner, loser int64) (winnerNew, loserNew int64) {
+	// Update points
+	// GetDifference(2000, 1000) would return -1
+	// GetDifference(2000, 3000) would return 1
+
 	difference := divisions.GetDifference(winner, loser)
 	increase := ladderWinPointsBase + int64((ladderWinPointsIncrement * float64(difference)))
 	decrease := ladderLosePointsBase - (int64((ladderLosePointsIncrement * float64(difference))) * -1)
@@ -417,6 +440,25 @@ func calculateNewPoints(winner, loser int64) (winnerNew, loserNew int64) {
 	}
 
 	return
+}
+
+func calculateNewRating(winnerId, loserId int64, winnerRating, winnerStdDev, loserRating, loserStdDev float64) (winnerNewRating, winnerNewStdDev, loserNewRating, loserNewStdDev, quality float64) {
+	player1 := skills.NewPlayer(winnerId)
+	player2 := skills.NewPlayer(loserId)
+
+	team1 := skills.NewTeam()
+	team2 := skills.NewTeam()
+
+	team1.AddPlayer(*player1, skills.NewRating(winnerRating, winnerStdDev))
+	team2.AddPlayer(*player2, skills.NewRating(loserRating, loserStdDev))
+
+	teams := []skills.Team{team1, team2}
+
+	var calc trueskill.TwoPlayerCalc
+	ratings := calc.CalcNewRatings(skills.DefaultGameInfo, teams, 1, 2)
+	quality = calc.CalcMatchQual(skills.DefaultGameInfo, teams)
+
+	return ratings[*player1].Mean(), ratings[*player1].Stddev(), ratings[*player2].Mean(), ratings[*player2].Stddev(), quality
 }
 
 func NewMatchResultPlayer(replay *Replay, player *ReplayPlayer) (matchplayer *MatchResultPlayer, err error) {

@@ -103,16 +103,27 @@ func initMatchmaking() {
 }
 
 func NewMatchmakerParticipant(connection *ClientConnection) *MatchmakerParticipant {
+	region, _ := connection.client.RegionStats(connection.client.LadderSearchRegion)
+
+	// TrueSkill stuff
 	team := skills.NewTeam()
 	player := skills.NewPlayer(connection.client.Id)
 	team.AddPlayer(*player, skills.NewRating(connection.client.RatingMean, connection.client.RatingStdDev))
+	var points int64
+	if region == nil {
+		team.AddPlayer(*player, skills.NewRating(connection.client.RatingMean, connection.client.RatingStdDev))
+		points = connection.client.LadderPoints
+	} else {
+		team.AddPlayer(*player, skills.NewRating(region.RatingMean, region.RatingStdDev))
+		points = region.LadderPoints
+	}
 
 	return &MatchmakerParticipant{
 		connection: connection,
 		client:     connection.client,
 		enrollTime: time.Now(),
 		team:       team,
-		points:     connection.client.LadderPoints,
+		points:     points,
 		radius:     connection.client.LadderSearchRadius,
 		region:     connection.client.LadderSearchRegion,
 		matching:   false,

@@ -184,15 +184,72 @@ func (m *HandshakeResponse) GetDivision() []*Division {
 	return nil
 }
 
-type UserStats struct {
-	Username         *string `protobuf:"bytes,1,req,name=username" json:"username,omitempty"`
+type UserRegionStats struct {
+	Region           *Region `protobuf:"varint,1,req,name=region,enum=protobufs.Region" json:"region,omitempty"`
 	Points           *int64  `protobuf:"varint,2,req,name=points" json:"points,omitempty"`
-	SearchRadius     *int64  `protobuf:"varint,3,req,name=search_radius" json:"search_radius,omitempty"`
-	Wins             *int64  `protobuf:"varint,4,req,name=wins" json:"wins,omitempty"`
-	Losses           *int64  `protobuf:"varint,5,req,name=losses" json:"losses,omitempty"`
-	Forefeits        *int64  `protobuf:"varint,6,req,name=forefeits" json:"forefeits,omitempty"`
-	Walkovers        *int64  `protobuf:"varint,7,req,name=walkovers" json:"walkovers,omitempty"`
+	Wins             *int64  `protobuf:"varint,3,req,name=wins" json:"wins,omitempty"`
+	Losses           *int64  `protobuf:"varint,4,req,name=losses" json:"losses,omitempty"`
+	Forefeits        *int64  `protobuf:"varint,5,req,name=forefeits" json:"forefeits,omitempty"`
+	Walkovers        *int64  `protobuf:"varint,6,req,name=walkovers" json:"walkovers,omitempty"`
 	XXX_unrecognized []byte  `json:"-"`
+}
+
+func (m *UserRegionStats) Reset()         { *m = UserRegionStats{} }
+func (m *UserRegionStats) String() string { return proto.CompactTextString(m) }
+func (*UserRegionStats) ProtoMessage()    {}
+
+func (m *UserRegionStats) GetRegion() Region {
+	if m != nil && m.Region != nil {
+		return *m.Region
+	}
+	return Region_NA
+}
+
+func (m *UserRegionStats) GetPoints() int64 {
+	if m != nil && m.Points != nil {
+		return *m.Points
+	}
+	return 0
+}
+
+func (m *UserRegionStats) GetWins() int64 {
+	if m != nil && m.Wins != nil {
+		return *m.Wins
+	}
+	return 0
+}
+
+func (m *UserRegionStats) GetLosses() int64 {
+	if m != nil && m.Losses != nil {
+		return *m.Losses
+	}
+	return 0
+}
+
+func (m *UserRegionStats) GetForefeits() int64 {
+	if m != nil && m.Forefeits != nil {
+		return *m.Forefeits
+	}
+	return 0
+}
+
+func (m *UserRegionStats) GetWalkovers() int64 {
+	if m != nil && m.Walkovers != nil {
+		return *m.Walkovers
+	}
+	return 0
+}
+
+type UserStats struct {
+	Username         *string            `protobuf:"bytes,1,req,name=username" json:"username,omitempty"`
+	SearchRadius     *int64             `protobuf:"varint,2,req,name=search_radius" json:"search_radius,omitempty"`
+	Points           *int64             `protobuf:"varint,3,req,name=points" json:"points,omitempty"`
+	Wins             *int64             `protobuf:"varint,4,req,name=wins" json:"wins,omitempty"`
+	Losses           *int64             `protobuf:"varint,5,req,name=losses" json:"losses,omitempty"`
+	Forefeits        *int64             `protobuf:"varint,6,req,name=forefeits" json:"forefeits,omitempty"`
+	Walkovers        *int64             `protobuf:"varint,7,req,name=walkovers" json:"walkovers,omitempty"`
+	Region           []*UserRegionStats `protobuf:"bytes,8,rep,name=region" json:"region,omitempty"`
+	XXX_unrecognized []byte             `json:"-"`
 }
 
 func (m *UserStats) Reset()         { *m = UserStats{} }
@@ -206,16 +263,16 @@ func (m *UserStats) GetUsername() string {
 	return ""
 }
 
-func (m *UserStats) GetPoints() int64 {
-	if m != nil && m.Points != nil {
-		return *m.Points
+func (m *UserStats) GetSearchRadius() int64 {
+	if m != nil && m.SearchRadius != nil {
+		return *m.SearchRadius
 	}
 	return 0
 }
 
-func (m *UserStats) GetSearchRadius() int64 {
-	if m != nil && m.SearchRadius != nil {
-		return *m.SearchRadius
+func (m *UserStats) GetPoints() int64 {
+	if m != nil && m.Points != nil {
+		return *m.Points
 	}
 	return 0
 }
@@ -246,6 +303,13 @@ func (m *UserStats) GetWalkovers() int64 {
 		return *m.Walkovers
 	}
 	return 0
+}
+
+func (m *UserStats) GetRegion() []*UserRegionStats {
+	if m != nil {
+		return m.Region
+	}
+	return nil
 }
 
 type MapPool struct {

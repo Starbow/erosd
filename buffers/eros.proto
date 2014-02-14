@@ -30,14 +30,25 @@ message HandshakeResponse {
 	repeated Division division = 5;
 }
 
+message UserRegionStats
+{
+	required Region region = 1;
+	required int64 points = 2;
+	required int64 wins = 3;
+	required int64 losses = 4;
+	required int64 forefeits = 5;
+	required int64 walkovers = 6;
+}
+
 message UserStats {
 	required string username = 1;
-	required int64 points = 2;
-	required int64 search_radius = 3;
+	required int64 search_radius = 2;
+	required int64 points = 3;
 	required int64 wins = 4;
 	required int64 losses = 5;
 	required int64 forefeits = 6;
 	required int64 walkovers = 7;
+	repeated UserRegionStats region = 8;
 }
 
 

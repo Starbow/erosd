@@ -345,8 +345,11 @@ func (conn *ClientConnection) OnChatJoin(txid int, data []byte) {
 			conn.SendResponseMessage(ErrorCode(err), txid, []byte(err.Error()))
 			return
 		}
+		room.join <- conn
+		info := room.ChatRoomInfoMessage(true)
+		data, _ := Marshal(info)
 
-		conn.SendResponseMessage("UCJ", txid, []byte{})
+		conn.SendResponseMessage("UCJ", txid, data)
 	}
 }
 func (conn *ClientConnection) OnChatLeave(txid int, data []byte) {
@@ -591,7 +594,7 @@ func (conn *ClientConnection) OnAddCharacter(txid int, data []byte) {
 
 	character := NewBattleNetCharacter(region, subregion, id, name)
 	character.ClientId = conn.client.Id
-	character.IsVerified = false
+	character.IsVerified = testMode
 	err = character.SetVerificationPortrait()
 
 	if err != nil {

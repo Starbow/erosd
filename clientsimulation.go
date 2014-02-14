@@ -37,7 +37,7 @@ func (cs *ClientSimulation) Run() {
 			case <-el.match:
 				opponent := el.opponent
 				elapsed := time.Since(el.enrollTime)
-				cs.client.TotalQueueTime += elapsed.Seconds()
+				//cs.client.TotalQueueTime += elapsed.Seconds()
 
 				// We have an opponent! Great success.
 				// We don't want to run this logic twice, so the higher ID will run it

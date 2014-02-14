@@ -68,7 +68,7 @@ func doSimulations(count int) {
 					break
 				}
 
-				log.Printf("%s: %dW %dL, Rating %d, Avg Queue %f", sims[i].client.Username, sims[i].client.Wins, sims[i].client.Losses, sims[i].client.LadderPoints, sims[i].client.TotalQueueTime/float64(sims[i].client.Wins+sims[i].client.Losses))
+				//log.Printf("%s: %dW %dL, Rating %d, Avg Queue %f", sims[i].client.Username, sims[i].client.Wins, sims[i].client.Losses, sims[i].client.LadderPoints, sims[i].client.TotalQueueTime/float64(sims[i].client.Wins+sims[i].client.Losses))
 
 				i++
 			}
@@ -135,6 +135,18 @@ func loadConfig() error {
 	ladderLosePointsBase, _ = config.GetInt64("ladder", "losepointsbase")
 	ladderLosePointsIncrement, _ = config.GetFloat("ladder", "losepointsincrement")
 	ladderMaxMapVetos, _ = config.GetInt64("ladder", "maxvetos")
+	rg, err := config.GetString("ladder", "activeregions")
+	if err == nil {
+		regions := strings.Split(rg, ";")
+		ladderActiveRegions = make([]BattleNetRegion, 0, len(regions))
+
+		for _, region := range regions {
+			regionCode := ParseBattleNetRegion(region)
+			if regionCode != BATTLENET_REGION_UNKNOWN {
+				ladderActiveRegions = append(ladderActiveRegions, regionCode)
+			}
+		}
+	}
 
 	dbType, _ = config.GetString("database", "type")
 	dbConnectionString, _ = config.GetString("database", "connection")
