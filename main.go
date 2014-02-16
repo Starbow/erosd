@@ -39,43 +39,6 @@ func broadcastRunner() {
 	}()
 }
 
-func doSimulations(count int) {
-	i := 0
-	points := int64(1250)
-	var sims []*ClientSimulation = make([]*ClientSimulation, 0, count)
-	for {
-		if i >= count {
-			break
-		}
-
-		go func() {
-			sim := NewClientSimulation(points, 1)
-			points += 50
-			sims = append(sims, sim)
-			log.Println("Launching sim", sim.client.Username)
-			sim.Run()
-		}()
-
-		i++
-	}
-
-	for {
-		time.Sleep(10 * time.Second)
-		go func() {
-			i := 0
-			for {
-				if i >= count {
-					break
-				}
-
-				//log.Printf("%s: %dW %dL, Rating %d, Avg Queue %f", sims[i].client.Username, sims[i].client.Wins, sims[i].client.Losses, sims[i].client.LadderPoints, sims[i].client.TotalQueueTime/float64(sims[i].client.Wins+sims[i].client.Losses))
-
-				i++
-			}
-		}()
-	}
-}
-
 func loadConfig() error {
 	config, err := conf.ReadConfigFile("erosd.cfg")
 	if err != nil {
@@ -168,12 +131,6 @@ func main() {
 		log.Panicln("Error while loading config", err)
 	}
 
-	if simulator {
-		go matchmaker.run()
-		doSimulations(25)
-		return
-	}
-
 	err = initDb()
 	if err != nil {
 		log.Fatalln("initDb", err)
@@ -194,6 +151,11 @@ func main() {
 	initChat()
 
 	// start the matchmaker
+	if simulator {
+		// go matchmaker.run()
+		doSimulations(25)
+		return
+	}
 
 	//Accept connections forever.
 	for {
@@ -205,7 +167,6 @@ func main() {
 		log.Println("Accepted", conn.RemoteAddr())
 
 		go handleConnection(conn)
-
 	}
 
 }
