@@ -189,27 +189,27 @@ func (c *Client) GetLadderPoints(region BattleNetRegion) int64 {
 }
 
 // Have Client c defeat Client o and update their ratings.
-func (c *Client) Defeat(o *Client, region BattleNetRegion) float64 {
+func (client *Client) Defeat(opponent *Client, region BattleNetRegion) float64 {
 
 	// Update W/L
-	c.Wins += 1
-	o.Losses += 1
+	client.Wins += 1
+	opponent.Losses += 1
 
 	var quality float64
-	c.RatingMean, c.RatingStdDev, o.RatingMean, o.RatingStdDev, quality = calculateNewRating(c.Id, o.Id, c.RatingMean, c.RatingStdDev, o.RatingMean, o.RatingStdDev)
-	c.LadderPoints, o.LadderPoints = calculateNewPoints(c.LadderPoints, o.LadderPoints)
+	client.RatingMean, client.RatingStdDev, opponent.RatingMean, opponent.RatingStdDev, quality = calculateNewRating(client.Id, opponent.Id, client.RatingMean, client.RatingStdDev, opponent.RatingMean, opponent.RatingStdDev)
+	client.LadderPoints, opponent.LadderPoints = calculateNewPoints(client.LadderPoints, opponent.LadderPoints)
 
-	regionStats, err := c.RegionStats(region)
+	regionStats, err := client.RegionStats(region)
 
 	if err != nil {
 		return quality
 	}
-	opponentRegionStats, err := c.RegionStats(region)
+	opponentRegionStats, err := opponent.RegionStats(region)
 	if err != nil {
 		return quality
 	}
 
-	regionStats.RatingMean, regionStats.RatingStdDev, opponentRegionStats.RatingMean, opponentRegionStats.RatingStdDev, quality = calculateNewRating(c.Id, o.Id, regionStats.RatingMean, regionStats.RatingStdDev, opponentRegionStats.RatingMean, opponentRegionStats.RatingStdDev)
+	regionStats.RatingMean, regionStats.RatingStdDev, opponentRegionStats.RatingMean, opponentRegionStats.RatingStdDev, quality = calculateNewRating(client.Id, opponent.Id, regionStats.RatingMean, regionStats.RatingStdDev, opponentRegionStats.RatingMean, opponentRegionStats.RatingStdDev)
 	regionStats.LadderPoints, opponentRegionStats.LadderPoints = calculateNewPoints(regionStats.LadderPoints, opponentRegionStats.LadderPoints)
 	regionStats.Wins += 1
 	opponentRegionStats.Losses += 1
