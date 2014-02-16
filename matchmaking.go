@@ -239,7 +239,9 @@ func (mm *Matchmaker) makeMatch(player1 *MatchmakerParticipant, player2 *Matchma
 	var err error
 	if !ok {
 		room, err = NewChatRoom(erosChatRoom, "", false, false)
-		log.Println("Error creating matchmaking chat", err, erosChatRoom)
+		if err != nil {
+			log.Println("Error creating matchmaking chat", err, erosChatRoom)
+		}
 	}
 
 	if room != nil {
