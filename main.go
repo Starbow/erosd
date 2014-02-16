@@ -160,6 +160,7 @@ func loadConfig() error {
 }
 
 func main() {
+	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 	rand.Seed(time.Now().UnixNano())
 
 	err := loadConfig()
