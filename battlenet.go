@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	protobufs "github.com/Starbow/erosd/buffers"
-	"log"
 	"math/rand"
 	"net/http"
 	"regexp"
@@ -80,26 +79,24 @@ func (c *BattleNetCharacterCache) Get(region BattleNetRegion, subregion, profile
 	c.RLock()
 
 	character, ok := c.profileIds[BattleNetProfileIdString(region, subregion, profileId)]
-
 	if !ok {
 		//Concurrently acquiring the lock like this is probably terrible.
 		c.RUnlock()
 		c.Lock()
-		var newChar BattleNetCharacter
 
+		var newChar BattleNetCharacter
 		err := dbMap.SelectOne(&newChar, "SELECT * FROM battle_net_characters WHERE Region=? and SubRegion=? and ProfileId=? and IsVerified=? LIMIT 1", region, subregion, profileId, true)
 		if err != nil || newChar.Id == 0 {
-			log.Println(err)
+			c.Unlock()
 			return nil
 		}
 
 		character = &newChar
 		c.characterIds[character.Id] = character
 		c.profileIds[character.ProfileIdString()] = character
-
-		defer c.Unlock()
+		c.Unlock()
 	} else {
-		defer c.RUnlock()
+		c.RUnlock()
 	}
 
 	return character
