@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"database/sql"
 	"errors"
 	"github.com/coopernurse/gorp"
@@ -21,6 +22,7 @@ type RealUser struct {
 	Id        int64  `db:"id"`
 	Username  string `db:"username"`
 	AuthToken string `db:"authtoken"`
+	Email     string `db:"email"`
 }
 
 // Attempt to log in. Should probably rate limit this.
@@ -35,7 +37,11 @@ func GetRealUser(username, authtoken string) *RealUser {
 		if err != nil || user.Id == 0 {
 			user.Username = username
 			user.AuthToken = authtoken
+			user.Email = username+"@starbowmod.com"
 			err = dbMap.Insert(&user)
+			if err != nil {
+				log.Println(err)
+			}
 		}
 
 	}
