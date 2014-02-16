@@ -948,9 +948,12 @@ func (conn *ClientConnection) OnHandshake(txid int, data []byte) bool {
 	resp.User = user
 	resp.Id = &client.Id
 	resp.Division = make([]*protobufs.Division, 0, len(divisions))
-
+	resp.ActiveRegion = make([]protobufs.Region, 0, len(ladderActiveRegions))
 	for x := range divisions {
 		resp.Division = append(resp.Division, divisions[x].DivisionMessage())
+	}
+	for _, region := range ladderActiveRegions {
+		resp.ActiveRegion = append(resp.ActiveRegion, protobufs.Region(region))
 	}
 	status = protobufs.HandshakeResponse_SUCCESS
 

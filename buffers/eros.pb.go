@@ -142,6 +142,7 @@ type HandshakeResponse struct {
 	Id               *int64                             `protobuf:"varint,3,opt,name=id" json:"id,omitempty"`
 	Character        []*Character                       `protobuf:"bytes,4,rep,name=character" json:"character,omitempty"`
 	Division         []*Division                        `protobuf:"bytes,5,rep,name=division" json:"division,omitempty"`
+	ActiveRegion     []Region                           `protobuf:"varint,6,rep,name=active_region,enum=protobufs.Region" json:"active_region,omitempty"`
 	XXX_unrecognized []byte                             `json:"-"`
 }
 
@@ -180,6 +181,13 @@ func (m *HandshakeResponse) GetCharacter() []*Character {
 func (m *HandshakeResponse) GetDivision() []*Division {
 	if m != nil {
 		return m.Division
+	}
+	return nil
+}
+
+func (m *HandshakeResponse) GetActiveRegion() []Region {
+	if m != nil {
+		return m.ActiveRegion
 	}
 	return nil
 }

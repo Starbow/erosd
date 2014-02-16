@@ -28,6 +28,7 @@ message HandshakeResponse {
 	optional int64 id = 3;
 	repeated Character character = 4;
 	repeated Division division = 5;
+	repeated Region active_region = 6;
 }
 
 message UserRegionStats
