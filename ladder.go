@@ -42,38 +42,7 @@ type Maps map[int64]*Map
 var (
 	divisionNames []string = []string{"Bronze", "Silver", "Gold", "Platinum", "Diamond"}
 	divisions     Divisions
-	maps          Maps = Maps{
-		1: &Map{
-			Id:            1,
-			Region:        BATTLENET_REGION_EU,
-			BattleNetName: "Starbow - Texas 3.0",
-			InRankedPool:  true,
-		},
-		2: &Map{
-			Id:            2,
-			Region:        BATTLENET_REGION_NA,
-			BattleNetName: "Frost LE",
-			InRankedPool:  false,
-		},
-		3: &Map{
-			Id:            3,
-			Region:        BATTLENET_REGION_NA,
-			BattleNetName: "Starbow - Fighting Spirit",
-			InRankedPool:  true,
-		},
-		4: &Map{
-			Id:            4,
-			Region:        BATTLENET_REGION_NA,
-			BattleNetName: "Starbow - Circuit breaker",
-			InRankedPool:  true,
-		},
-		5: &Map{
-			Id:            5,
-			Region:        BATTLENET_REGION_NA,
-			BattleNetName: "Starbow - Neo Tau Cross",
-			InRankedPool:  true,
-		},
-	}
+	maps          Maps = Maps{}
 
 	divisionCount             int64
 	subdivisionCount          int64
@@ -86,6 +55,20 @@ var (
 	ladderMaxMapVetos         int64             = 3
 	ladderActiveRegions       []BattleNetRegion = []BattleNetRegion{BATTLENET_REGION_NA, BATTLENET_REGION_EU}
 )
+
+// Load maps from the database
+func loadMaps() {
+	results, err := dbMap.Select(&Map{}, "SELECT * FROM maps")
+	if err == nil {
+		maps = make(Maps)
+		for x := range results {
+			mapObject := results[x].(*Map)
+			maps[mapObject.Id] = mapObject
+		}
+	} else {
+		log.Panic("Error loading maps", err)
+	}
+}
 
 // Create divisions. There will be [subdivisionCount] subdivisions per division.
 // The final division will only have one subdivision.

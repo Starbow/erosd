@@ -144,6 +144,7 @@ func main() {
 	// start the broadcast routine
 	go broadcastRunner()
 
+	loadMaps()
 	initDivisions()
 	initClientCaches()
 	initBattleNet()
