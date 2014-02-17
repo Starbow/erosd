@@ -116,7 +116,7 @@ func (user *SimulatedUser) Run() {
                     MatchmakerMatchId: match.Id,
                     Region: user.client.LadderSearchRegion,
                 }
-                dbMap.Update(match_result);
+                dbMap.Insert(match_result);
 
                 // Get region stats for us and them
                 userRegion, _ := user.client.RegionStats(character.Region)
