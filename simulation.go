@@ -38,7 +38,10 @@ func NewSimulatedUser(number, points, radius int64) *SimulatedUser {
         client.Username = site_user.Username
         client.LadderPoints = points
         client.LadderSearchRadius = radius
-        dbMap.Insert(client)
+        err := dbMap.Insert(client)
+        if err != nil {
+            log.Println(err)
+        }
     }
 
     // Create a character for this client with a random region
@@ -49,7 +52,10 @@ func NewSimulatedUser(number, points, radius int64) *SimulatedUser {
         character = NewBattleNetCharacter(region, 1, int(site_user.Id), site_user.Username)
         character.IsVerified = true
         character.ClientId = client.Id
-        dbMap.Insert(character)
+        err := dbMap.Insert(character)
+        if err != nil {
+            log.Println(err)
+        }
     }
 
     // Create a dummy connection for the client
@@ -68,11 +74,29 @@ func NewSimulatedUser(number, points, radius int64) *SimulatedUser {
     }
 }
 
+func get_random_region_character(client *Client, region BattleNetRegion) *BattleNetCharacter {
+    res, err := dbMap.Select(&BattleNetCharacter{}, "SELECT * FROM battle_net_characters WHERE ClientId=? AND Region=? LIMIT 1", client.Id, region)
+    if err != nil {
+        log.Println(err)
+        return nil
+    }
+    return res[rand.Intn(len(res))].(*BattleNetCharacter)
+}
+
+func get_random_character(client *Client) *BattleNetCharacter {
+    res, err := dbMap.Select(&BattleNetCharacter{}, "SELECT * FROM battle_net_characters WHERE ClientId=? LIMIT 1", client.Id)
+    if err != nil {
+        log.Println(err)
+        return nil
+    }
+    return res[rand.Intn(len(res))].(*BattleNetCharacter)
+}
+
 func (user *SimulatedUser) Run() {
     races := []string{"Terran", "Zerg", "Protoss"}
     for {
         // Pick a random character to queue with
-        character := user.characters[rand.Intn(len(user.characters))]
+        character := get_random_character(user.client)
         user.client.LadderSearchRegion = character.Region
 
         // Join the matchmaking queue
@@ -116,7 +140,10 @@ func (user *SimulatedUser) Run() {
                     MatchmakerMatchId: match.Id,
                     Region: user.client.LadderSearchRegion,
                 }
-                dbMap.Insert(match_result);
+                err := dbMap.Insert(match_result);
+                if err != nil {
+                    log.Println(err)
+                }
 
                 // Get region stats for us and them
                 userRegion, _ := user.client.RegionStats(character.Region)
@@ -131,11 +158,10 @@ func (user *SimulatedUser) Run() {
                 }
 
                 // Create player record for them
-                // TODO: Get the other player's characterId
                 opponentPlayer := &MatchResultPlayer{
                     MatchId: match.Id,
                     ClientId: opponent.client.Id,
-                    CharacterId: 0,
+                    CharacterId: get_random_region_character(opponent.client, match_result.Region).Id,
                     Race: races[rand.Intn(len(races))],
                 }
 
@@ -170,7 +196,10 @@ func (user *SimulatedUser) Run() {
                 opponent.client.PendingMatchmakingOpponentId = 0
 
                 // Save our work
-                dbMap.Insert(userPlayer, opponentPlayer)
+                err = dbMap.Insert(userPlayer, opponentPlayer)
+                if err != nil {
+                    log.Println(err)
+                }
                 dbMap.Update(user.client, opponent.client)
             }
         }
