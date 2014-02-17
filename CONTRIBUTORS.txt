@@ -1,5 +1,6 @@
-Author and Maintainer:
+Authors and Maintainers:
     Veritas - Veritas on TeamLiquid
+    Graylin Kim - graylinkim @ github
 
 
 And everyone in the Starbow dev team who contributed their very brainy ideas.

@@ -166,11 +166,12 @@ func NewChatRoom(name, password string, joinable, fixed bool) (cr *ChatRoom, err
 }
 
 func (ch *ChatRoom) ChatRoomInfoMessage(detailed bool) *protobufs.ChatRoomInfo {
-
+	ch.RLock()
+	defer ch.RUnlock()
 	var (
 		chat       protobufs.ChatRoomInfo
 		users      int64 = int64(len(ch.members))
-		passworded bool  = ch.password == ""
+		passworded bool  = ch.password ! = ""
 	)
 	chat.Key = &ch.key
 	chat.Name = &ch.name

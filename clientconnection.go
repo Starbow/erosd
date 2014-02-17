@@ -254,7 +254,6 @@ func (conn *ClientConnection) read() {
 // 301 - Error processing replay
 // 302 - Error while processing match result
 // 303 - Duplicate Replay
-// 303 - A player was not found in the database.
 // 304 - The submitting client was not involved in the match.
 // 305 - Game too short.
 // 306 - Bad format. Required 1v1 with no observers.
@@ -594,7 +593,7 @@ func (conn *ClientConnection) OnAddCharacter(txid int, data []byte) {
 
 	character := NewBattleNetCharacter(region, subregion, id, name)
 	character.ClientId = conn.client.Id
-	character.IsVerified = testMode
+	character.IsVerified = false
 	err = character.SetVerificationPortrait()
 
 	if err != nil {

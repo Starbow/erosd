@@ -1,12 +1,12 @@
 package main
 
 import (
-	"log"
 	"database/sql"
 	"errors"
 	"github.com/coopernurse/gorp"
-	"github.com/mattn/go-sqlite3"
-        _ "github.com/go-sql-driver/mysql"
+	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/mattn/go-sqlite3"
+	"log"
 )
 
 var (
@@ -14,7 +14,6 @@ var (
 	dbType             string
 	dbConnectionString string
 	ErrDbInsert        error = errors.New("An error occured while writing to the database.")
-	_                        = sqlite3.ErrError
 )
 
 // Website user in the database
@@ -37,7 +36,7 @@ func GetRealUser(username, authtoken string) *RealUser {
 		if err != nil || user.Id == 0 {
 			user.Username = username
 			user.AuthToken = authtoken
-			user.Email = username+"@starbowmod.com"
+			user.Email = username + "@starbowmod.com"
 			err = dbMap.Insert(&user)
 			if err != nil {
 				log.Println(err)
