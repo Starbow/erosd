@@ -59,10 +59,16 @@ func broadcastMessage(command string, message proto.Message) {
 
 //Broadcast a message to a specific client.
 func (c *Client) Broadcast(command string, message proto.Message) {
-	data, err := Marshal(message)
+	var (
+		data []byte = []byte{}
+		err  error
+	)
+	if message != nil {
+		data, err = Marshal(message)
 
-	if err != nil {
-		panic(err)
+		if err != nil {
+			panic(err)
+		}
 	}
 	for _, v := range clientConnections {
 

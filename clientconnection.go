@@ -205,6 +205,8 @@ func (conn *ClientConnection) read() {
 				go conn.OnQueueMatchmaking(txid, data.Bytes())
 			case "MMD":
 				go conn.OnDequeueMatchmaking(txid, data.Bytes())
+			case "MMF":
+				go conn.OnForefeitMatchmaking(txid, data.Bytes())
 			case "BNA":
 				go conn.OnAddCharacter(txid, data.Bytes())
 			case "BNU":
@@ -563,6 +565,7 @@ func (conn *ClientConnection) OnReplay(txid int, data []byte) {
 	data, _ = Marshal(message)
 
 	conn.SendResponseMessage("REP", txid, data)
+	conn.SendServerMessage("MMI", []byte{})
 }
 
 func (conn *ClientConnection) OnAddCharacter(txid int, data []byte) {
@@ -728,6 +731,29 @@ func (conn *ClientConnection) OnRemoveCharacter(txid int, data []byte) {
 	conn.SendResponseMessage("BNR", txid, []byte{})
 }
 
+func (conn *ClientConnection) handleMatchmakingResult(txid int, match *MatchmakerMatch, opponent *Client, selectedMap *Map, elapsed int64) {
+
+	var res protobufs.MatchmakingResult
+	opponentStats := opponent.UserStatsMessage()
+	mapInfo := selectedMap.MapMessage()
+
+	res.Channel = &match.Channel
+	res.ChatRoom = &match.ChatRoom
+	res.Timespan = &elapsed
+	res.Quality = &match.Quality
+	res.Opponent = opponentStats
+	res.Map = mapInfo
+
+	data, _ := Marshal(&res)
+	conn.SendResponseMessage("MMR", txid, data)
+	if match.ChatRoom != "" {
+		room, ok := chatRooms[cleanChatRoomName(match.ChatRoom)]
+		if ok && room != nil {
+			room.join <- conn
+		}
+	}
+}
+
 func (conn *ClientConnection) OnQueueMatchmaking(txid int, data []byte) {
 	defer conn.panicRecovery(txid)
 
@@ -753,6 +779,28 @@ func (conn *ClientConnection) OnQueueMatchmaking(txid int, data []byte) {
 			return
 		}
 
+		// Resume pending matches
+		if conn.client.PendingMatchmakingId > 0 {
+			match := matchmaker.Match(conn.client.PendingMatchmakingId)
+			opponent := clientCache.Get(conn.client.PendingMatchmakingOpponentId)
+
+			since := time.Now().Unix() - match.AddTime
+
+			if since >= matchmakingMatchTimeout {
+				// Match has expired. End it.
+				if opponent != nil {
+					matchmaker.EndMatch(conn.client.PendingMatchmakingId, conn.client, opponent)
+				} else {
+					matchmaker.EndMatch(conn.client.PendingMatchmakingId, conn.client)
+				}
+			} else {
+				// Match is active. Send the old result.
+				selectedMap := maps[match.MapId]
+				conn.handleMatchmakingResult(txid, match, opponent, selectedMap, 0)
+				return
+			}
+		}
+
 		matchmaker.register <- conn
 		//We need to wait until the matchmaker has actually finished adding
 		//our new participant, otherwise our lookup would fail.
@@ -774,30 +822,7 @@ func (conn *ClientConnection) OnQueueMatchmaking(txid int, data []byte) {
 
 				dbMap.Update(conn.client)
 
-				var res protobufs.MatchmakingResult
-
-				elapsed := int64(time.Since(el.enrollTime).Seconds())
-				opponentStats := opponent.client.UserStatsMessage()
-				mapInfo := el.selectedMap.MapMessage()
-
-				res.Channel = &match.Channel
-				res.ChatRoom = &match.ChatRoom
-				res.Timespan = &elapsed
-				res.Quality = &match.Quality
-				res.Opponent = opponentStats
-				res.Map = mapInfo
-
-				data, _ := Marshal(&res)
-				conn.SendResponseMessage("MMR", txid, data)
-
-				log.Println("Should be joining", match.ChatRoom)
-				if match.ChatRoom != "" {
-					room, ok := chatRooms[cleanChatRoomName(match.ChatRoom)]
-					if ok && room != nil {
-						log.Println("Should definitely be joining", match.ChatRoom)
-						room.join <- conn
-					}
-				}
+				conn.handleMatchmakingResult(txid, match, opponent.client, el.selectedMap, int64(time.Since(el.enrollTime).Seconds()))
 			}
 		}()
 		conn.SendResponseMessage("MMQ", txid, []byte{})
@@ -817,6 +842,15 @@ func (conn *ClientConnection) OnDequeueMatchmaking(txid int, data []byte) {
 		}()
 	}
 	conn.SendResponseMessage("MMD", txid, []byte{})
+}
+
+func (conn *ClientConnection) OnForefeitMatchmaking(txid int, data []byte) {
+	defer conn.panicRecovery(txid)
+
+	if conn.client.PendingMatchmakingId > 0 {
+		conn.client.ForefeitMatchmadeMatch()
+	}
+	conn.SendResponseMessage("MMF", txid, []byte{})
 }
 
 func (conn *ClientConnection) OnSimulation(txid int, data []byte) {

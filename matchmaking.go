@@ -26,6 +26,10 @@ const (
 	MATCHMAKING_TYPE_1V1 = 1
 )
 
+var (
+	matchmakingMatchTimeout int64 = 2 * 60 * 60
+)
+
 type Matchmaker struct {
 	// The actual matchmaker
 	register               chan *ClientConnection
@@ -203,6 +207,8 @@ func (mm *Matchmaker) EndMatch(id int64, participant ...*Client) {
 			participant[x].PendingMatchmakingId = 0
 			participant[x].PendingMatchmakingOpponentId = 0
 			participant[x].PendingMatchmakingRegion = 0
+
+			go participant[x].Broadcast("MMI", nil)
 		}
 
 		dbMap.Update(match)
@@ -315,6 +321,11 @@ func (mm *Matchmaker) run() {
 							continue
 						}
 
+						// Check we're not the same client.
+						if k.client.Id == l.client.Id {
+							continue
+						}
+
 						// Check we're not already matched.
 						if w.matching {
 							continue
@@ -416,7 +427,6 @@ func (mp *MatchmakerParticipant) IsMatch(mp2 *MatchmakerParticipant) bool {
 
 	r1Match := (r1+r1v >= r2l && r1-r1v <= r2u)
 	r2Match := (r2+r2v >= r1l && r2-r2v <= r1u)
-
 	return (r1Match && r2Match)
 }
 
