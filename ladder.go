@@ -320,13 +320,6 @@ func NewMatchResult(replay *Replay, client *Client) (result *MatchResult, player
 	// I made a nice client-ID based mutex manager just for this purpose.
 	//clientLockouts.LockIds(player.ClientId, opponent.ClientId)
 	//clientLockouts.UnlockIds(player.ClientId, opponent.ClientId)
-
-	var res MatchResult
-	res.DateTime = replay.UnixTimestamp
-	res.MapId = m.Id
-	res.MatchmakerMatchId = client.PendingMatchmakingId
-	res.Region = region
-
 	if player.Victory {
 		opponentClient := clientCache.Get(opponent.ClientId)
 
@@ -346,6 +339,18 @@ func NewMatchResult(replay *Replay, client *Client) (result *MatchResult, player
 			opponentClient.ForefeitMatchmadeMatch()
 		}
 
+		var res MatchResult
+		res.DateTime = replay.UnixTimestamp
+		res.MapId = m.Id
+		res.MatchmakerMatchId = client.PendingMatchmakingId
+		res.Region = region
+
+		err = dbMap.Insert(&res)
+		if err != nil {
+			err = ErrDbInsert
+			return
+		}
+
 		var source MatchResultSource
 		source.MatchId = res.Id
 		source.ReplayHash = replay.Filehash
@@ -356,11 +361,6 @@ func NewMatchResult(replay *Replay, client *Client) (result *MatchResult, player
 			return
 		}
 
-		err = dbMap.Insert(&res)
-		if err != nil {
-			err = ErrDbInsert
-			return
-		}
 		player.MatchId = res.Id
 		opponent.MatchId = res.Id
 
