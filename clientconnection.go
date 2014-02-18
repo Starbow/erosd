@@ -587,7 +587,6 @@ func (conn *ClientConnection) OnReplay(txid int, data []byte) {
 	data, _ = Marshal(message)
 
 	conn.SendResponseMessage("REP", txid, data)
-	conn.SendServerMessage("MMI", []byte{})
 }
 
 func (conn *ClientConnection) OnAddCharacter(txid int, data []byte) {

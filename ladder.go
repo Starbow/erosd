@@ -392,8 +392,14 @@ func NewMatchResult(replay *Replay, client *Client) (result *MatchResult, player
 		result = &res
 		players = []*MatchResultPlayer{player, opponent}
 
-		go client.BroadcastStatsMessage()
-		go opponentClient.BroadcastStatsMessage()
+		go func() {
+			client.BroadcastStatsMessage()
+			client.BroadcastMatchmakingIdle()
+		}()
+		go func() {
+			opponentClient.BroadcastStatsMessage()
+			opponentClient.BroadcastMatchmakingIdle()
+		}()
 	}
 
 	return

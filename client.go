@@ -286,6 +286,10 @@ func (c *Client) BroadcastStatsMessage() {
 	c.Broadcast("USU", message)
 }
 
+func (c *Client) BroadcastMatchmakingIdle() {
+	c.Broadcast("MMI", nil)
+}
+
 // Check if the client can queue in this region.
 func (c *Client) HasRegion(region BattleNetRegion) bool {
 	count, _ := dbMap.SelectInt("SELECT COUNT(*) FROM battle_net_characters WHERE ClientId=? and Region=?", c.Id, region)
