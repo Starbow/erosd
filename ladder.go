@@ -8,6 +8,7 @@ import (
 	"github.com/Starbow/erosd/buffers"
 	"log"
 	"math/rand"
+	"strings"
 )
 
 var _ = log.Ldate
@@ -134,12 +135,13 @@ func (d Divisions) GetDifference(points, points2 int64) int64 {
 }
 
 func (m Maps) Get(region BattleNetRegion, name string) *Map {
+	name = strings.TrimSpace(strings.ToLower(name))
 	for x := range m {
 		if m[x].Region != region {
 			continue
 		}
 
-		if m[x].BattleNetName == name {
+		if strings.TrimSpace(strings.ToLower(m[x].BattleNetName)) == name {
 			return m[x]
 		}
 	}
