@@ -3,10 +3,14 @@ package main
 import (
 	"code.google.com/p/goprotobuf/proto"
 	"errors"
+	"fmt"
 	"github.com/Starbow/erosd/buffers"
 	"log"
+	"os"
+	"path"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -15,6 +19,7 @@ var (
 	joinableChatRooms        map[string]*ChatRoom
 	fixedChatRooms           []string
 	maxChatRooms             int64 = 5
+	chatIdBase               int64 = 1
 	ErrChatRoomAlreadyExists error = errors.New("The chat room name specified already exists.")
 	ErrChatRoomReserved      error = errors.New("The chat room name is reserved.")
 	ErrChatRoomNameTooShort  error = errors.New("The chat room name is too short")
@@ -34,6 +39,7 @@ func initChat() {
 }
 
 type ChatRoom struct {
+	id      int64
 	members map[int64]*ClientConnection
 
 	key      string
@@ -46,6 +52,9 @@ type ChatRoom struct {
 	leave   chan *ClientConnection
 	message chan *protobufs.ChatRoomMessage
 	abort   chan bool
+
+	logger  *log.Logger
+	logFile *os.File
 
 	sync.RWMutex
 }
@@ -68,6 +77,10 @@ func (cr *ChatRoom) run() {
 		case <-timer.C:
 			// Nobody has joined after a set time. Close the room.
 			if len(cr.members) == 0 && !cr.fixed {
+				cr.logger.Println("Closing unjoined room")
+				if cr.logFile != nil {
+					cr.logFile.Close()
+				}
 				return
 			}
 		case client := <-cr.join:
@@ -86,7 +99,7 @@ func (cr *ChatRoom) run() {
 			data, _ := Marshal(&detailedJoin)
 			client.SendServerMessage("CHJ", data)
 			client.chatRooms[cr.key] = cr
-
+			cr.logger.Println("join:", client.id, client.client.Username)
 		case client := <-cr.leave:
 			cr.Lock()
 			_, exists := cr.members[client.id]
@@ -100,14 +113,23 @@ func (cr *ChatRoom) run() {
 			cr.Unlock()
 			leave := cr.ChatRoomUserMessage(client, false)
 			cr.Broadcast("CHL", &leave)
-
+			cr.logger.Println("left:", client.id, client.client.Username)
 			if len(cr.members) == 0 && !cr.fixed {
 				// Everyone has left. We're a non-fixed room. Leave.
+				cr.logger.Println("Closing inactive room")
+				if cr.logFile != nil {
+					cr.logFile.Close()
+				}
 				return
 			}
 		case msg := <-cr.message:
+			cr.logger.Println("msg:", msg.GetSender().GetUsername(), ":", msg.GetMessage())
 			cr.Broadcast("CHM", msg)
 		case <-cr.abort:
+			cr.logger.Println("Closing aborted room")
+			if cr.logFile != nil {
+				cr.logFile.Close()
+			}
 			return
 		}
 	}
@@ -153,6 +175,7 @@ func NewChatRoom(name, password string, joinable, fixed bool) (cr *ChatRoom, err
 	}
 
 	cr = &ChatRoom{
+		id:       atomic.AddInt64(&chatIdBase, 1),
 		members:  make(map[int64]*ClientConnection),
 		key:      key,
 		name:     strings.TrimSpace(name),
@@ -163,6 +186,17 @@ func NewChatRoom(name, password string, joinable, fixed bool) (cr *ChatRoom, err
 		joinable: joinable,
 		fixed:    fixed,
 		password: strings.TrimSpace(password),
+	}
+
+	var logfile string = path.Join(logPath, fmt.Sprintf("%d-chat-%d.log", os.Getpid(), cr.id))
+	file, err := os.Create(logfile)
+	if err != nil {
+		log.Println("Failed to create log file", logfile, "for new chat", name)
+		cr.logger = log.New(os.Stdout, fmt.Sprintf("chat-%d:", cr.id), log.Ldate|log.Ltime|log.Lshortfile)
+	} else {
+		log.Println("Logging new chat", cr.id, ":", name)
+		cr.logger = log.New(file, "", log.Ldate|log.Ltime|log.Lshortfile)
+		cr.logFile = file
 	}
 
 	go cr.run()

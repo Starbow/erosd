@@ -16,6 +16,7 @@ var (
 	allowsimulations bool
 	matchmaker       *Matchmaker
 	testMode         bool
+	logPath          string
 )
 
 func random(min, max int) int {
@@ -49,6 +50,7 @@ func loadConfig() error {
 		config.AddOption("erosd", "allowsimulations", "false")
 		config.AddOption("erosd", "python", "/usr/bin/python2.7")
 		config.AddOption("erosd", "testmode", "false")
+		config.AddOption("erosd", "logpath", "logs")
 
 		config.AddSection("ladderdivisions")
 		config.AddOption("ladderdivisions", "divisions", "4")
@@ -84,6 +86,7 @@ func loadConfig() error {
 	pythonPath, _ = config.GetString("erosd", "python")
 	testMode, _ = config.GetBool("erosd", "testmode")
 	allowsimulations, _ = config.GetBool("erosd", "allowsimulations")
+	logPath, _ = config.GetString("erosd", "logpath")
 
 	divisionCount, _ = config.GetInt64("ladderdivisions", "divisions")
 	subdivisionCount, _ = config.GetInt64("ladderdivisions", "subdivisions")

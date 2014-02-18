@@ -308,7 +308,7 @@ func NewMatchResult(replay *Replay, client *Client) (result *MatchResult, player
 
 		if opponentClient == nil {
 			err = ErrLadderPlayerNotFound // new error for lookup fail
-			log.Println("wut")
+			log.Println("Opponenet client nil", opponent.ClientId)
 			return
 		}
 

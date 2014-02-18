@@ -13,6 +13,7 @@ import (
 	"math/rand"
 	"net"
 	"os"
+	"path"
 	"regexp"
 	"runtime/debug"
 	"strings"
@@ -31,14 +32,15 @@ const MAXIMUM_DATA_SIZE = 500 * 1024
 const READ_BUFFER_SIZE = 4096
 
 type ClientConnection struct {
-	id            int64 // Connection ID
-	conn          net.Conn
-	reader        *bufio.Reader
-	writer        *bufio.Writer
-	authenticated bool
-	superUser     bool // Maybe allow certain users special functions.
-	client        *Client
-
+	id                int64 // Connection ID
+	conn              net.Conn
+	reader            *bufio.Reader
+	writer            *bufio.Writer
+	authenticated     bool
+	superUser         bool // Maybe allow certain users special functions.
+	client            *Client
+	logger            *log.Logger
+	logFile           *os.File
 	lastactive        time.Time
 	lastPing          time.Time
 	lastPingChallenge string
@@ -59,6 +61,18 @@ func NewClientConnection(conn net.Conn) (clientConn *ClientConnection) {
 		reader:        bufio.NewReader(conn),
 		writer:        bufio.NewWriter(conn),
 		chatRooms:     make(map[string]*ChatRoom),
+	}
+	var source string = conn.RemoteAddr().String()
+	var logfile string = path.Join(logPath, fmt.Sprintf("%d-conn-%d.log", os.Getpid(), clientConn.id))
+	file, err := os.Create(logfile)
+	if err != nil {
+		log.Println("Failed to create log file", logfile, "for new connection from", source)
+		clientConn.logger = log.New(os.Stdout, fmt.Sprintf("conn-%d:", clientConn.id), log.Ldate|log.Ltime|log.Lshortfile)
+	} else {
+		log.Println("Logging new connection from", source, "to", logfile)
+		clientConn.logger = log.New(file, "", log.Ldate|log.Ltime|log.Lshortfile)
+		clientConn.logFile = file
+		clientConn.logger.Println("Logging new connection from", source, "to", logfile)
 	}
 
 	clientConnections[clientConn.id] = clientConn
@@ -113,6 +127,10 @@ func (conn *ClientConnection) read() {
 		for x := range conn.chatRooms {
 			conn.chatRooms[x].leave <- conn
 		}
+
+		if conn.logFile != nil {
+			conn.logFile.Close()
+		}
 	}()
 
 	go func() {
@@ -148,7 +166,7 @@ func (conn *ClientConnection) read() {
 		if err != nil {
 			// If the error isn't a straight disconnection, print it
 			if err != io.EOF {
-				log.Println("Socket Error", err)
+				conn.logger.Println("Socket Error", err)
 			}
 			return
 		}
@@ -159,7 +177,7 @@ func (conn *ClientConnection) read() {
 		}
 
 		if length > MAXIMUM_DATA_SIZE {
-			log.Printf("Connection from %s exceeded max data size (%d)", conn.conn.RemoteAddr().String(), length)
+			conn.logger.Printf("Connection from %s exceeded max data size (%d)", conn.conn.RemoteAddr().String(), length)
 			return
 		}
 
@@ -169,11 +187,11 @@ func (conn *ClientConnection) read() {
 
 			written, err := io.CopyN(&data, conn.reader, int64(length))
 			if err != nil {
-				log.Println(err)
+				conn.logger.Println(err)
 			}
 
 			if written != int64(length) {
-				log.Println("Expecting", length, "got", written)
+				conn.logger.Println("Expecting", length, "got", written)
 			}
 
 		}
@@ -181,6 +199,8 @@ func (conn *ClientConnection) read() {
 		conn.Lock()
 		conn.lastactive = time.Now()
 		conn.Unlock()
+
+		conn.logger.Println("recv:", event, length)
 
 		if conn.client == nil {
 			if event == "HSH" {
@@ -359,7 +379,7 @@ func (conn *ClientConnection) OnChatLeave(txid int, data []byte) {
 	var leave protobufs.ChatRoomRequest
 	err := Unmarshal(data, &leave)
 	if err != nil {
-		log.Println(err)
+		conn.logger.Println(err)
 		conn.Close()
 		return
 	}
@@ -414,6 +434,7 @@ func (conn *ClientConnection) OnPrivateMessage(txid int, data []byte) {
 	if !sent {
 		conn.SendResponseMessage("507", txid, []byte{})
 	} else {
+		conn.logger.Println("Send private message to", message.GetTarget(), ":", message.GetMessage())
 		conn.SendResponseMessage("UPM", txid, []byte{})
 	}
 
@@ -431,6 +452,7 @@ func (conn *ClientConnection) OnChatMessage(txid int, data []byte) {
 	key := cleanChatRoomName(message.GetTarget())
 	room, ok := conn.chatRooms[key]
 	if ok {
+		conn.logger.Println("Sent chat message to room", key, ":", message.GetMessage())
 		msg := room.ChatRoomMessageMessage(conn, &message)
 		room.message <- &msg
 		conn.SendResponseMessage("UCM", txid, []byte{})
@@ -525,7 +547,7 @@ func (conn *ClientConnection) OnReplay(txid int, data []byte) {
 	file, err := ioutil.TempFile("", "erosreplay")
 	if err != nil {
 		conn.SendResponseMessage("104", txid, []byte{})
-		log.Println(err)
+		conn.logger.Println(err)
 		return
 	}
 
@@ -535,7 +557,7 @@ func (conn *ClientConnection) OnReplay(txid int, data []byte) {
 	_, err = file.Write(data)
 	if err != nil {
 		conn.SendResponseMessage("104", txid, []byte{})
-		log.Println(err)
+		conn.logger.Println(err)
 		return
 	}
 
@@ -544,14 +566,14 @@ func (conn *ClientConnection) OnReplay(txid int, data []byte) {
 	replay, err := NewReplay(file.Name())
 	if err != nil {
 		conn.SendResponseMessage("301", txid, []byte{})
-		log.Println(err)
+		conn.logger.Println(err)
 		return
 	}
 
 	result, players, err := NewMatchResult(replay, conn.client)
 	if err != nil {
 		conn.SendResponseMessage(ErrorCode(err), txid, []byte(err.Error()))
-		log.Println(err)
+		conn.logger.Println(err)
 		return
 	}
 
@@ -600,7 +622,7 @@ func (conn *ClientConnection) OnAddCharacter(txid int, data []byte) {
 	err = character.SetVerificationPortrait()
 
 	if err != nil {
-		log.Println(err)
+		conn.logger.Println(err)
 		conn.SendResponseMessage("203", txid, []byte{})
 		return
 	}
@@ -653,7 +675,7 @@ func (conn *ClientConnection) OnUpdateCharacter(txid int, data []byte) {
 	if !character.IsVerified {
 		ok, err := character.CheckVerificationPortrait()
 		if err != nil {
-			log.Println(err)
+			conn.logger.Println(err)
 			conn.SendResponseMessage("203", txid, []byte{})
 			return
 		}
@@ -683,7 +705,7 @@ func (conn *ClientConnection) OnUpdateCharacter(txid int, data []byte) {
 		_, err = dbMap.Update(character)
 		if err != nil {
 			conn.SendResponseMessage("102", txid, []byte{})
-			log.Println(err)
+			conn.logger.Println(err)
 			return
 		}
 	}
@@ -724,7 +746,7 @@ func (conn *ClientConnection) OnRemoveCharacter(txid int, data []byte) {
 	_, err = dbMap.Delete(character)
 	if err != nil {
 		conn.SendResponseMessage("102", txid, []byte{})
-		log.Println(err)
+		conn.logger.Println(err)
 		return
 	}
 
@@ -763,7 +785,7 @@ func (conn *ClientConnection) OnQueueMatchmaking(txid int, data []byte) {
 		var queue protobufs.MatchmakingQueue
 		err := Unmarshal(data, &queue)
 		if err != nil {
-			log.Println("wat", err)
+			conn.logger.Println(err)
 		}
 
 		conn.client.LadderSearchRegion = BattleNetRegion(queue.GetRegion())
@@ -934,7 +956,7 @@ func (conn *ClientConnection) OnHandshake(txid int, data []byte) bool {
 	var hs protobufs.Handshake
 	err := Unmarshal(data, &hs)
 	if err != nil {
-		log.Println("wat", err)
+		conn.logger.Println(err)
 		return false
 	}
 
@@ -943,7 +965,7 @@ func (conn *ClientConnection) OnHandshake(txid int, data []byte) bool {
 	realUser := GetRealUser(hs.GetUsername(), hs.GetAuthKey())
 
 	if realUser == nil {
-		log.Println("bad auth", hs.GetUsername(), hs.GetAuthKey())
+		conn.logger.Println("bad auth", hs.GetUsername(), hs.GetAuthKey())
 		return false
 	}
 
@@ -958,10 +980,10 @@ func (conn *ClientConnection) OnHandshake(txid int, data []byte) bool {
 
 		dbMap.Update(client)
 
-		log.Printf("New client %+v %+v", *client, err)
+		conn.logger.Printf("New client %+v %+v", *client, err)
 	}
 
-	log.Printf("Client %+v", *client)
+	conn.logger.Printf("Client %+v", *client)
 	conn.client = client
 
 	var user *protobufs.UserStats = client.UserStatsMessage()
@@ -995,11 +1017,17 @@ func (conn *ClientConnection) OnHandshake(txid int, data []byte) bool {
 
 func (conn *ClientConnection) SendResponseMessage(command string, txid int, data []byte) error {
 
-	header := fmt.Sprintf("%s %d %d\n", command, txid, len(data))
-	log.Println("Send", header)
+	header := fmt.Sprintf("%s %d %d", command, txid, len(data))
+	conn.logger.Println("send:", header)
 	conn.Lock()
 	defer conn.Unlock()
 	_, err := conn.writer.WriteString(header)
+
+	if err != nil {
+		return err
+	}
+
+	err = conn.writer.WriteByte('\n')
 	if err != nil {
 		return err
 	}
@@ -1017,11 +1045,15 @@ func (conn *ClientConnection) SendResponseMessage(command string, txid int, data
 
 func (conn *ClientConnection) SendServerMessage(command string, data []byte) error {
 
-	header := fmt.Sprintf("%s %d\n", command, len(data))
-	log.Println("Send", header)
+	header := fmt.Sprintf("%s %d", command, len(data))
+	conn.logger.Println("send:", header)
 	conn.Lock()
 	defer conn.Unlock()
 	_, err := conn.writer.WriteString(header)
+	if err != nil {
+		return err
+	}
+	err = conn.writer.WriteByte('\n')
 	if err != nil {
 		return err
 	}

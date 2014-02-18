@@ -31,3 +31,6 @@ erosd.cfg
 sc2reader/*
 mpyq.py
 *.pyc
+
+#logs
+logs/*

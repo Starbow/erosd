@@ -4,7 +4,6 @@ import (
 	"code.google.com/p/goprotobuf/proto"
 	"errors"
 	"github.com/Starbow/erosd/buffers"
-	"log"
 	"strconv"
 	"strings"
 )
@@ -30,7 +29,6 @@ func Unpack(data string) (event string, txid int, size int, err error) {
 
 	event = result[0]
 	err = nil
-	log.Println(data, event, size)
 	return
 }
 

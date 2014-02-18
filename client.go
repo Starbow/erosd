@@ -216,6 +216,8 @@ func (client *Client) Defeat(opponent *Client, region BattleNetRegion) float64 {
 
 	dbMap.Update(regionStats, opponentRegionStats)
 
+	log.Println(client.Username, client.LadderPoints, "defeated", opponent.Username, opponent.LadderPoints)
+
 	return quality
 }
 
@@ -227,6 +229,7 @@ func (c *Client) ForefeitMatchmadeMatch() {
 		opponent.Walkovers += 1
 		matchmaker.EndMatch(c.PendingMatchmakingId, c, opponent)
 		dbMap.Update(c, opponent)
+		log.Println(c.Username, "forefeited")
 	}
 }
 
