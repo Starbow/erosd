@@ -230,6 +230,15 @@ func (c *Client) ForefeitMatchmadeMatch() {
 		matchmaker.EndMatch(c.PendingMatchmakingId, c, opponent)
 		dbMap.Update(c, opponent)
 		log.Println(c.Username, "forefeited")
+
+		go func() {
+			c.BroadcastStatsMessage()
+			c.BroadcastMatchmakingIdle()
+		}()
+		go func() {
+			opponent.BroadcastStatsMessage()
+			opponent.BroadcastMatchmakingIdle()
+		}()
 	}
 }
 

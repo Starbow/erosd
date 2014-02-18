@@ -208,10 +208,6 @@ func (mm *Matchmaker) EndMatch(id int64, participant ...*Client) {
 			participant[x].PendingMatchmakingOpponentId = 0
 			participant[x].PendingMatchmakingRegion = 0
 
-			go func() {
-				participant[x].BroadcastStatsMessage()
-				participant[x].BroadcastMatchmakingIdle()
-			}()
 		}
 
 		dbMap.Update(match)
