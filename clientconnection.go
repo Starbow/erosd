@@ -804,22 +804,26 @@ func (conn *ClientConnection) OnQueueMatchmaking(txid int, data []byte) {
 		// Resume pending matches
 		if conn.client.PendingMatchmakingId > 0 {
 			match := matchmaker.Match(conn.client.PendingMatchmakingId)
-			opponent := clientCache.Get(conn.client.PendingMatchmakingOpponentId)
 
-			since := time.Now().Unix() - match.AddTime
-
-			if since >= matchmakingMatchTimeout {
-				// Match has expired. End it.
+			if match != nil {
+				opponent := clientCache.Get(conn.client.PendingMatchmakingOpponentId)
 				if opponent != nil {
-					matchmaker.EndMatch(conn.client.PendingMatchmakingId, conn.client, opponent)
-				} else {
-					matchmaker.EndMatch(conn.client.PendingMatchmakingId, conn.client)
+					since := time.Now().Unix() - match.AddTime
+
+					if since >= matchmakingMatchTimeout {
+						// Match has expired. End it.
+						if opponent != nil {
+							matchmaker.EndMatch(conn.client.PendingMatchmakingId, conn.client, opponent)
+						} else {
+							matchmaker.EndMatch(conn.client.PendingMatchmakingId, conn.client)
+						}
+					} else {
+						// Match is active. Send the old result.
+						selectedMap := maps[match.MapId]
+						conn.handleMatchmakingResult(txid, match, opponent, selectedMap, 0)
+						return
+					}
 				}
-			} else {
-				// Match is active. Send the old result.
-				selectedMap := maps[match.MapId]
-				conn.handleMatchmakingResult(txid, match, opponent, selectedMap, 0)
-				return
 			}
 		}
 
@@ -983,6 +987,7 @@ func (conn *ClientConnection) OnHandshake(txid int, data []byte) bool {
 		conn.logger.Printf("New client %+v %+v", *client, err)
 	}
 
+	log.Println("client:", client.Id, client.Username)
 	conn.logger.Printf("Client %+v", *client)
 	conn.client = client
 
