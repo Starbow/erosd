@@ -400,11 +400,17 @@ func (mp *MatchmakerParticipant) Quality(opponent *MatchmakerParticipant) float6
 func (mp *MatchmakerParticipant) SearchBoundaries() (lower, upper, variance int64) {
 	var (
 		elapsed              = float64(time.Since(mp.enrollTime).Seconds())
-		base         float64 = 50
-		participants float64 = float64(len(matchmaker.participants))
+		participants float64 = float64(len(matchmaker.regionParticipants[mp.region]))
+		r            int64
 	)
 
-	r := int64(base + ((10 * elapsed) / participants))
+	if participants < 20 {
+		r = int64(12 + (elapsed * 12))
+	} else if participants < 140 {
+		r = int64(15 + (200*elapsed)/participants)
+	} else {
+		r = int64(15 + (2 * elapsed))
+	}
 
 	if mp.radius > 0 {
 		cap := mp.radius * divisionPoints
