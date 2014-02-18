@@ -80,8 +80,11 @@ func (cr *ChatRoom) run() {
 
 			cr.members[client.id] = client
 			cr.Unlock()
-			join := cr.ChatRoomUserMessage(client)
-			cr.Broadcast("CHJ", &join)
+			join := cr.ChatRoomUserMessage(client, false)
+			cr.Broadcast("CHJ", &join, client)
+			detailedJoin := cr.ChatRoomUserMessage(client, true)
+			data, _ := Marshal(&detailedJoin)
+			client.SendServerMessage("CHJ", data)
 			client.chatRooms[cr.key] = cr
 
 		case client := <-cr.leave:
@@ -95,7 +98,7 @@ func (cr *ChatRoom) run() {
 			delete(cr.members, client.id)
 			delete(client.chatRooms, cr.key)
 			cr.Unlock()
-			leave := cr.ChatRoomUserMessage(client)
+			leave := cr.ChatRoomUserMessage(client, false)
 			cr.Broadcast("CHL", &leave)
 
 			if len(cr.members) == 0 && !cr.fixed {
@@ -110,7 +113,7 @@ func (cr *ChatRoom) run() {
 	}
 }
 
-func (cr *ChatRoom) Broadcast(command string, message proto.Message) error {
+func (cr *ChatRoom) Broadcast(command string, message proto.Message, exclude ...*ClientConnection) error {
 	data, err := Marshal(message)
 	if err != nil {
 		return err
@@ -119,7 +122,13 @@ func (cr *ChatRoom) Broadcast(command string, message proto.Message) error {
 	cr.RLock()
 	defer cr.RUnlock()
 
+parent:
 	for x := range cr.members {
+		for y := range exclude {
+			if cr.members[x] == exclude[y] {
+				continue parent
+			}
+		}
 		go cr.members[x].SendServerMessage(command, data)
 	}
 
@@ -192,10 +201,10 @@ func (ch *ChatRoom) ChatRoomInfoMessage(detailed bool) *protobufs.ChatRoomInfo {
 
 }
 
-func (ch *ChatRoom) ChatRoomUserMessage(client *ClientConnection) protobufs.ChatRoomUser {
+func (ch *ChatRoom) ChatRoomUserMessage(client *ClientConnection, detailed bool) protobufs.ChatRoomUser {
 
 	var (
-		chat *protobufs.ChatRoomInfo = ch.ChatRoomInfoMessage(false)
+		chat *protobufs.ChatRoomInfo = ch.ChatRoomInfoMessage(detailed)
 		user *protobufs.UserStats    = client.client.UserStatsMessage()
 		join protobufs.ChatRoomUser
 	)
