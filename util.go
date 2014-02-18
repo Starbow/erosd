@@ -3,10 +3,19 @@ package main
 import (
 	"code.google.com/p/goprotobuf/proto"
 	"errors"
+	"fmt"
 	"github.com/Starbow/erosd/buffers"
+	"runtime/debug"
 	"strconv"
 	"strings"
 )
+
+func genericPanicRecover() {
+	if r := recover(); r != nil {
+		fmt.Println("Recovered from a panic", r)
+		debug.PrintStack()
+	}
+}
 
 //Take a "CMD TxID Len\n" input and split it up
 func Unpack(data string) (event string, txid int, size int, err error) {
@@ -44,19 +53,23 @@ func Marshal(message proto.Message) (data []byte, err error) {
 
 //Broadcast a message to all active connections.
 func broadcastMessage(command string, message proto.Message) {
+	defer genericPanicRecover()
 	data, err := Marshal(message)
 
 	if err != nil {
 		panic(err)
 	}
 	for _, v := range clientConnections {
-
+		if v == nil {
+			continue
+		}
 		go v.SendServerMessage(command, data)
 	}
 }
 
 //Broadcast a message to a specific client.
 func (c *Client) Broadcast(command string, message proto.Message) {
+	defer genericPanicRecover()
 	var (
 		data []byte = []byte{}
 		err  error
@@ -69,7 +82,9 @@ func (c *Client) Broadcast(command string, message proto.Message) {
 		}
 	}
 	for _, v := range clientConnections {
-
+		if v == nil {
+			continue
+		}
 		if v.client.Id == c.Id {
 			go v.SendServerMessage(command, data)
 		}
