@@ -65,6 +65,7 @@ func loadMaps() {
 		for x := range results {
 			mapObject := results[x].(*Map)
 			maps[mapObject.Id] = mapObject
+			mapObject.SanitizedName = strings.TrimSpace(strings.ToLower(mapObject.BattleNetName))
 		}
 	} else {
 		log.Panic("Error loading maps", err)
@@ -135,13 +136,13 @@ func (d Divisions) GetDifference(points, points2 int64) int64 {
 }
 
 func (m Maps) Get(region BattleNetRegion, name string) *Map {
-	name = strings.TrimSpace(strings.ToLower(name))
+	sanitized := strings.TrimSpace(strings.ToLower(name))
 	for x := range m {
 		if m[x].Region != region {
 			continue
 		}
 
-		if strings.TrimSpace(strings.ToLower(m[x].BattleNetName)) == name {
+		if m[x].SanitizedName == sanitized {
 			return m[x]
 		}
 	}
@@ -188,6 +189,7 @@ type Map struct {
 	BattleNetID   int
 	BattleNetName string
 	InRankedPool  bool
+	SanitizedName string `db:"-"`
 }
 
 func (m *Map) MapMessage() *protobufs.Map {
