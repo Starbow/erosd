@@ -1,15 +1,16 @@
 package main
 
 import (
+	"net"
+	"bufio"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"log"
-	"os/exec"
 )
 
 var _ = log.Ldate
 var (
-	pythonPath string
+	pythonPort string
 )
 
 type ReplayPlayer struct {
@@ -44,32 +45,36 @@ type Replay struct {
 }
 
 func NewReplay(path string) (replay *Replay, err error) {
-	cmd := exec.Command(pythonPath, "sc2json.py", "--indent", "4", path)
-	out, err := cmd.StdoutPipe()
+	conn, err := net.Dial("tcp", pythonPort)
+	defer conn.Close()
+
+
+	writer := bufio.NewWriter(conn)
+	_, err = writer.WriteString(path+"\n")
 	if err != nil {
 		return nil, err
 	}
 
-	err = cmd.Start()
+	err = writer.Flush()
 	if err != nil {
+		return nil, err
+	}
+
+	reader := bufio.NewReader(conn)
+	data, err := reader.ReadBytes('\n')
+	if err != nil {
+		if err != io.EOF {
+			log.Println("Socket Error", err)
+		}
 		return
 	}
 
 	var rep Replay
-	data, err := ioutil.ReadAll(out)
+	err = json.Unmarshal(data, &rep)
 	if err != nil {
 		return nil, err
 	}
 
-	err = cmd.Wait()
-	if err != nil {
-		return
-	}
-
-	err = json.Unmarshal(data, &rep)
-	if err != nil {
-		return
-	}
 	replay = &rep
 	return
 }
