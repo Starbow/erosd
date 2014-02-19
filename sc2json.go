@@ -46,6 +46,11 @@ type Replay struct {
 
 func NewReplay(path string) (replay *Replay, err error) {
 	conn, err := net.Dial("tcp", pythonPort)
+	if err != nil {
+		matchmaker.logger.Println("Dial error", err)
+		return nil, err
+	}
+
 	defer conn.Close()
 
 	writer := bufio.NewWriter(conn)
