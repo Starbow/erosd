@@ -22,6 +22,7 @@ var (
 	ErrLadderGameTooShort             = errors.New("The provided game was too short.")
 	ErrLadderWrongOpponent            = errors.New("The provided game was not against your matchmade opponent. You have been forefeited.")
 	ErrLadderWrongMap                 = errors.New("The provided game was not on the correct map.")
+	ErrLadderWrongSpeed               = errors.New("The provided game was not on the Faster speed setting.")
 )
 
 type Division struct {
@@ -242,6 +243,11 @@ func NewMatchResult(replay *Replay, client *Client) (result *MatchResult, player
 	// Find the opponent
 	matchmaker.logger.Println("New replay from", client.Id, client.Username, *replay)
 	region := ParseBattleNetRegion(replay.Region)
+
+	if replay.Speed != "Faster" {
+		err = ErrLadderWrongSpeed
+		return
+	}
 
 	if replay.GameLength < 120 {
 		err = ErrLadderGameTooShort

@@ -283,6 +283,7 @@ func (conn *ClientConnection) read() {
 // 308 - All participants of the game must be registered.
 // 309 - Player not found in database.
 // 310 - You didn't play your matchmade opponent. You have been forefeited from that game.
+// 311 - The game was not played on Faster.
 // 401 - Can't queue on this region without a character on this region.
 // 402 - The matchmaking request was cancelled.
 // 501 - Chat room not joinable.
@@ -313,12 +314,15 @@ func ErrorCode(err error) string {
 		return "309"
 	} else if err == ErrLadderWrongOpponent {
 		return "310"
+	} else if err == ErrLadderWrongSpeed {
+		return "311"
 	} else if err == ErrChatRoomAlreadyExists {
 		return "503"
 	} else if err == ErrChatRoomReserved {
 		return "504"
 	} else if err == ErrChatRoomNameTooShort {
 		return "509"
+
 	} else {
 		return "106"
 	}
