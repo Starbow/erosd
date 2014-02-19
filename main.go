@@ -48,7 +48,6 @@ func loadConfig() error {
 		config.AddOption("erosd", "listen", ":12345")
 		config.AddOption("erosd", "simulator", "false")
 		config.AddOption("erosd", "allowsimulations", "false")
-		config.AddOption("erosd", "python", "/usr/bin/python2.7")
 		config.AddOption("erosd", "testmode", "false")
 		config.AddOption("erosd", "logpath", "logs")
 
@@ -75,6 +74,9 @@ func loadConfig() error {
 		config.AddOption("chat", "fixedrooms", "Practice Partner Search (Bronze-Silver);Practice Partner Search (Gold-Platinum);Practice Partner Search")
 		config.AddOption("chat", "maxuserchats", "5")
 
+		config.AddSection("python")
+		config.AddOption("python", "port", ":54321")
+
 		err = config.WriteConfigFile("erosd.cfg", 0644, "Erosd Config")
 		if err != nil {
 			return err
@@ -83,7 +85,7 @@ func loadConfig() error {
 
 	listen, _ = config.GetString("erosd", "listen")
 	simulator, _ = config.GetBool("erosd", "simulator")
-	pythonPath, _ = config.GetString("erosd", "python")
+	pythonPort, _ = config.GetString("python", "port")
 	testMode, _ = config.GetBool("erosd", "testmode")
 	allowsimulations, _ = config.GetBool("erosd", "allowsimulations")
 	logPath, _ = config.GetString("erosd", "logpath")
