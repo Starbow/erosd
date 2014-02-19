@@ -41,6 +41,7 @@ type Replay struct {
 	MapName       string         `json:"map_name"`
 	Versions      []int          `json:"versions"`
 	Region        string         `json:"region"`
+	Gateway       string         `json:"gateway"`
 	Release       string         `json:"release"`
 }
 

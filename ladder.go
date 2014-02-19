@@ -242,8 +242,12 @@ func NewMatchResult(replay *Replay, client *Client) (result *MatchResult, player
 	// Find the local character
 	// Find the opponent
 	matchmaker.logger.Println("New replay from", client.Id, client.Username, *replay)
-	region := ParseBattleNetRegion(replay.Region)
-
+	var region BattleNetRegion
+	if replay.Region != "" {
+		region = ParseBattleNetRegion(replay.Region)
+	} else if replay.Gateway != "" {
+		region = ParseBattleNetRegion(replay.Gateway)
+	}
 	if replay.Speed != "Faster" {
 		err = ErrLadderWrongSpeed
 		return
