@@ -5,13 +5,16 @@ import (
 	"log"
 	"math/rand"
 	"net"
+	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 )
 
 var (
 	randomSource     rand.Source = rand.NewSource(time.Now().Unix())
-	listen           string
+	listenAddresses  []string
 	simulator        bool
 	allowsimulations bool
 	matchmaker       *Matchmaker
@@ -83,7 +86,10 @@ func loadConfig() error {
 		}
 	}
 
-	listen, _ = config.GetString("erosd", "listen")
+	listen, err := config.GetString("erosd", "listen")
+	if err == nil {
+		listenAddresses = strings.Split(listen, ";")
+	}
 	simulator, _ = config.GetBool("erosd", "simulator")
 	pythonPort, _ = config.GetString("python", "port")
 	testMode, _ = config.GetBool("erosd", "testmode")
@@ -129,6 +135,26 @@ func loadConfig() error {
 	return nil
 }
 
+func listenAndServe(address string) {
+	ln, err := net.Listen("tcp", address)
+	if err != nil {
+		log.Fatalln("Failed to listen on", address, err)
+	} else {
+		log.Println("Listening on", address)
+	}
+
+	for {
+		conn, err := ln.Accept()
+		if err != nil {
+			log.Println("Accept error", err)
+			continue
+		}
+		log.Println("Accepted", conn.RemoteAddr())
+
+		go handleConnection(conn)
+	}
+}
+
 func main() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 	rand.Seed(time.Now().UnixNano())
@@ -143,9 +169,8 @@ func main() {
 		log.Fatalln("initDb", err)
 	}
 
-	ln, err := net.Listen("tcp", listen)
-	if err != nil {
-		log.Fatalln("Failed to listen on", listen, err)
+	if len(listenAddresses) == 0 {
+		log.Fatalln("No listeners provided")
 	}
 
 	// start the broadcast routine
@@ -165,16 +190,24 @@ func main() {
 		return
 	}
 
-	//Accept connections forever.
-	for {
-		conn, err := ln.Accept()
-		if err != nil {
-			log.Println("Accept error", err)
-			continue
-		}
-		log.Println("Accepted", conn.RemoteAddr())
+	// Set up listeners
+	for _, listen := range listenAddresses {
+		go listenAndServe(listen)
+	}
 
-		go handleConnection(conn)
+	log.Println("Initialization complete")
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, os.Kill, syscall.SIGHUP)
+
+	for {
+		sig := <-c
+		switch sig {
+		case os.Interrupt, os.Kill:
+			break
+		case syscall.SIGHUP:
+			break
+		}
 	}
 
 }
