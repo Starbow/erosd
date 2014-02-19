@@ -386,7 +386,7 @@ func NewMatchResult(replay *Replay, client *Client) (result *MatchResult, player
 		}
 
 		player.PointsDifference = player.PointsAfter - player.PointsBefore
-		opponent.PointsDifference = player.PointsAfter - player.PointsBefore
+		opponent.PointsDifference = opponent.PointsAfter - opponent.PointsBefore
 
 		client.PendingMatchmakingId = 0
 		client.PendingMatchmakingOpponentId = 0

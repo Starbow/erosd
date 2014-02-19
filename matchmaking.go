@@ -151,6 +151,91 @@ func NewMatchmakerParticipant(connection *ClientConnection) *MatchmakerParticipa
 		match:      make(chan *MatchmakerMatch),
 	}
 }
+
+func (mmm *MatchmakerMatch) CreateForefeit(client *Client) (result *MatchResult, players []*MatchResultPlayer, err error) {
+	matchmaker.logger.Println("Forefeiting", client.Id, client.Username)
+	participants := matchmaker.MatchParticipants(mmm.Id)
+	result = &MatchResult{
+		DateTime:          time.Now().Unix(),
+		MapId:             mmm.MapId,
+		MatchmakerMatchId: mmm.Id,
+		Region:            mmm.Region,
+	}
+
+	err = dbMap.Insert(result)
+	if err != nil {
+		result = nil
+		return
+	}
+
+	var opponentClient *Client
+	var player, opponent MatchResultPlayer
+	for x := range participants {
+		if participants[x].ClientId != client.Id {
+			opponentClient = clientCache.Get(participants[x].ClientId)
+		}
+	}
+
+	if opponentClient == nil {
+		matchmaker.logger.Println("Opponent client not found")
+		result = nil
+		client.ForefeitMatchmadeMatch()
+		err = ErrLadderPlayerNotFound
+
+		return
+	}
+
+	player.MatchId = result.Id
+	player.ClientId = client.Id
+	player.Victory = false
+	player.Race = "Forefeit"
+
+	opponent.MatchId = result.Id
+	opponent.ClientId = opponentClient.Id
+	opponent.Victory = true
+	opponent.Race = "Walkover"
+
+	playerRegion, _ := client.RegionStats(mmm.Region)
+	opponentRegion, _ := opponentClient.RegionStats(mmm.Region)
+
+	if playerRegion == nil || opponentRegion == nil {
+		player.PointsBefore = client.LadderPoints
+		opponent.PointsBefore = opponentClient.LadderPoints
+	} else {
+		player.PointsBefore = playerRegion.LadderPoints
+		opponent.PointsBefore = opponentRegion.LadderPoints
+	}
+
+	client.ForefeitMatchmadeMatch()
+
+	if playerRegion == nil || opponentRegion == nil {
+		player.PointsAfter = client.LadderPoints
+		opponent.PointsAfter = opponentClient.LadderPoints
+	} else {
+		player.PointsAfter = playerRegion.LadderPoints
+		opponent.PointsAfter = opponentRegion.LadderPoints
+	}
+
+	player.PointsDifference = player.PointsAfter - player.PointsBefore
+	opponent.PointsDifference = opponent.PointsAfter - opponent.PointsBefore
+
+	client.PendingMatchmakingId = 0
+	client.PendingMatchmakingOpponentId = 0
+	opponentClient.PendingMatchmakingId = 0
+	opponentClient.PendingMatchmakingOpponentId = 0
+	_, uerr := dbMap.Update(client, opponentClient)
+	if uerr != nil {
+		err = ErrDbInsert
+		matchmaker.logger.Println(uerr)
+		return
+	}
+
+	dbMap.Insert(&player, &opponent)
+	players = []*MatchResultPlayer{&player, &opponent}
+
+	return
+}
+
 func (mm *Matchmaker) Match(id int64) *MatchmakerMatch {
 
 	match, ok := mm.matchCache[id]

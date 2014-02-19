@@ -877,7 +877,12 @@ func (conn *ClientConnection) OnForefeitMatchmaking(txid int, data []byte) {
 	defer conn.panicRecovery(txid)
 
 	if conn.client.PendingMatchmakingId > 0 {
-		conn.client.ForefeitMatchmadeMatch()
+		match := matchmaker.Match(conn.client.PendingMatchmakingId)
+		if match != nil {
+			//result, players, err :=
+			match.CreateForefeit(conn.client)
+		}
+
 	}
 	conn.SendResponseMessage("MMF", txid, []byte{})
 }
