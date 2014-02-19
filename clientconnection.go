@@ -235,8 +235,6 @@ func (conn *ClientConnection) read() {
 				go conn.OnRemoveCharacter(txid, data.Bytes())
 			case "REP":
 				go conn.OnReplay(txid, data.Bytes())
-			//case "UCN":
-			//	go conn.OnUserChangeName(txid, data.Bytes())
 			case "PNR":
 				go conn.OnPong(txid, data.Bytes())
 			case "UCJ":
@@ -521,30 +519,6 @@ func (conn *ClientConnection) OnPong(txid int, data []byte) {
 	conn.lastPingChallenge = ""
 }
 
-//TODO: Detmine if we're removing this.
-func (conn *ClientConnection) OnUserChangeName(txid int, data []byte) {
-	defer conn.panicRecovery(txid)
-
-	username := strings.TrimSpace(string(data))
-
-	if !usernameValidator.MatchString(username) {
-		conn.SendResponseMessage("107", txid, []byte{})
-		return
-	}
-
-	count, _ := dbMap.SelectInt("SELECT COUNT(*) FROM clients WHERE Username=?", username)
-	if count > 0 {
-		conn.SendResponseMessage("108", txid, []byte{})
-		return
-	}
-
-	conn.client.Username = username
-	dbMap.Update(conn.client)
-	conn.SendResponseMessage("UCN", txid, []byte(username))
-
-}
-
-//TODO: Add some sort of real logging at some point
 func (conn *ClientConnection) OnReplay(txid int, data []byte) {
 	defer conn.panicRecovery(txid)
 
