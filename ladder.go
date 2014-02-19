@@ -256,18 +256,26 @@ func NewMatchResult(replay *Replay, client *Client) (result *MatchResult, player
 
 	m := maps.Get(region, replay.MapName)
 
-	if m == nil || !m.InRankedPool {
+	if m == nil {
+		matchmaker.logger.Println("Map not found in pool", region, replay.MapName)
+		err = ErrLadderInvalidMap
+		return
+	}
+	if !m.InRankedPool {
+		matchmaker.logger.Println("Map not found in ranked pool", region, replay.MapName)
 		err = ErrLadderInvalidMap
 		return
 	}
 
 	if len(replay.Observers) > 0 || len(replay.Players) != 2 {
+		matchmaker.logger.Println("Invalid game format", len(replay.Observers), "observers", len(replay.Players), "players")
 		err = ErrLadderInvalidFormat
 		return
 	}
 
 	count, err := dbMap.SelectInt("SELECT COUNT(*) FROM match_result_sources WHERE ReplayHash=?", replay.Filehash)
 	if err == nil && count > 0 {
+		matchmaker.logger.Println("Duplicate replay")
 		err = ErrLadderDuplicateReplay
 		return
 	}
@@ -279,6 +287,7 @@ func NewMatchResult(replay *Replay, client *Client) (result *MatchResult, player
 	for x := range replay.Players {
 		mrp, merr := NewMatchResultPlayer(replay, &replay.Players[x])
 		if merr != nil || mrp == nil {
+			matchmaker.logger.Println("MRP Error or nil", merr)
 			err = ErrLadderInvalidMatchParticipents
 			return
 		}
@@ -292,18 +301,21 @@ func NewMatchResult(replay *Replay, client *Client) (result *MatchResult, player
 
 	//We don't have the player that submitted the replay.
 	if player == nil {
+		matchmaker.logger.Println("ErrLadderClientNotInvolved")
 		err = ErrLadderClientNotInvolved
 		return
 	}
 
 	//We don't have an opponent.
 	if opponent == nil {
+		matchmaker.logger.Println("ErrLadderInvalidMatchParticipents")
 		err = ErrLadderInvalidMatchParticipents
 		return
 	}
 
 	//Make sure we only have one and only one victor.
 	if player.Victory == opponent.Victory {
+		matchmaker.logger.Println("player.Victory == opponent.Victory")
 		err = ErrLadderInvalidFormat
 		return
 	}

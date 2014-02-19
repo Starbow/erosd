@@ -1,11 +1,11 @@
 package main
 
 import (
-	"net"
 	"bufio"
 	"encoding/json"
 	"io"
 	"log"
+	"net"
 )
 
 var _ = log.Ldate
@@ -48,9 +48,8 @@ func NewReplay(path string) (replay *Replay, err error) {
 	conn, err := net.Dial("tcp", pythonPort)
 	defer conn.Close()
 
-
 	writer := bufio.NewWriter(conn)
-	_, err = writer.WriteString(path+"\n")
+	_, err = writer.WriteString(path + "\n")
 	if err != nil {
 		return nil, err
 	}
@@ -67,6 +66,11 @@ func NewReplay(path string) (replay *Replay, err error) {
 			log.Println("Socket Error", err)
 		}
 		return
+	}
+
+	if len(data) == 0 {
+		matchmaker.logger.Println("Data retreieved for", path, "empty")
+		return nil, nil
 	}
 
 	var rep Replay
