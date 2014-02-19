@@ -212,6 +212,8 @@ func (conn *ClientConnection) read() {
 					if err == nil {
 						conn.SendServerMessage("SSU", data)
 					}
+
+					conn.handlePendingMatchmaking(-1)
 				}
 			} else {
 				return
@@ -744,13 +746,47 @@ func (conn *ClientConnection) handleMatchmakingResult(txid int, match *Matchmake
 	res.Map = mapInfo
 
 	data, _ := Marshal(&res)
-	conn.SendResponseMessage("MMR", txid, data)
-	if match.ChatRoom != "" {
-		room, ok := chatRooms[cleanChatRoomName(match.ChatRoom)]
-		if ok && room != nil {
-			room.join <- conn
+	if txid > 0 {
+		conn.SendResponseMessage("MMR", txid, data)
+	} else {
+		conn.SendServerMessage("MMR", data)
+	}
+
+	room := matchmaker.GetMatchmakingChat(match.ChatRoom)
+	if room != nil {
+		room.join <- conn
+	}
+}
+
+func (conn *ClientConnection) handlePendingMatchmaking(txid int) bool {
+	if conn.client.PendingMatchmakingId > 0 {
+		match := matchmaker.Match(conn.client.PendingMatchmakingId)
+
+		if match != nil {
+			opponent := clientCache.Get(conn.client.PendingMatchmakingOpponentId)
+			if opponent != nil {
+				since := time.Now().Unix() - match.AddTime
+
+				if since >= matchmakingMatchTimeout {
+					// Match has expired. End it.
+					if opponent != nil {
+						matchmaker.logger.Println("Cleaning up old match between", conn.client.Username, opponent.Username)
+						matchmaker.EndMatch(conn.client.PendingMatchmakingId, conn.client, opponent)
+					} else {
+						matchmaker.logger.Println("Cleaning up old match for", conn.client.Username)
+						matchmaker.EndMatch(conn.client.PendingMatchmakingId, conn.client)
+					}
+				} else {
+					// Match is active. Send the old result.
+					selectedMap := maps[match.MapId]
+					conn.handleMatchmakingResult(txid, match, opponent, selectedMap, 0)
+					return true
+				}
+			}
 		}
 	}
+
+	return false
 }
 
 func (conn *ClientConnection) OnQueueMatchmaking(txid int, data []byte) {
@@ -779,29 +815,8 @@ func (conn *ClientConnection) OnQueueMatchmaking(txid int, data []byte) {
 		}
 
 		// Resume pending matches
-		if conn.client.PendingMatchmakingId > 0 {
-			match := matchmaker.Match(conn.client.PendingMatchmakingId)
-
-			if match != nil {
-				opponent := clientCache.Get(conn.client.PendingMatchmakingOpponentId)
-				if opponent != nil {
-					since := time.Now().Unix() - match.AddTime
-
-					if since >= matchmakingMatchTimeout {
-						// Match has expired. End it.
-						if opponent != nil {
-							matchmaker.EndMatch(conn.client.PendingMatchmakingId, conn.client, opponent)
-						} else {
-							matchmaker.EndMatch(conn.client.PendingMatchmakingId, conn.client)
-						}
-					} else {
-						// Match is active. Send the old result.
-						selectedMap := maps[match.MapId]
-						conn.handleMatchmakingResult(txid, match, opponent, selectedMap, 0)
-						return
-					}
-				}
-			}
+		if conn.handlePendingMatchmaking(txid) {
+			return
 		}
 
 		matchmaker.register <- conn
