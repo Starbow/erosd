@@ -7,6 +7,8 @@ import (
 	"log"
 	"math"
 	"math/rand"
+	"os"
+	"path"
 	"sort"
 	"sync"
 	"time"
@@ -40,6 +42,8 @@ type Matchmaker struct {
 	matchCache             map[int64]*MatchmakerMatch
 	matchParticipantCache  map[int64]*MatchmakerMatchParticipant
 	matchParticipantsCache map[int64][]*MatchmakerMatchParticipant
+	logger                 *log.Logger
+	logFile                *os.File
 	sync.RWMutex
 }
 
@@ -103,6 +107,18 @@ func initMatchmaking() {
 		matchParticipantCache:  make(map[int64]*MatchmakerMatchParticipant),
 		matchParticipantsCache: make(map[int64][]*MatchmakerMatchParticipant),
 	}
+
+	var logfile string = path.Join(logPath, fmt.Sprintf("%d-mm.log", os.Getpid()))
+	file, err := os.Create(logfile)
+	if err != nil {
+		log.Println("Failed to create log file", logfile, "for matchmaker")
+		matchmaker.logger = log.New(os.Stdout, fmt.Sprintf("mm"), log.Ldate|log.Ltime|log.Lshortfile)
+	} else {
+		log.Println("Logging matchmaker to", logfile)
+		matchmaker.logger = log.New(file, "", log.Ldate|log.Ltime|log.Lshortfile)
+		matchmaker.logFile = file
+	}
+
 	go matchmaker.run()
 }
 

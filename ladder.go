@@ -240,7 +240,7 @@ type MatchResultSource struct {
 func NewMatchResult(replay *Replay, client *Client) (result *MatchResult, players []*MatchResultPlayer, err error) {
 	// Find the local character
 	// Find the opponent
-	log.Println(*replay)
+	matchmaker.logger.Println("New replay from", client.Id, client.Username, *replay)
 	region := ParseBattleNetRegion(replay.Region)
 
 	if replay.GameLength < 120 {
@@ -312,18 +312,20 @@ func NewMatchResult(replay *Replay, client *Client) (result *MatchResult, player
 
 		if opponentClient == nil {
 			err = ErrLadderPlayerNotFound // new error for lookup fail
-			log.Println("Opponenet client nil", opponent.ClientId)
+			matchmaker.logger.Println("Opponenet client nil", opponent.ClientId)
 			return
 		}
 
 		if !client.IsMatchedWith(opponentClient) {
 			client.ForefeitMatchmadeMatch()
 			err = ErrLadderWrongOpponent
+			matchmaker.logger.Println("Not matched with opponent", client.Id, client.Username)
 			return
 		}
 
 		if !opponentClient.IsMatchedWith(client) {
 			opponentClient.ForefeitMatchmadeMatch()
+			matchmaker.logger.Println("Not matched with opponent", opponentClient.Id, opponentClient.Username)
 		}
 
 		var res MatchResult
@@ -335,6 +337,7 @@ func NewMatchResult(replay *Replay, client *Client) (result *MatchResult, player
 		err = dbMap.Insert(&res)
 		if err != nil {
 			err = ErrDbInsert
+			matchmaker.logger.Println(err)
 			return
 		}
 
@@ -345,6 +348,7 @@ func NewMatchResult(replay *Replay, client *Client) (result *MatchResult, player
 
 		if !client.IsOnMap(m.Id) {
 			err = ErrLadderWrongMap
+			matchmaker.logger.Println("Wrong map, expected", m.Id)
 			return
 		}
 
@@ -385,6 +389,7 @@ func NewMatchResult(replay *Replay, client *Client) (result *MatchResult, player
 		_, uerr := dbMap.Update(client, opponentClient)
 		if uerr != nil {
 			err = ErrDbInsert
+			matchmaker.logger.Println(uerr)
 			return
 		}
 
