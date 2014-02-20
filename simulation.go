@@ -173,14 +173,14 @@ func (user *SimulatedUser) Run() {
 					// User win
 					if result < 3 {
 						// User walkover
-						opponent.client.ForefeitMatchmadeMatch()
+						opponent.client.ForfeitMatchmadeMatch()
 					}
 					user.client.Defeat(opponent.client, match_result.Region)
 				} else {
 					// User loss
 					if result < 53 {
-						// User forefeit
-						user.client.ForefeitMatchmadeMatch()
+						// User forfeit
+						user.client.ForfeitMatchmadeMatch()
 					}
 					opponent.client.Defeat(user.client, match_result.Region)
 				}

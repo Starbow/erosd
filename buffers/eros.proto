@@ -37,7 +37,7 @@ message UserRegionStats
 	required int64 points = 2;
 	required int64 wins = 3;
 	required int64 losses = 4;
-	required int64 forefeits = 5;
+	required int64 forfeits = 5;
 	required int64 walkovers = 6;
 }
 
@@ -47,7 +47,7 @@ message UserStats {
 	required int64 points = 3;
 	required int64 wins = 4;
 	required int64 losses = 5;
-	required int64 forefeits = 6;
+	required int64 forfeits = 6;
 	required int64 walkovers = 7;
 	repeated UserRegionStats region = 8;
 }
@@ -163,4 +163,9 @@ message MatchResult {
 	required Region region = 1;
 	required Map map = 2;
 	repeated MatchParticipant participant = 3;
+}
+
+message BroadcastAlert {
+	required string message = 2;
+	required int32 predefined = 1;
 }

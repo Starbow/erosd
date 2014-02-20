@@ -152,8 +152,8 @@ func NewMatchmakerParticipant(connection *ClientConnection) *MatchmakerParticipa
 	}
 }
 
-func (mmm *MatchmakerMatch) CreateForefeit(client *Client) (result *MatchResult, players []*MatchResultPlayer, err error) {
-	matchmaker.logger.Println("Forefeiting", client.Id, client.Username)
+func (mmm *MatchmakerMatch) CreateForfeit(client *Client) (result *MatchResult, players []*MatchResultPlayer, err error) {
+	matchmaker.logger.Println("Forfeiting", client.Id, client.Username)
 	participants := matchmaker.MatchParticipants(mmm.Id)
 	result = &MatchResult{
 		DateTime:          time.Now().Unix(),
@@ -179,7 +179,7 @@ func (mmm *MatchmakerMatch) CreateForefeit(client *Client) (result *MatchResult,
 	if opponentClient == nil {
 		matchmaker.logger.Println("Opponent client not found")
 		result = nil
-		client.ForefeitMatchmadeMatch()
+		client.ForfeitMatchmadeMatch()
 		err = ErrLadderPlayerNotFound
 
 		return
@@ -188,7 +188,7 @@ func (mmm *MatchmakerMatch) CreateForefeit(client *Client) (result *MatchResult,
 	player.MatchId = result.Id
 	player.ClientId = client.Id
 	player.Victory = false
-	player.Race = "Forefeit"
+	player.Race = "Forfeit"
 
 	opponent.MatchId = result.Id
 	opponent.ClientId = opponentClient.Id
@@ -206,7 +206,7 @@ func (mmm *MatchmakerMatch) CreateForefeit(client *Client) (result *MatchResult,
 		opponent.PointsBefore = opponentRegion.LadderPoints
 	}
 
-	client.ForefeitMatchmadeMatch()
+	client.ForfeitMatchmadeMatch()
 
 	if playerRegion == nil || opponentRegion == nil {
 		player.PointsAfter = client.LadderPoints
@@ -278,14 +278,14 @@ func (mm *Matchmaker) MatchParticipants(id int64) []*MatchmakerMatchParticipant 
 
 	if !ok {
 
-		res, err := dbMap.Select(&MatchmakerMatchParticipant{}, "SELECT * FROM matchmaker_match_participants WHERE MatchId=? LIMIT 1", id)
-		m = make([]*MatchmakerMatchParticipant, len(res))
+		res, err := dbMap.Select(&MatchmakerMatchParticipant{}, "SELECT * FROM matchmaker_match_participants WHERE MatchId=?", id)
+		m = make([]*MatchmakerMatchParticipant, 0, len(res))
 		if err != nil {
 			return nil
 		}
 
 		for x := range res {
-			m[x] = res[x].(*MatchmakerMatchParticipant)
+			m = append(m, res[x].(*MatchmakerMatchParticipant))
 		}
 
 		mm.matchParticipantsCache[id] = m
@@ -294,20 +294,29 @@ func (mm *Matchmaker) MatchParticipants(id int64) []*MatchmakerMatchParticipant 
 	return m
 }
 
-func (mm *Matchmaker) EndMatch(id int64, participant ...*Client) {
+func (mm *Matchmaker) EndMatch(id int64) {
 	match := mm.Match(id)
 
 	if match != nil {
+
+		participants := mm.MatchParticipants(id)
 		match.EndTime = time.Now().Unix()
 
-		for x := range participant {
-			if participant[x] == nil {
+		for x := range participants {
+			if participants[x] == nil {
+				log.Println("Nil participant for", id)
 				continue
 			}
 
-			participant[x].PendingMatchmakingId = 0
-			participant[x].PendingMatchmakingOpponentId = 0
-			participant[x].PendingMatchmakingRegion = 0
+			client := clientCache.Get(participants[x].ClientId)
+			if client.PendingMatchmakingId == id {
+				client.PendingMatchmakingId = 0
+				client.PendingMatchmakingOpponentId = 0
+				client.PendingMatchmakingRegion = 0
+
+				dbMap.Update(client)
+				go client.Broadcast("MMI", nil)
+			}
 
 		}
 
@@ -366,18 +375,20 @@ func (mm *Matchmaker) makeMatch(player1 *MatchmakerParticipant, player2 *Matchma
 
 	if err == nil {
 		var p1, p2 MatchmakerMatchParticipant
+		p1time := time.Since(player1.enrollTime)
+		p2time := time.Since(player2.enrollTime)
 		p1.MatchId = match.Id
 		p2.MatchId = match.Id
 		p1.ClientId = player1.connection.client.Id
-		p2.ClientId = player1.connection.client.Id
+		p2.ClientId = player2.connection.client.Id
 		p1.Points = player1.points
 		p2.Points = player2.points
 		p1.RatingMean = player1.connection.client.RatingMean
-		p2.RatingMean = player1.connection.client.RatingMean
+		p2.RatingMean = player2.connection.client.RatingMean
 		p1.RatingStdDev = player1.connection.client.RatingStdDev
 		p2.RatingStdDev = player2.connection.client.RatingStdDev
-		p1.QueueTime = time.Since(player1.enrollTime).Seconds()
-		p2.QueueTime = time.Since(player2.enrollTime).Seconds()
+		p1.QueueTime = p1time.Seconds()
+		p2.QueueTime = p2time.Seconds()
 		err = dbMap.Insert(&p1, &p2)
 
 		if err != nil {

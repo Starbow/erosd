@@ -96,7 +96,7 @@ type Client struct {
 
 	Wins      int64 `db:"ladder_wins"`
 	Losses    int64 `db:"ladder_losses"`
-	Forefeits int64 `db:"ladder_forefeits"`
+	Forfeits  int64 `db:"ladder_forefeits"`
 	Walkovers int64 `db:"ladder_walkovers"`
 }
 
@@ -114,7 +114,7 @@ type ClientRegionStats struct {
 
 	Wins      int64 `db:"ladder_wins"`
 	Losses    int64 `db:"ladder_losses"`
-	Forefeits int64 `db:"ladder_forefeits"`
+	Forfeits  int64 `db:"ladder_forefeits"`
 	Walkovers int64 `db:"ladder_walkovers"`
 }
 
@@ -221,24 +221,28 @@ func (client *Client) Defeat(opponent *Client, region BattleNetRegion) float64 {
 	return quality
 }
 
-func (c *Client) ForefeitMatchmadeMatch() {
+func (c *Client) ForfeitMatchmadeMatch() {
 	if c.PendingMatchmakingId > 0 {
 		opponent := clientCache.Get(c.PendingMatchmakingOpponentId)
-		opponent.Defeat(c, BattleNetRegion(c.PendingMatchmakingRegion))
-		c.Forefeits += 1
-		opponent.Walkovers += 1
-		matchmaker.EndMatch(c.PendingMatchmakingId, c, opponent)
-		dbMap.Update(c, opponent)
-		log.Println(c.Username, "forefeited")
+		if opponent.PendingMatchmakingId == c.PendingMatchmakingId {
+			opponent.Defeat(c, BattleNetRegion(c.PendingMatchmakingRegion))
+			c.Forfeits += 1
+			opponent.Walkovers += 1
+			matchmaker.EndMatch(c.PendingMatchmakingId)
+			dbMap.Update(c, opponent)
+			log.Println(c.Username, "forfeited")
 
-		go func() {
-			c.BroadcastStatsMessage()
-			c.BroadcastMatchmakingIdle()
-		}()
-		go func() {
-			opponent.BroadcastStatsMessage()
-			opponent.BroadcastMatchmakingIdle()
-		}()
+			go func() {
+				c.BroadcastStatsMessage()
+				c.BroadcastMatchmakingIdle()
+			}()
+			go func() {
+				opponent.BroadcastStatsMessage()
+				opponent.BroadcastMatchmakingIdle()
+			}()
+		} else {
+			matchmaker.EndMatch(c.PendingMatchmakingId)
+		}
 	}
 }
 
@@ -274,7 +278,7 @@ func (c *Client) UserStatsMessage() *protobufs.UserStats {
 	user.Wins = &c.Wins
 	user.Losses = &c.Losses
 	user.Walkovers = &c.Walkovers
-	user.Forefeits = &c.Forefeits
+	user.Forfeits = &c.Forfeits
 	user.Region = make([]*protobufs.UserRegionStats, 0, len(ladderActiveRegions))
 
 	for _, region := range ladderActiveRegions {
@@ -357,7 +361,7 @@ func (c *Client) RegionStats(region BattleNetRegion) (regionStats *ClientRegionS
 	err = dbMap.SelectOne(&stats, "SELECT * FROM client_region_stats WHERE client_id=? and region=?", c.Id, int64(region))
 	if err != nil || stats.Id == 0 {
 		stats.ClientId = c.Id
-		stats.Forefeits = 0
+		stats.Forfeits = 0
 		stats.Losses = 0
 		stats.LadderPoints = ladderStartingPoints
 		stats.RatingMean = 25
@@ -380,8 +384,16 @@ func (crs *ClientRegionStats) UserRegionStatsMessage() *protobufs.UserRegionStat
 	stats.Wins = &crs.Wins
 	stats.Losses = &crs.Losses
 	stats.Walkovers = &crs.Walkovers
-	stats.Forefeits = &crs.Forefeits
+	stats.Forfeits = &crs.Forfeits
 	stats.Region = &region
 
 	return &stats
+}
+
+func (client *Client) SendBroadcastAlert(predefined int32, message string) {
+	var bufmsg protobufs.BroadcastAlert
+	bufmsg.Message = &message
+	bufmsg.Predefined = &predefined
+
+	client.Broadcast("ALT", &bufmsg)
 }

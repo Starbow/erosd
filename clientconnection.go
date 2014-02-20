@@ -228,7 +228,7 @@ func (conn *ClientConnection) read() {
 			case "MMD":
 				go conn.OnDequeueMatchmaking(txid, data.Bytes())
 			case "MMF":
-				go conn.OnForefeitMatchmaking(txid, data.Bytes())
+				go conn.OnForfeitMatchmaking(txid, data.Bytes())
 			case "BNA":
 				go conn.OnAddCharacter(txid, data.Bytes())
 			case "BNU":
@@ -282,7 +282,7 @@ func (conn *ClientConnection) read() {
 // 307 - Bad map. Require a map in the map pool.
 // 308 - All participants of the game must be registered.
 // 309 - Player not found in database.
-// 310 - You didn't play your matchmade opponent. You have been forefeited from that game.
+// 310 - You didn't play your matchmade opponent. You have been forfeited from that game.
 // 311 - The game was not played on Faster.
 // 401 - Can't queue on this region without a character on this region.
 // 402 - The matchmaking request was cancelled.
@@ -765,22 +765,25 @@ func (conn *ClientConnection) handlePendingMatchmaking(txid int) bool {
 		if match != nil {
 			opponent := clientCache.Get(conn.client.PendingMatchmakingOpponentId)
 			if opponent != nil {
-				since := time.Now().Unix() - match.AddTime
+				if opponent.PendingMatchmakingId == conn.client.PendingMatchmakingId {
+					since := time.Now().Unix() - match.AddTime
 
-				if since >= matchmakingMatchTimeout {
-					// Match has expired. End it.
-					if opponent != nil {
-						matchmaker.logger.Println("Cleaning up old match between", conn.client.Username, opponent.Username)
-						matchmaker.EndMatch(conn.client.PendingMatchmakingId, conn.client, opponent)
+					if since >= matchmakingMatchTimeout {
+						// Match has expired. End it.
+						if opponent != nil {
+							matchmaker.logger.Println("Cleaning up old match between", conn.client.Username, opponent.Username)
+
+						} else {
+							matchmaker.logger.Println("Cleaning up old match for", conn.client.Username)
+
+						}
+						matchmaker.EndMatch(conn.client.PendingMatchmakingId)
 					} else {
-						matchmaker.logger.Println("Cleaning up old match for", conn.client.Username)
-						matchmaker.EndMatch(conn.client.PendingMatchmakingId, conn.client)
+						// Match is active. Send the old result.
+						selectedMap := maps[match.MapId]
+						conn.handleMatchmakingResult(txid, match, opponent, selectedMap, 0)
+						return true
 					}
-				} else {
-					// Match is active. Send the old result.
-					selectedMap := maps[match.MapId]
-					conn.handleMatchmakingResult(txid, match, opponent, selectedMap, 0)
-					return true
 				}
 			}
 		}
@@ -862,14 +865,14 @@ func (conn *ClientConnection) OnDequeueMatchmaking(txid int, data []byte) {
 	conn.SendResponseMessage("MMD", txid, []byte{})
 }
 
-func (conn *ClientConnection) OnForefeitMatchmaking(txid int, data []byte) {
+func (conn *ClientConnection) OnForfeitMatchmaking(txid int, data []byte) {
 	defer conn.panicRecovery(txid)
 
 	if conn.client.PendingMatchmakingId > 0 {
 		match := matchmaker.Match(conn.client.PendingMatchmakingId)
 		if match != nil {
 			//result, players, err :=
-			match.CreateForefeit(conn.client)
+			match.CreateForfeit(conn.client)
 		}
 
 	}

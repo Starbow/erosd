@@ -197,7 +197,7 @@ type UserRegionStats struct {
 	Points           *int64  `protobuf:"varint,2,req,name=points" json:"points,omitempty"`
 	Wins             *int64  `protobuf:"varint,3,req,name=wins" json:"wins,omitempty"`
 	Losses           *int64  `protobuf:"varint,4,req,name=losses" json:"losses,omitempty"`
-	Forefeits        *int64  `protobuf:"varint,5,req,name=forefeits" json:"forefeits,omitempty"`
+	Forfeits         *int64  `protobuf:"varint,5,req,name=forfeits" json:"forfeits,omitempty"`
 	Walkovers        *int64  `protobuf:"varint,6,req,name=walkovers" json:"walkovers,omitempty"`
 	XXX_unrecognized []byte  `json:"-"`
 }
@@ -234,9 +234,9 @@ func (m *UserRegionStats) GetLosses() int64 {
 	return 0
 }
 
-func (m *UserRegionStats) GetForefeits() int64 {
-	if m != nil && m.Forefeits != nil {
-		return *m.Forefeits
+func (m *UserRegionStats) GetForfeits() int64 {
+	if m != nil && m.Forfeits != nil {
+		return *m.Forfeits
 	}
 	return 0
 }
@@ -254,7 +254,7 @@ type UserStats struct {
 	Points           *int64             `protobuf:"varint,3,req,name=points" json:"points,omitempty"`
 	Wins             *int64             `protobuf:"varint,4,req,name=wins" json:"wins,omitempty"`
 	Losses           *int64             `protobuf:"varint,5,req,name=losses" json:"losses,omitempty"`
-	Forefeits        *int64             `protobuf:"varint,6,req,name=forefeits" json:"forefeits,omitempty"`
+	Forfeits         *int64             `protobuf:"varint,6,req,name=forfeits" json:"forfeits,omitempty"`
 	Walkovers        *int64             `protobuf:"varint,7,req,name=walkovers" json:"walkovers,omitempty"`
 	Region           []*UserRegionStats `protobuf:"bytes,8,rep,name=region" json:"region,omitempty"`
 	XXX_unrecognized []byte             `json:"-"`
@@ -299,9 +299,9 @@ func (m *UserStats) GetLosses() int64 {
 	return 0
 }
 
-func (m *UserStats) GetForefeits() int64 {
-	if m != nil && m.Forefeits != nil {
-		return *m.Forefeits
+func (m *UserStats) GetForfeits() int64 {
+	if m != nil && m.Forfeits != nil {
+		return *m.Forfeits
 	}
 	return 0
 }
@@ -934,6 +934,30 @@ func (m *MatchResult) GetParticipant() []*MatchParticipant {
 		return m.Participant
 	}
 	return nil
+}
+
+type BroadcastAlert struct {
+	Message          *string `protobuf:"bytes,2,req,name=message" json:"message,omitempty"`
+	Predefined       *int32  `protobuf:"varint,1,req,name=predefined" json:"predefined,omitempty"`
+	XXX_unrecognized []byte  `json:"-"`
+}
+
+func (m *BroadcastAlert) Reset()         { *m = BroadcastAlert{} }
+func (m *BroadcastAlert) String() string { return proto.CompactTextString(m) }
+func (*BroadcastAlert) ProtoMessage()    {}
+
+func (m *BroadcastAlert) GetMessage() string {
+	if m != nil && m.Message != nil {
+		return *m.Message
+	}
+	return ""
+}
+
+func (m *BroadcastAlert) GetPredefined() int32 {
+	if m != nil && m.Predefined != nil {
+		return *m.Predefined
+	}
+	return 0
 }
 
 func init() {

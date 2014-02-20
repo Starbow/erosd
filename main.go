@@ -13,13 +13,14 @@ import (
 )
 
 var (
-	randomSource     rand.Source = rand.NewSource(time.Now().Unix())
-	listenAddresses  []string
-	simulator        bool
-	allowsimulations bool
-	matchmaker       *Matchmaker
-	testMode         bool
-	logPath          string
+	randomSource         rand.Source = rand.NewSource(time.Now().Unix())
+	listenAddresses      []string
+	adminListenAddresses []string
+	simulator            bool
+	allowsimulations     bool
+	matchmaker           *Matchmaker
+	testMode             bool
+	logPath              string
 )
 
 func random(min, max int) int {
@@ -29,6 +30,11 @@ func random(min, max int) int {
 // Handle an incoming connection.
 func handleConnection(conn net.Conn) {
 	client := NewClientConnection(conn)
+	client.read()
+}
+
+func handleAdminConnection(conn net.Conn) {
+	client := NewAdminConnection(conn)
 	client.read()
 }
 
@@ -49,6 +55,7 @@ func loadConfig() error {
 		config = conf.NewConfigFile()
 		config.AddSection("erosd")
 		config.AddOption("erosd", "listen", ":12345")
+		config.AddOption("erosd", "adminlisten", "127.0.0.1:12346")
 		config.AddOption("erosd", "simulator", "false")
 		config.AddOption("erosd", "allowsimulations", "false")
 		config.AddOption("erosd", "testmode", "false")
@@ -89,6 +96,10 @@ func loadConfig() error {
 	listen, err := config.GetString("erosd", "listen")
 	if err == nil {
 		listenAddresses = strings.Split(listen, ";")
+	}
+	listen, err = config.GetString("erosd", "adminlisten")
+	if err == nil {
+		adminListenAddresses = strings.Split(listen, ";")
 	}
 	simulator, _ = config.GetBool("erosd", "simulator")
 	pythonPort, _ = config.GetString("python", "port")
@@ -135,12 +146,16 @@ func loadConfig() error {
 	return nil
 }
 
-func listenAndServe(address string) {
+func listenAndServe(address string, admin bool) {
 	ln, err := net.Listen("tcp", address)
 	if err != nil {
 		log.Fatalln("Failed to listen on", address, err)
 	} else {
-		log.Println("Listening on", address)
+		if admin {
+			log.Println("Listening admin on", address)
+		} else {
+			log.Println("Listening on", address)
+		}
 	}
 
 	for {
@@ -151,7 +166,11 @@ func listenAndServe(address string) {
 		}
 		log.Println("Accepted", conn.RemoteAddr())
 
-		go handleConnection(conn)
+		if admin {
+			go handleAdminConnection(conn)
+		} else {
+			go handleConnection(conn)
+		}
 	}
 }
 
@@ -192,7 +211,11 @@ func main() {
 
 	// Set up listeners
 	for _, listen := range listenAddresses {
-		go listenAndServe(listen)
+		go listenAndServe(listen, false)
+	}
+
+	for _, listen := range adminListenAddresses {
+		go listenAndServe(listen, true)
 	}
 
 	log.Println("Initialization complete")
@@ -204,7 +227,8 @@ func main() {
 		sig := <-c
 		switch sig {
 		case os.Interrupt, os.Kill:
-			break
+			SendBroadcastAlert(1, "")
+			//os.Exit(0)
 		case syscall.SIGHUP:
 			break
 		}

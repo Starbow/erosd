@@ -20,7 +20,7 @@ var (
 	ErrLadderInvalidFormat            = errors.New("Matches must be a 1v1 with no observers.")
 	ErrLadderDuplicateReplay          = errors.New("The provided has been processed previously.")
 	ErrLadderGameTooShort             = errors.New("The provided game was too short.")
-	ErrLadderWrongOpponent            = errors.New("The provided game was not against your matchmade opponent. You have been forefeited.")
+	ErrLadderWrongOpponent            = errors.New("The provided game was not against your matchmade opponent. You have been forfeited.")
 	ErrLadderWrongMap                 = errors.New("The provided game was not on the correct map.")
 	ErrLadderWrongSpeed               = errors.New("The provided game was not on the Faster speed setting.")
 )
@@ -61,16 +61,19 @@ var (
 // Load maps from the database
 func loadMaps() {
 	results, err := dbMap.Select(&Map{}, "SELECT * FROM maps")
+	newMaps := make(Maps)
+
 	if err == nil {
-		maps = make(Maps)
 		for x := range results {
 			mapObject := results[x].(*Map)
-			maps[mapObject.Id] = mapObject
+			newMaps[mapObject.Id] = mapObject
 			mapObject.SanitizedName = strings.TrimSpace(strings.ToLower(mapObject.BattleNetName))
 		}
 	} else {
 		log.Panic("Error loading maps", err)
 	}
+
+	maps = newMaps
 }
 
 // Create divisions. There will be [subdivisionCount] subdivisions per division.
@@ -339,14 +342,14 @@ func NewMatchResult(replay *Replay, client *Client) (result *MatchResult, player
 		}
 
 		if !client.IsMatchedWith(opponentClient) {
-			client.ForefeitMatchmadeMatch()
+			client.ForfeitMatchmadeMatch()
 			err = ErrLadderWrongOpponent
 			matchmaker.logger.Println("Not matched with opponent", client.Id, client.Username)
 			return
 		}
 
 		if !opponentClient.IsMatchedWith(client) {
-			opponentClient.ForefeitMatchmadeMatch()
+			opponentClient.ForfeitMatchmadeMatch()
 			matchmaker.logger.Println("Not matched with opponent", opponentClient.Id, opponentClient.Username)
 		}
 

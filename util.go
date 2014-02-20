@@ -105,6 +105,7 @@ func NewMatchmakingStats(region BattleNetRegion) *protobufs.MatchmakingStats {
 
 	stats.Region = &protoRegion
 	stats.SearchingUsers = &searching
+
 	return &stats
 }
 
@@ -114,6 +115,7 @@ func NewServerStats() *protobufs.ServerStats {
 		connected int64 = int64(len(clientConnections))
 		mm        int64 = int64(len(matchmaker.participants))
 	)
+
 	x.ActiveUsers = &connected
 	x.SearchingUsers = &mm
 	x.Region = []*protobufs.MatchmakingStats{
@@ -125,4 +127,12 @@ func NewServerStats() *protobufs.ServerStats {
 	}
 
 	return &x
+}
+
+func SendBroadcastAlert(predefined int32, message string) {
+	var bufmsg protobufs.BroadcastAlert
+	bufmsg.Message = &message
+	bufmsg.Predefined = &predefined
+
+	broadcastMessage("ALT", &bufmsg)
 }
