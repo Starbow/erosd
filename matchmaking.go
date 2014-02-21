@@ -214,7 +214,6 @@ func (self *MatchmakerMatch) StartLongProcess(initiator *Client, process int) bo
 	}
 
 	go func() {
-		log.Println(matchmakingLongProcessResponseTime)
 		timer := time.NewTimer(time.Second * time.Duration(matchmakingLongProcessResponseTime))
 
 		select {
@@ -228,6 +227,7 @@ func (self *MatchmakerMatch) StartLongProcess(initiator *Client, process int) bo
 				self.longProcessProc(initiator, process)
 			}
 
+			self.longProcessActive = false
 			return
 		}
 	}()
@@ -410,20 +410,6 @@ func (mm *Matchmaker) EndMatch(id int64) {
 
 }
 
-func (mm *Matchmaker) GetMatchmakingChat(name string) (room *ChatRoom) {
-	name = cleanChatRoomName(name)
-	room, ok := chatRooms[name]
-	var err error
-	if !ok {
-		room, err = NewChatRoom(name, "", false, false)
-		if err != nil {
-			log.Println("Error creating matchmaking chat", err, name)
-		}
-	}
-
-	return room
-}
-
 //Match 2 players against each other.
 func (mm *Matchmaker) makeMatch(player1 *MatchmakerParticipant, player2 *MatchmakerParticipant) {
 	quality := player1.Quality(player2)
@@ -449,7 +435,7 @@ func (mm *Matchmaker) makeMatch(player1 *MatchmakerParticipant, player2 *Matchma
 	match.Channel = battleNetChannel
 	match.longProcessActive = false
 
-	room := mm.GetMatchmakingChat(erosChatRoom)
+	room := GetChatRoom(erosChatRoom, "", false, false)
 
 	if room != nil {
 		match.ChatRoom = erosChatRoom

@@ -18,6 +18,7 @@ var (
 	chatRooms                map[string]*ChatRoom
 	joinableChatRooms        map[string]*ChatRoom
 	fixedChatRooms           []string
+	autoJoinChatRooms        []string
 	maxChatRooms             int64 = 5
 	chatIdBase               int64 = 1
 	ErrChatRoomAlreadyExists error = errors.New("The chat room name specified already exists.")
@@ -57,6 +58,20 @@ type ChatRoom struct {
 	logFile *os.File
 
 	sync.RWMutex
+}
+
+func GetChatRoom(name string, password string, joinable, fixed bool) (room *ChatRoom) {
+	name = cleanChatRoomName(name)
+	room, ok := chatRooms[name]
+	var err error
+	if !ok {
+		room, err = NewChatRoom(name, password, joinable, fixed)
+		if err != nil {
+			log.Println("Error creating chat", err, name)
+		}
+	}
+
+	return room
 }
 
 func (cr *ChatRoom) run() {

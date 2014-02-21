@@ -233,6 +233,13 @@ func (conn *ClientConnection) read() {
 					}
 
 					conn.handlePendingMatchmaking(-1)
+
+					for _, roomname := range autoJoinChatRooms {
+						chat := GetChatRoom(roomname, "", true, true)
+						if chat != nil {
+							chat.join <- conn
+						}
+					}
 				}
 			} else {
 				return
@@ -426,7 +433,7 @@ func (conn *ClientConnection) OnLongProcessResponse(txid int, data []byte) {
 		return
 	}
 
-	var response bool = data[0] == 1
+	var response bool = data[0] == '1'
 
 	match := matchmaker.Match(conn.client.PendingMatchmakingId)
 	if match == nil {
@@ -886,7 +893,7 @@ func (conn *ClientConnection) handleMatchmakingResult(txid int, match *Matchmake
 		conn.SendServerMessage("MMR", data)
 	}
 
-	room := matchmaker.GetMatchmakingChat(match.ChatRoom)
+	room := GetChatRoom(match.ChatRoom, "", false, false)
 	if room != nil {
 		room.join <- conn
 	}

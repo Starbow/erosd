@@ -85,7 +85,8 @@ func loadConfig() error {
 		config.AddOption("database", "connection", "erosd.sqlite3")
 
 		config.AddSection("chat")
-		config.AddOption("chat", "fixedrooms", "Practice Partner Search (Bronze-Silver);Practice Partner Search (Gold-Platinum);Practice Partner Search")
+		config.AddOption("chat", "fixedrooms", "Starbow;Practice Partner Search (Bronze-Silver);Practice Partner Search (Gold-Platinum);Practice Partner Search")
+		config.AddOption("chat", "autojoin", "autojoin;Practice Partner Search (Bronze-Silver);Practice Partner Search (Gold-Platinum);Practice Partner Search")
 		config.AddOption("chat", "maxuserchats", "5")
 
 		config.AddSection("python")
@@ -148,6 +149,10 @@ func loadConfig() error {
 	cn, err := config.GetString("chat", "fixedrooms")
 	if err == nil {
 		fixedChatRooms = strings.Split(cn, ";")
+	}
+	aj, err := config.GetString("chat", "autojoin")
+	if err == nil {
+		autoJoinChatRooms = strings.Split(aj, ";")
 	}
 	maxChatRooms, _ = config.GetInt64("chat", "maxuserchats")
 	return nil
