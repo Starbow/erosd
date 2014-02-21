@@ -45,6 +45,7 @@ type ClientConnection struct {
 	lastPing          time.Time
 	lastPingChallenge string
 	latency           int64
+	lastMessage       time.Time
 
 	lastPong time.Time
 
@@ -61,6 +62,7 @@ func NewClientConnection(conn net.Conn) (clientConn *ClientConnection) {
 		reader:        bufio.NewReader(conn),
 		writer:        bufio.NewWriter(conn),
 		chatRooms:     make(map[string]*ChatRoom),
+		lastMessage:   time.Now(),
 	}
 	var source string = conn.RemoteAddr().String()
 	var logfile string = path.Join(logPath, fmt.Sprintf("%d-conn-%d.log", os.Getpid(), clientConn.id))
@@ -326,6 +328,7 @@ func (conn *ClientConnection) read() {
 // 507 - Can't send message. User offline.
 // 508 - Can't send message. Missing fields.
 // 509 - Can't create room. Name too short.
+// 510 - Can't send message. Rate limit.
 func ErrorCode(err error) string {
 	if err == ErrLadderClientNotInvolved {
 		return "304"
@@ -585,6 +588,11 @@ func (conn *ClientConnection) OnPrivateMessage(txid int, data []byte) {
 
 func (conn *ClientConnection) OnChatMessage(txid int, data []byte) {
 	defer conn.panicRecovery(txid)
+	if time.Since(conn.lastMessage).Seconds() < 1 {
+		conn.SendResponseMessage("511", txid, []byte{})
+		return
+	}
+	conn.lastMessage = time.Now()
 
 	var message protobufs.ChatMessage
 	err := Unmarshal(data, &message)
