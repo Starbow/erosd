@@ -152,6 +152,35 @@ func (c *Client) Vetoes() []*Map {
 	return v
 }
 
+func (c *Client) Refresh() {
+	clientLockouts.LockId(c.Id)
+	defer clientLockouts.UnlockId(c.Id)
+	err := dbMap.SelectOne(c, "SELECT * FROM clients WHERE id=? LIMIT 1", c.Id)
+
+	if err != nil {
+		log.Println("Error refreshing client", c.Id)
+	}
+
+	if _, ok := clientRegionStats[c.Id]; ok {
+		for x := range clientRegionStats[c.Id] {
+			clientRegionStats[c.Id][x].Refresh()
+		}
+	}
+}
+
+func (c *Client) IsOnline() bool {
+	for _, v := range clientConnections {
+		if v == nil {
+			continue
+		}
+		if v.client.Id == c.Id {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (c *ClientCache) Get(id int64) *Client {
 	c.RLock()
 
@@ -375,6 +404,13 @@ func (c *Client) RegionStats(region BattleNetRegion) (regionStats *ClientRegionS
 
 	clientRegionStats[c.Id][region] = &stats
 	return &stats, nil
+}
+
+func (crs *ClientRegionStats) Refresh() {
+	err := dbMap.SelectOne(crs, "SELECT * FROM client_region_stats WHERE id=? LIMIT 1", crs.Id)
+	if err != nil {
+		log.Println("Error refreshing CRS", crs.ClientId, crs.Id)
+	}
 }
 
 func (crs *ClientRegionStats) UserRegionStatsMessage() *protobufs.UserRegionStats {
