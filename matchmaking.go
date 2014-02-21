@@ -26,10 +26,17 @@ const (
 	MATCHMAKING_REGION_CN  = 16
 
 	MATCHMAKING_TYPE_1V1 = 1
+
+	MATCHMAKING_LONG_PROCESS_NOSHOW = 1
+	MATCHMAKING_LONG_PROCESS_DRAW   = 2
 )
 
 var (
 	matchmakingMatchTimeout int64 = 2 * 60 * 60
+	// The time before long processes can be launched
+	matchmakingLongProcessUnlockTime int64 = 60
+	// The time that a long process takes.
+	matchmakingLongProcessResponseTime int64 = 240
 )
 
 type Matchmaker struct {
@@ -78,6 +85,12 @@ type MatchmakerMatch struct {
 	Region   BattleNetRegion
 	Channel  string
 	ChatRoom string
+
+	longProcessCount     int64     `db:"-"`
+	longProcessType      int64     `db:"-"`
+	longProcessActive    bool      `db:"-"`
+	longProcessInitiator *Client   `db:"-"`
+	longProcessResponse  chan bool `db:"-"`
 }
 
 type MatchmakerMatchParticipant struct {
@@ -150,6 +163,76 @@ func NewMatchmakerParticipant(connection *ClientConnection) *MatchmakerParticipa
 		abort:      make(chan bool),
 		match:      make(chan *MatchmakerMatch),
 	}
+}
+
+func (self *MatchmakerMatch) CanLongProcess() bool {
+	return (time.Now().Unix() - self.AddTime) >= matchmakingLongProcessUnlockTime
+}
+
+func (self *MatchmakerMatch) EndMatch() {
+	matchmaker.EndMatch(self.Id)
+}
+
+func (self *MatchmakerMatch) longProcessProc(initiator *Client, process int) {
+	self.longProcessActive = false
+
+	if process == MATCHMAKING_LONG_PROCESS_DRAW {
+		matchmaker.logger.Println("Game", self.Id, "ended with no result")
+		self.EndMatch()
+	} else if process == MATCHMAKING_LONG_PROCESS_NOSHOW {
+		matchmaker.logger.Println("Game", self.Id, "ended with walkover for", initiator.Id, initiator.Username)
+		opponent := clientCache.Get(initiator.PendingMatchmakingOpponentId)
+		if opponent == nil {
+			self.EndMatch()
+		} else {
+			self.CreateForfeit(opponent)
+		}
+	}
+}
+
+func (self *MatchmakerMatch) StartLongProcess(initiator *Client, process int) bool {
+	if !self.CanLongProcess() {
+		return false
+	}
+
+	if self.longProcessActive {
+		return false
+	}
+
+	matchmaker.logger.Println("Game", self.Id, "long process", process, "requested by", initiator.Id, initiator.Username)
+
+	self.longProcessCount += 1
+	self.longProcessActive = true
+	self.longProcessInitiator = initiator
+	self.longProcessResponse = make(chan bool)
+
+	// If they're spamming the feature just abort the match.
+	if self.longProcessCount == 3 {
+		matchmaker.logger.Println("Game", self.Id, "long process spam aborted game")
+		self.EndMatch()
+		return true
+	}
+
+	go func() {
+		log.Println(matchmakingLongProcessResponseTime)
+		timer := time.NewTimer(time.Second * time.Duration(matchmakingLongProcessResponseTime))
+
+		select {
+		case <-timer.C:
+			self.longProcessProc(initiator, process)
+
+		case response := <-self.longProcessResponse:
+			matchmaker.logger.Println("Game", self.Id, "long process client response:", response)
+			// Client has responded to us. Continue if they confirm the long process.
+			if response {
+				self.longProcessProc(initiator, process)
+			}
+
+			return
+		}
+	}()
+
+	return true
 }
 
 func (mmm *MatchmakerMatch) CreateForfeit(client *Client) (result *MatchResult, players []*MatchResultPlayer, err error) {
@@ -249,6 +332,7 @@ func (mm *Matchmaker) Match(id int64) *MatchmakerMatch {
 		}
 
 		mm.matchCache[id] = match
+		match.longProcessActive = false
 	}
 
 	return match
@@ -363,6 +447,7 @@ func (mm *Matchmaker) makeMatch(player1 *MatchmakerParticipant, player2 *Matchma
 	match.Region = player1.region
 	match.MapId = selectedMap.Id
 	match.Channel = battleNetChannel
+	match.longProcessActive = false
 
 	room := mm.GetMatchmakingChat(erosChatRoom)
 

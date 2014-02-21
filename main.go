@@ -21,6 +21,7 @@ var (
 	matchmaker           *Matchmaker
 	testMode             bool
 	logPath              string
+	replayPath           string
 )
 
 func random(min, max int) int {
@@ -60,6 +61,7 @@ func loadConfig() error {
 		config.AddOption("erosd", "allowsimulations", "false")
 		config.AddOption("erosd", "testmode", "false")
 		config.AddOption("erosd", "logpath", "logs")
+		config.AddOption("erosd", "logpath", "replays")
 
 		config.AddSection("ladderdivisions")
 		config.AddOption("ladderdivisions", "divisions", "4")
@@ -68,6 +70,8 @@ func loadConfig() error {
 		config.AddOption("ladderdivisions", "divisionnames", "Bronze;Silver;Gold;Platinum;Diamond;Master;Grand Master")
 
 		config.AddSection("ladder")
+		config.AddOption("ladder", "longprocessresponsetime", "240")
+		config.AddOption("ladder", "longprocessunlocktime", "60")
 		config.AddOption("ladder", "startingpoints", "1250")
 		config.AddOption("ladder", "winpointsbase", "100")
 		config.AddOption("ladder", "winpointsincrement", "25")
@@ -106,6 +110,7 @@ func loadConfig() error {
 	testMode, _ = config.GetBool("erosd", "testmode")
 	allowsimulations, _ = config.GetBool("erosd", "allowsimulations")
 	logPath, _ = config.GetString("erosd", "logpath")
+	replayPath, _ = config.GetString("erosd", "replaypath")
 
 	divisionCount, _ = config.GetInt64("ladderdivisions", "divisions")
 	subdivisionCount, _ = config.GetInt64("ladderdivisions", "subdivisions")
@@ -116,6 +121,8 @@ func loadConfig() error {
 	}
 
 	matchmakingMatchTimeout, _ = config.GetInt64("ladder", "matchtimeout")
+	matchmakingLongProcessUnlockTime, _ = config.GetInt64("ladder", "longprocessunlocktime")
+	matchmakingLongProcessResponseTime, _ = config.GetInt64("ladder", "longprocessresponsetime")
 	ladderStartingPoints, _ = config.GetInt64("ladder", "startingpoints")
 	ladderWinPointsBase, _ = config.GetInt64("ladder", "winpointsbase")
 	ladderWinPointsIncrement, _ = config.GetFloat("ladder", "winpointsincrement")

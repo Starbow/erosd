@@ -432,6 +432,8 @@ type MatchmakingResult struct {
 	Channel          *string    `protobuf:"bytes,5,req,name=channel" json:"channel,omitempty"`
 	ChatRoom         *string    `protobuf:"bytes,6,req,name=chat_room" json:"chat_room,omitempty"`
 	Map              *Map       `protobuf:"bytes,7,req,name=map" json:"map,omitempty"`
+	LongUnlockTime   *int64     `protobuf:"varint,8,req,name=long_unlock_time" json:"long_unlock_time,omitempty"`
+	LongResponseTime *int64     `protobuf:"varint,9,req,name=long_response_time" json:"long_response_time,omitempty"`
 	XXX_unrecognized []byte     `json:"-"`
 }
 
@@ -486,6 +488,20 @@ func (m *MatchmakingResult) GetMap() *Map {
 		return m.Map
 	}
 	return nil
+}
+
+func (m *MatchmakingResult) GetLongUnlockTime() int64 {
+	if m != nil && m.LongUnlockTime != nil {
+		return *m.LongUnlockTime
+	}
+	return 0
+}
+
+func (m *MatchmakingResult) GetLongResponseTime() int64 {
+	if m != nil && m.LongResponseTime != nil {
+		return *m.LongResponseTime
+	}
+	return 0
 }
 
 type ChatRoomInfo struct {

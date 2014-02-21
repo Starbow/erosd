@@ -81,10 +81,11 @@ func NewClientConnection(conn net.Conn) (clientConn *ClientConnection) {
 
 func DisconnectClient(id int64, command string) {
 	for _, v := range clientConnections {
-
-		if v.client.Id == id {
-			v.SendServerMessage(command, []byte{})
-			v.Close()
+		if v != nil {
+			if v.client.Id == id {
+				v.SendServerMessage(command, []byte{})
+				v.Close()
+			}
 		}
 	}
 }
@@ -130,6 +131,24 @@ func (conn *ClientConnection) read() {
 
 		if conn.logFile != nil {
 			conn.logFile.Close()
+		}
+
+		// Accept draw/noshow if we're marked as that.
+		if conn.client.PendingMatchmakingId == 0 {
+			return
+		}
+
+		match := matchmaker.Match(conn.client.PendingMatchmakingId)
+		if match == nil {
+			return
+		}
+
+		if !match.longProcessActive {
+			return
+		}
+
+		if match.longProcessInitiator.Id != conn.client.Id {
+			match.longProcessResponse <- true
 		}
 	}()
 
@@ -249,6 +268,10 @@ func (conn *ClientConnection) read() {
 				go conn.OnPrivateMessage(txid, data.Bytes())
 			case "UCI":
 				go conn.OnChatIndex(txid, data.Bytes())
+			case "RLP":
+				go conn.OnLongProcessRequest(txid, data.Bytes())
+			case "LPR":
+				go conn.OnLongProcessResponse(txid, data.Bytes())
 			}
 		}
 	}
@@ -286,6 +309,7 @@ func (conn *ClientConnection) read() {
 // 311 - The game was not played on Faster.
 // 401 - Can't queue on this region without a character on this region.
 // 402 - The matchmaking request was cancelled.
+// 403 - Long process unavailable.
 // 501 - Chat room not joinable.
 // 502 - Bad password.
 // 503 - Can't create. Already exists.
@@ -330,6 +354,114 @@ func ErrorCode(err error) string {
 
 func (conn *ClientConnection) Close() {
 	conn.conn.Close()
+}
+
+func (conn *ClientConnection) OnLongProcessRequest(txid int, data []byte) {
+	defer conn.panicRecovery(txid)
+
+	if conn.client.PendingMatchmakingId == 0 || len(data) == 0 {
+		conn.logger.Println("Bad command", conn.client.PendingMatchmakingId, len(data))
+		conn.SendResponseMessage("403", txid, []byte{})
+		return
+	}
+
+	var process int = int(data[0])
+
+	if process != MATCHMAKING_LONG_PROCESS_DRAW && process != MATCHMAKING_LONG_PROCESS_NOSHOW {
+		conn.logger.Println("Bad data")
+		conn.SendResponseMessage("403", txid, []byte{})
+		return
+	}
+
+	match := matchmaker.Match(conn.client.PendingMatchmakingId)
+	if match == nil {
+		conn.logger.Println("Bad match")
+		conn.SendResponseMessage("403", txid, []byte{})
+		return
+	}
+
+	opponent := clientCache.Get(conn.client.PendingMatchmakingOpponentId)
+	if opponent == nil || opponent.PendingMatchmakingOpponentId != conn.client.Id {
+		conn.logger.Println("Mismatch. Ending match.")
+		conn.SendResponseMessage("RLP", txid, []byte{})
+		match.EndMatch()
+		return
+	}
+
+	if !opponent.IsOnline() {
+		conn.SendResponseMessage("RLP", txid, []byte{})
+		if process == MATCHMAKING_LONG_PROCESS_DRAW {
+			match.EndMatch()
+		} else if process == MATCHMAKING_LONG_PROCESS_NOSHOW {
+			opponent.ForfeitMatchmadeMatch()
+		}
+
+		return
+	}
+
+	if !match.CanLongProcess() || !match.StartLongProcess(conn.client, process) {
+		conn.logger.Println("Failed to start")
+		conn.SendResponseMessage("403", txid, []byte{})
+		return
+	}
+
+	if process == MATCHMAKING_LONG_PROCESS_DRAW {
+		// Long process draw
+		opponent.Broadcast("LPD", nil)
+	} else if process == MATCHMAKING_LONG_PROCESS_NOSHOW {
+		// Long process forefeit
+		opponent.Broadcast("LPF", nil)
+	}
+
+	//Request Long Process
+	conn.SendResponseMessage("RLP", txid, []byte{})
+}
+
+func (conn *ClientConnection) OnLongProcessResponse(txid int, data []byte) {
+	defer conn.panicRecovery(txid)
+
+	if conn.client.PendingMatchmakingId == 0 || len(data) == 0 {
+		conn.logger.Println("Bad command", conn.client.PendingMatchmakingId, len(data))
+		conn.SendResponseMessage("403", txid, []byte{})
+		return
+	}
+
+	var response bool = data[0] == 1
+
+	match := matchmaker.Match(conn.client.PendingMatchmakingId)
+	if match == nil {
+		conn.logger.Println("Bad match")
+		conn.SendResponseMessage("403", txid, []byte{})
+		return
+	}
+
+	if !match.longProcessActive {
+		conn.logger.Println("Long process not active")
+		conn.SendResponseMessage("403", txid, []byte{})
+		return
+	}
+
+	if match.longProcessInitiator.Id == conn.client.Id {
+		conn.logger.Println("Response is from initiator", match.Id)
+		conn.SendResponseMessage("403", txid, []byte{})
+		return
+	}
+
+	go func() {
+		match.longProcessResponse <- response
+	}()
+	go func() {
+		if response {
+			// Long Process Accept
+			match.longProcessInitiator.Broadcast("LPA", nil)
+		} else {
+			// Long Process Reject
+			match.longProcessInitiator.Broadcast("LPR", nil)
+		}
+	}()
+
+	// Long process response
+	conn.SendResponseMessage("LPR", txid, []byte{})
 }
 
 func (conn *ClientConnection) OnChatJoin(txid int, data []byte) {
@@ -744,6 +876,8 @@ func (conn *ClientConnection) handleMatchmakingResult(txid int, match *Matchmake
 	res.Quality = &match.Quality
 	res.Opponent = opponentStats
 	res.Map = mapInfo
+	res.LongUnlockTime = &matchmakingLongProcessUnlockTime
+	res.LongResponseTime = &matchmakingLongProcessResponseTime
 
 	data, _ := Marshal(&res)
 	if txid > 0 {

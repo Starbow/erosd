@@ -83,6 +83,8 @@ message MatchmakingResult {
 	required string channel = 5;
 	required string chat_room = 6;
 	required Map map = 7;
+	required int64 long_unlock_time = 8;
+	required int64 long_response_time = 9;
 }
 
 message ChatRoomInfo {
