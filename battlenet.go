@@ -21,7 +21,7 @@ type BattleNetCharacterCache struct {
 }
 
 var (
-	battleNetProfileRegex = regexp.MustCompile(`^http://((www\.battlenet\.com\.(cn))|((\w+)\.battle\.net))/sc2/\w+/profile/(\d+)/(\d+)/(.+)/$`)
+	battleNetProfileRegex = regexp.MustCompile(`((www\.battlenet\.com\.(cn))|((\w+)\.battle\.net))/sc2/\w+/profile/(\d+)/(\d+)/(.+)/$`)
 	inGameProfileRegex    = regexp.MustCompile(`^starcraft://profile/\d/\d+$`)
 	ErrBadRegion          = errors.New("A bad region code was passed.")
 	ErrBattleNetLookup    = errors.New("An error occured while Battle.Net lookupinginging")
