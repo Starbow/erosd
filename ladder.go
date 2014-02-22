@@ -217,17 +217,17 @@ type MapVeto struct {
 
 type MatchResult struct {
 	Id                int64
-	MapId             int64 // Map
-	MatchmakerMatchId int64
+	MapId             *int64 // Map
+	MatchmakerMatchId *int64
 	DateTime          int64 // unix
 	Region            BattleNetRegion
 }
 
 type MatchResultPlayer struct {
 	Id               int64
-	MatchId          int64
-	ClientId         int64
-	CharacterId      int64
+	MatchId          *int64
+	ClientId         *int64
+	CharacterId      *int64
 	PointsBefore     int64
 	PointsAfter      int64
 	PointsDifference int64
@@ -237,7 +237,7 @@ type MatchResultPlayer struct {
 
 type MatchResultSource struct {
 	Id         int64
-	MatchId    int64
+	MatchId    *int64
 	ReplayHash string
 }
 
@@ -299,7 +299,7 @@ func NewMatchResult(replay *Replay, client *Client) (result *MatchResult, player
 			return
 		}
 
-		if mrp.ClientId == client.Id {
+		if mrp.ClientId != nil && *mrp.ClientId == client.Id {
 			player = mrp
 		} else {
 			opponent = mrp
@@ -333,7 +333,10 @@ func NewMatchResult(replay *Replay, client *Client) (result *MatchResult, player
 	//clientLockouts.LockIds(player.ClientId, opponent.ClientId)
 	//clientLockouts.UnlockIds(player.ClientId, opponent.ClientId)
 	if player.Victory {
-		opponentClient := clientCache.Get(opponent.ClientId)
+		var opponentClient *Client = nil
+		if opponent.ClientId != nil {
+			opponentClient = clientCache.Get(*opponent.ClientId)
+		}
 
 		if opponentClient == nil {
 			err = ErrLadderPlayerNotFound // new error for lookup fail
@@ -355,8 +358,15 @@ func NewMatchResult(replay *Replay, client *Client) (result *MatchResult, player
 
 		var res MatchResult
 		res.DateTime = replay.UnixTimestamp
-		res.MapId = m.Id
-		res.MatchmakerMatchId = client.PendingMatchmakingId
+		res.MapId = &m.Id
+
+		if client.PendingMatchmakingId != nil {
+			pendingMMID := *client.PendingMatchmakingId
+			res.MatchmakerMatchId = &pendingMMID
+		} else {
+			res.MatchmakerMatchId = nil
+		}
+
 		res.Region = region
 
 		err = dbMap.Insert(&res)
@@ -367,7 +377,7 @@ func NewMatchResult(replay *Replay, client *Client) (result *MatchResult, player
 		}
 
 		var source MatchResultSource
-		source.MatchId = res.Id
+		source.MatchId = &res.Id
 		source.ReplayHash = replay.Filehash
 		dbMap.Insert(&source)
 
@@ -377,8 +387,8 @@ func NewMatchResult(replay *Replay, client *Client) (result *MatchResult, player
 			return
 		}
 
-		player.MatchId = res.Id
-		opponent.MatchId = res.Id
+		player.MatchId = &res.Id
+		opponent.MatchId = &res.Id
 
 		playerRegion, _ := client.RegionStats(region)
 		opponentRegion, _ := opponentClient.RegionStats(region)
@@ -407,10 +417,10 @@ func NewMatchResult(replay *Replay, client *Client) (result *MatchResult, player
 		player.PointsDifference = player.PointsAfter - player.PointsBefore
 		opponent.PointsDifference = opponent.PointsAfter - opponent.PointsBefore
 
-		client.PendingMatchmakingId = 0
-		client.PendingMatchmakingOpponentId = 0
-		opponentClient.PendingMatchmakingId = 0
-		opponentClient.PendingMatchmakingOpponentId = 0
+		client.PendingMatchmakingId = nil
+		client.PendingMatchmakingOpponentId = nil
+		opponentClient.PendingMatchmakingId = nil
+		opponentClient.PendingMatchmakingOpponentId = nil
 		_, uerr := dbMap.Update(client, opponentClient)
 		if uerr != nil {
 			err = ErrDbInsert
@@ -494,7 +504,7 @@ func NewMatchResultPlayer(replay *Replay, player *ReplayPlayer) (matchplayer *Ma
 
 	var mrp MatchResultPlayer
 
-	mrp.CharacterId = character.Id
+	mrp.CharacterId = &character.Id
 	mrp.ClientId = character.ClientId
 	mrp.Race = player.GameRace
 	mrp.Victory = player.Victory == "Win"
@@ -506,7 +516,7 @@ func (mr *MatchResult) MatchResultMessage(players []*MatchResultPlayer) *protobu
 	var (
 		message    protobufs.MatchResult
 		region     protobufs.Region = protobufs.Region(mr.Region)
-		mapMessage *protobufs.Map   = maps[mr.MapId].MapMessage()
+		mapMessage *protobufs.Map   = maps[*mr.MapId].MapMessage()
 	)
 
 	message.Region = &region
@@ -523,12 +533,15 @@ func (mr *MatchResult) MatchResultMessage(players []*MatchResultPlayer) *protobu
 func (mrp *MatchResultPlayer) MatchParticipantMessage() *protobufs.MatchParticipant {
 	var (
 		message   protobufs.MatchParticipant
-		client    *Client
-		character *BattleNetCharacter
+		client    *Client             = nil
+		character *BattleNetCharacter = nil
 	)
-
-	client = clientCache.Get(mrp.ClientId)
-	character = characterCache.GetId(mrp.CharacterId)
+	if mrp.ClientId != nil {
+		client = clientCache.Get(*mrp.ClientId)
+	}
+	if mrp.CharacterId != nil {
+		character = characterCache.GetId(*mrp.CharacterId)
+	}
 
 	message.PointsBefore = &mrp.PointsBefore
 	message.PointsAfter = &mrp.PointsAfter

@@ -1,7 +1,6 @@
 package main
 
 import (
-	//"log"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -162,7 +161,7 @@ type BattleNetAPIProfile struct {
 
 type BattleNetCharacter struct {
 	Id                            int64
-	ClientId                      int64
+	ClientId                      *int64
 	AddTime                       int64
 	Region                        BattleNetRegion
 	SubRegion                     int

@@ -50,7 +50,7 @@ func NewSimulatedUser(number, points, radius int64) *SimulatedUser {
 		log.Println("Creating new character for user", username, "in region", region)
 		character = NewBattleNetCharacter(region, 1, int(site_user.Id), site_user.Username)
 		character.IsVerified = true
-		character.ClientId = client.Id
+		character.ClientId = &client.Id
 		err := dbMap.Insert(character)
 		if err != nil {
 			log.Println(err)
@@ -111,8 +111,8 @@ func (user *SimulatedUser) Run() {
 			opponent := el.opponent
 
 			// Update the database record for the client
-			user.client.PendingMatchmakingId = match.Id
-			user.client.PendingMatchmakingOpponentId = opponent.client.Id
+			user.client.PendingMatchmakingId = &match.Id
+			user.client.PendingMatchmakingOpponentId = &opponent.client.Id
 			user.client.PendingMatchmakingRegion = int64(match.Region)
 			dbMap.Update(user.client)
 
@@ -135,8 +135,8 @@ func (user *SimulatedUser) Run() {
 
 				match_result := &MatchResult{
 					DateTime:          time.Now().Unix(),
-					MapId:             bnet_map.Id,
-					MatchmakerMatchId: match.Id,
+					MapId:             &bnet_map.Id,
+					MatchmakerMatchId: &match.Id,
 					Region:            user.client.LadderSearchRegion,
 				}
 				err := dbMap.Insert(match_result)
@@ -150,17 +150,17 @@ func (user *SimulatedUser) Run() {
 
 				// Create player record for us
 				userPlayer := &MatchResultPlayer{
-					MatchId:     match.Id,
-					ClientId:    user.client.Id,
-					CharacterId: character.Id,
+					MatchId:     &match.Id,
+					ClientId:    &user.client.Id,
+					CharacterId: &character.Id,
 					Race:        races[rand.Intn(len(races))],
 				}
 
 				// Create player record for them
 				opponentPlayer := &MatchResultPlayer{
-					MatchId:     match.Id,
-					ClientId:    opponent.client.Id,
-					CharacterId: get_random_region_character(opponent.client, match_result.Region).Id,
+					MatchId:     &match.Id,
+					ClientId:    &opponent.client.Id,
+					CharacterId: &get_random_region_character(opponent.client, match_result.Region).Id,
 					Race:        races[rand.Intn(len(races))],
 				}
 
@@ -189,10 +189,10 @@ func (user *SimulatedUser) Run() {
 				opponentPlayer.PointsAfter = opponentRegion.LadderPoints
 
 				// Reset our queue states
-				user.client.PendingMatchmakingId = 0
-				user.client.PendingMatchmakingOpponentId = 0
-				opponent.client.PendingMatchmakingId = 0
-				opponent.client.PendingMatchmakingOpponentId = 0
+				user.client.PendingMatchmakingId = nil
+				user.client.PendingMatchmakingOpponentId = nil
+				opponent.client.PendingMatchmakingId = nil
+				opponent.client.PendingMatchmakingOpponentId = nil
 
 				// Save our work
 				err = dbMap.Insert(userPlayer, opponentPlayer)

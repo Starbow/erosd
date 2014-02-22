@@ -78,7 +78,7 @@ type MatchmakerPotentialMatch struct {
 
 type MatchmakerMatch struct {
 	Id       int64
-	MapId    int64
+	MapId    *int64
 	AddTime  int64
 	EndTime  int64
 	Quality  float64
@@ -95,8 +95,8 @@ type MatchmakerMatch struct {
 
 type MatchmakerMatchParticipant struct {
 	Id           int64
-	MatchId      int64
-	ClientId     int64
+	MatchId      *int64
+	ClientId     *int64
 	Points       int64
 	RatingMean   float64
 	RatingStdDev float64
@@ -181,7 +181,10 @@ func (self *MatchmakerMatch) longProcessProc(initiator *Client, process int) {
 		self.EndMatch()
 	} else if process == MATCHMAKING_LONG_PROCESS_NOSHOW {
 		matchmaker.logger.Println("Game", self.Id, "ended with walkover for", initiator.Id, initiator.Username)
-		opponent := clientCache.Get(initiator.PendingMatchmakingOpponentId)
+		var opponent *Client
+		if initiator.PendingMatchmakingOpponentId != nil {
+			opponent = clientCache.Get(*initiator.PendingMatchmakingOpponentId)
+		}
 		if opponent == nil {
 			self.EndMatch()
 		} else {
@@ -241,7 +244,7 @@ func (mmm *MatchmakerMatch) CreateForfeit(client *Client) (result *MatchResult, 
 	result = &MatchResult{
 		DateTime:          time.Now().Unix(),
 		MapId:             mmm.MapId,
-		MatchmakerMatchId: mmm.Id,
+		MatchmakerMatchId: &mmm.Id,
 		Region:            mmm.Region,
 	}
 
@@ -254,8 +257,8 @@ func (mmm *MatchmakerMatch) CreateForfeit(client *Client) (result *MatchResult, 
 	var opponentClient *Client
 	var player, opponent MatchResultPlayer
 	for x := range participants {
-		if participants[x].ClientId != client.Id {
-			opponentClient = clientCache.Get(participants[x].ClientId)
+		if participants[x].ClientId != nil && *participants[x].ClientId != client.Id {
+			opponentClient = clientCache.Get(*participants[x].ClientId)
 		}
 	}
 
@@ -268,13 +271,13 @@ func (mmm *MatchmakerMatch) CreateForfeit(client *Client) (result *MatchResult, 
 		return
 	}
 
-	player.MatchId = result.Id
-	player.ClientId = client.Id
+	player.MatchId = &result.Id
+	player.ClientId = &client.Id
 	player.Victory = false
 	player.Race = "Forfeit"
 
-	opponent.MatchId = result.Id
-	opponent.ClientId = opponentClient.Id
+	opponent.MatchId = &result.Id
+	opponent.ClientId = &opponentClient.Id
 	opponent.Victory = true
 	opponent.Race = "Walkover"
 
@@ -302,10 +305,10 @@ func (mmm *MatchmakerMatch) CreateForfeit(client *Client) (result *MatchResult, 
 	player.PointsDifference = player.PointsAfter - player.PointsBefore
 	opponent.PointsDifference = opponent.PointsAfter - opponent.PointsBefore
 
-	client.PendingMatchmakingId = 0
-	client.PendingMatchmakingOpponentId = 0
-	opponentClient.PendingMatchmakingId = 0
-	opponentClient.PendingMatchmakingOpponentId = 0
+	client.PendingMatchmakingId = nil
+	client.PendingMatchmakingOpponentId = nil
+	opponentClient.PendingMatchmakingId = nil
+	opponentClient.PendingMatchmakingOpponentId = nil
 	_, uerr := dbMap.Update(client, opponentClient)
 	if uerr != nil {
 		err = ErrDbInsert
@@ -391,11 +394,13 @@ func (mm *Matchmaker) EndMatch(id int64) {
 				log.Println("Nil participant for", id)
 				continue
 			}
-
-			client := clientCache.Get(participants[x].ClientId)
-			if client.PendingMatchmakingId == id {
-				client.PendingMatchmakingId = 0
-				client.PendingMatchmakingOpponentId = 0
+			var client *Client = nil
+			if participants[x].ClientId != nil {
+				client = clientCache.Get(*participants[x].ClientId)
+			}
+			if client.PendingMatchmakingId != nil && *client.PendingMatchmakingId == id {
+				client.PendingMatchmakingId = nil
+				client.PendingMatchmakingOpponentId = nil
 				client.PendingMatchmakingRegion = 0
 
 				dbMap.Update(client)
@@ -431,7 +436,7 @@ func (mm *Matchmaker) makeMatch(player1 *MatchmakerParticipant, player2 *Matchma
 	match.AddTime = time.Now().Unix()
 	match.Quality = quality
 	match.Region = player1.region
-	match.MapId = selectedMap.Id
+	match.MapId = &selectedMap.Id
 	match.Channel = battleNetChannel
 	match.longProcessActive = false
 
@@ -448,10 +453,10 @@ func (mm *Matchmaker) makeMatch(player1 *MatchmakerParticipant, player2 *Matchma
 		var p1, p2 MatchmakerMatchParticipant
 		p1time := time.Since(player1.enrollTime)
 		p2time := time.Since(player2.enrollTime)
-		p1.MatchId = match.Id
-		p2.MatchId = match.Id
-		p1.ClientId = player1.connection.client.Id
-		p2.ClientId = player2.connection.client.Id
+		p1.MatchId = &match.Id
+		p2.MatchId = &match.Id
+		p1.ClientId = &player1.connection.client.Id
+		p2.ClientId = &player2.connection.client.Id
 		p1.Points = player1.points
 		p2.Points = player2.points
 		p1.RatingMean = player1.connection.client.RatingMean

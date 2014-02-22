@@ -94,7 +94,10 @@ func (conn *AdminConnection) read() {
 			return
 		}
 
-		opponent := clientCache.Get(client.PendingMatchmakingOpponentId)
+		var opponent *Client = nil
+		if client.PendingMatchmakingOpponentId != nil {
+			opponent = clientCache.Get(*client.PendingMatchmakingOpponentId)
+		}
 		client.ForfeitMatchmadeMatch()
 
 		if len(tokens) > 2 {
@@ -127,8 +130,8 @@ func (conn *AdminConnection) read() {
 			conn.writer.WriteString("FAIL Bad Client")
 			return
 		}
-		if client.PendingMatchmakingId > 0 {
-			matchmaker.EndMatch(client.PendingMatchmakingId)
+		if client.PendingMatchmakingId != nil {
+			matchmaker.EndMatch(*client.PendingMatchmakingId)
 
 			if len(tokens) > 2 {
 				message := strings.Join(tokens[2:], " ")

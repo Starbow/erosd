@@ -136,11 +136,11 @@ func (conn *ClientConnection) read() {
 		}
 
 		// Accept draw/noshow if we're marked as that.
-		if conn.client.PendingMatchmakingId == 0 {
+		if conn.client.PendingMatchmakingId == nil {
 			return
 		}
 
-		match := matchmaker.Match(conn.client.PendingMatchmakingId)
+		match := matchmaker.Match(*conn.client.PendingMatchmakingId)
 		if match == nil {
 			return
 		}
@@ -369,7 +369,7 @@ func (conn *ClientConnection) Close() {
 func (conn *ClientConnection) OnLongProcessRequest(txid int, data []byte) {
 	defer conn.panicRecovery(txid)
 
-	if conn.client.PendingMatchmakingId == 0 || len(data) == 0 {
+	if conn.client.PendingMatchmakingId == nil || len(data) == 0 {
 		conn.logger.Println("Bad command", conn.client.PendingMatchmakingId, len(data))
 		conn.SendResponseMessage("403", txid, []byte{})
 		return
@@ -383,15 +383,17 @@ func (conn *ClientConnection) OnLongProcessRequest(txid int, data []byte) {
 		return
 	}
 
-	match := matchmaker.Match(conn.client.PendingMatchmakingId)
+	match := matchmaker.Match(*conn.client.PendingMatchmakingId)
 	if match == nil {
 		conn.logger.Println("Bad match")
 		conn.SendResponseMessage("403", txid, []byte{})
 		return
 	}
-
-	opponent := clientCache.Get(conn.client.PendingMatchmakingOpponentId)
-	if opponent == nil || opponent.PendingMatchmakingOpponentId != conn.client.Id {
+	var opponent *Client = nil
+	if conn.client.PendingMatchmakingOpponentId != nil {
+		opponent = clientCache.Get(*conn.client.PendingMatchmakingOpponentId)
+	}
+	if opponent == nil || *opponent.PendingMatchmakingOpponentId != conn.client.Id {
 		conn.logger.Println("Mismatch. Ending match.")
 		conn.SendResponseMessage("RLP", txid, []byte{})
 		match.EndMatch()
@@ -430,7 +432,7 @@ func (conn *ClientConnection) OnLongProcessRequest(txid int, data []byte) {
 func (conn *ClientConnection) OnLongProcessResponse(txid int, data []byte) {
 	defer conn.panicRecovery(txid)
 
-	if conn.client.PendingMatchmakingId == 0 || len(data) == 0 {
+	if conn.client.PendingMatchmakingId == nil || len(data) == 0 {
 		conn.logger.Println("Bad command", conn.client.PendingMatchmakingId, len(data))
 		conn.SendResponseMessage("403", txid, []byte{})
 		return
@@ -438,7 +440,7 @@ func (conn *ClientConnection) OnLongProcessResponse(txid int, data []byte) {
 
 	var response bool = data[0] == '1'
 
-	match := matchmaker.Match(conn.client.PendingMatchmakingId)
+	match := matchmaker.Match(*conn.client.PendingMatchmakingId)
 	if match == nil {
 		conn.logger.Println("Bad match")
 		conn.SendResponseMessage("403", txid, []byte{})
@@ -759,7 +761,7 @@ func (conn *ClientConnection) OnAddCharacter(txid int, data []byte) {
 	}
 
 	character := NewBattleNetCharacter(region, subregion, id, name)
-	character.ClientId = conn.client.Id
+	character.ClientId = &conn.client.Id
 	character.IsVerified = false
 	err = character.SetVerificationPortrait()
 
@@ -808,7 +810,7 @@ func (conn *ClientConnection) OnUpdateCharacter(txid int, data []byte) {
 		return
 	}
 
-	if character.ClientId != conn.client.Id {
+	if character.ClientId == nil || *character.ClientId != conn.client.Id {
 		conn.SendResponseMessage("201", txid, []byte{})
 		return
 	}
@@ -880,7 +882,7 @@ func (conn *ClientConnection) OnRemoveCharacter(txid int, data []byte) {
 		return
 	}
 
-	if character.ClientId != conn.client.Id {
+	if character.ClientId == nil || *character.ClientId != conn.client.Id {
 		conn.SendResponseMessage("201", txid, []byte{})
 		return
 	}
@@ -924,11 +926,14 @@ func (conn *ClientConnection) handleMatchmakingResult(txid int, match *Matchmake
 }
 
 func (conn *ClientConnection) handlePendingMatchmaking(txid int) bool {
-	if conn.client.PendingMatchmakingId > 0 {
-		match := matchmaker.Match(conn.client.PendingMatchmakingId)
+	if conn.client.PendingMatchmakingId != nil {
+		match := matchmaker.Match(*conn.client.PendingMatchmakingId)
 
 		if match != nil {
-			opponent := clientCache.Get(conn.client.PendingMatchmakingOpponentId)
+			var opponent *Client = nil
+			if conn.client.PendingMatchmakingOpponentId != nil {
+				opponent = clientCache.Get(*conn.client.PendingMatchmakingOpponentId)
+			}
 			if opponent != nil {
 				if opponent.PendingMatchmakingId == conn.client.PendingMatchmakingId {
 					since := time.Now().Unix() - match.AddTime
@@ -942,10 +947,10 @@ func (conn *ClientConnection) handlePendingMatchmaking(txid int) bool {
 							matchmaker.logger.Println("Cleaning up old match for", conn.client.Username)
 
 						}
-						matchmaker.EndMatch(conn.client.PendingMatchmakingId)
+						matchmaker.EndMatch(*conn.client.PendingMatchmakingId)
 					} else {
 						// Match is active. Send the old result.
-						selectedMap := maps[match.MapId]
+						selectedMap := maps[*match.MapId]
 						conn.handleMatchmakingResult(txid, match, opponent, selectedMap, 0)
 						return true
 					}
@@ -1002,8 +1007,8 @@ func (conn *ClientConnection) OnQueueMatchmaking(txid int, data []byte) {
 				opponent := el.opponent
 				// We have an opponent! Great success.
 
-				conn.client.PendingMatchmakingId = match.Id
-				conn.client.PendingMatchmakingOpponentId = opponent.client.Id
+				conn.client.PendingMatchmakingId = &match.Id
+				conn.client.PendingMatchmakingOpponentId = &opponent.client.Id
 				conn.client.PendingMatchmakingRegion = int64(match.Region)
 
 				dbMap.Update(conn.client)
@@ -1033,8 +1038,8 @@ func (conn *ClientConnection) OnDequeueMatchmaking(txid int, data []byte) {
 func (conn *ClientConnection) OnForfeitMatchmaking(txid int, data []byte) {
 	defer conn.panicRecovery(txid)
 
-	if conn.client.PendingMatchmakingId > 0 {
-		match := matchmaker.Match(conn.client.PendingMatchmakingId)
+	if conn.client.PendingMatchmakingId != nil {
+		match := matchmaker.Match(*conn.client.PendingMatchmakingId)
 		if match != nil {
 			//result, players, err :=
 			match.CreateForfeit(conn.client)

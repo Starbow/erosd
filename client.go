@@ -90,9 +90,9 @@ type Client struct {
 	LadderSearchRadius int64           `db:"ladder_search_radius"` // Search Radius.
 	LadderSearchRegion BattleNetRegion `db:"ladder_search_region"`
 
-	PendingMatchmakingId         int64 `db:"matchmaking_pending_match_id"`
-	PendingMatchmakingOpponentId int64 `db:"matchmaking_pending_opponent_id"`
-	PendingMatchmakingRegion     int64 `db:"matchmaking_pending_region"`
+	PendingMatchmakingId         *int64 `db:"matchmaking_pending_match_id"`
+	PendingMatchmakingOpponentId *int64 `db:"matchmaking_pending_opponent_id"`
+	PendingMatchmakingRegion     int64  `db:"matchmaking_pending_region"`
 
 	Wins      int64 `db:"ladder_wins"`
 	Losses    int64 `db:"ladder_losses"`
@@ -101,8 +101,8 @@ type Client struct {
 }
 
 type ClientRegionStats struct {
-	Id       int64 `db:"id"`
-	ClientId int64 `db:"client_id"`
+	Id       int64  `db:"id"`
+	ClientId *int64 `db:"client_id"`
 
 	Region BattleNetRegion `db:"region"`
 
@@ -251,13 +251,16 @@ func (client *Client) Defeat(opponent *Client, region BattleNetRegion) float64 {
 }
 
 func (c *Client) ForfeitMatchmadeMatch() {
-	if c.PendingMatchmakingId > 0 {
-		opponent := clientCache.Get(c.PendingMatchmakingOpponentId)
-		if opponent.PendingMatchmakingId == c.PendingMatchmakingId {
+	if c.PendingMatchmakingId != nil {
+		var opponent *Client = nil
+		if c.PendingMatchmakingOpponentId != nil {
+			opponent = clientCache.Get(*c.PendingMatchmakingOpponentId)
+		}
+		if opponent.PendingMatchmakingId != nil && *opponent.PendingMatchmakingId == *c.PendingMatchmakingId {
 			opponent.Defeat(c, BattleNetRegion(c.PendingMatchmakingRegion))
 			c.Forfeits += 1
 			opponent.Walkovers += 1
-			matchmaker.EndMatch(c.PendingMatchmakingId)
+			matchmaker.EndMatch(*c.PendingMatchmakingId)
 			dbMap.Update(c, opponent)
 			log.Println(c.Username, "forfeited")
 
@@ -270,32 +273,32 @@ func (c *Client) ForfeitMatchmadeMatch() {
 				opponent.BroadcastMatchmakingIdle()
 			}()
 		} else {
-			matchmaker.EndMatch(c.PendingMatchmakingId)
+			matchmaker.EndMatch(*c.PendingMatchmakingId)
 		}
 	}
 }
 
 // Check if the client is matched against the opponent in matchmaking.
 func (c *Client) IsMatchedWith(opponent *Client) bool {
-	if c.PendingMatchmakingId == 0 {
+	if c.PendingMatchmakingId == nil {
 		return true
 	}
 
-	return (c.PendingMatchmakingOpponentId == opponent.Id)
+	return (*c.PendingMatchmakingOpponentId == opponent.Id)
 }
 
 // Check if the client is matched against the opponent in matchmaking.
 func (c *Client) IsOnMap(id int64) bool {
-	if c.PendingMatchmakingId == 0 {
+	if c.PendingMatchmakingId == nil {
 		return true
 	}
 
-	match := matchmaker.Match(c.PendingMatchmakingId)
+	match := matchmaker.Match(*c.PendingMatchmakingId)
 	if match == nil {
 		return true
 	}
 
-	return (match.MapId == id)
+	return (match.MapId != nil && *match.MapId == id)
 }
 
 // Generate a UserStats protocol buffer message from this client.
@@ -389,7 +392,7 @@ func (c *Client) RegionStats(region BattleNetRegion) (regionStats *ClientRegionS
 
 	err = dbMap.SelectOne(&stats, "SELECT * FROM client_region_stats WHERE client_id=? and region=?", c.Id, int64(region))
 	if err != nil || stats.Id == 0 {
-		stats.ClientId = c.Id
+		stats.ClientId = &c.Id
 		stats.Forfeits = 0
 		stats.Losses = 0
 		stats.LadderPoints = ladderStartingPoints
