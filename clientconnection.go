@@ -679,12 +679,12 @@ func (conn *ClientConnection) OnReplay(txid int, data []byte) {
 	}
 
 	defer file.Close()
-	defer os.Remove(file.Name())
 
 	_, err = file.Write(data)
 	if err != nil {
 		conn.SendResponseMessage("104", txid, []byte{})
 		conn.logger.Println(err)
+		os.Remove(file.Name())
 		return
 	}
 
@@ -694,6 +694,7 @@ func (conn *ClientConnection) OnReplay(txid int, data []byte) {
 	if err != nil {
 		conn.SendResponseMessage("301", txid, []byte{})
 		conn.logger.Println(err)
+		os.Remove(file.Name())
 		return
 	}
 
@@ -701,12 +702,27 @@ func (conn *ClientConnection) OnReplay(txid int, data []byte) {
 	if err != nil {
 		conn.SendResponseMessage(ErrorCode(err), txid, []byte(err.Error()))
 		conn.logger.Println(err)
+		os.Remove(file.Name())
 		return
 	}
 
 	if result == nil {
 		conn.SendResponseMessage("301", txid, []byte{})
+		os.Remove(file.Name())
 		return
+	}
+
+	if replayPath != "" {
+		newfile := path.Join(replayPath, fmt.Sprintf("%d.sc2replay", result.Id))
+		err = os.Rename(file.Name(), newfile)
+		if err == nil {
+			matchmaker.logger.Println("Replay uploaded by", conn.client.Username, "for match", result.Id, "saved to", newfile)
+		} else {
+			matchmaker.logger.Println("Failed to save replay uploaded by", conn.client.Username, "for match", result.Id, file.Name(), "->", newfile, err)
+			os.Remove(file.Name())
+		}
+	} else {
+		os.Remove(file.Name())
 	}
 
 	message := result.MatchResultMessage(players)
