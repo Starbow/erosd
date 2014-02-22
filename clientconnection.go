@@ -136,21 +136,23 @@ func (conn *ClientConnection) read() {
 		}
 
 		// Accept draw/noshow if we're marked as that.
-		if conn.client.PendingMatchmakingId == nil {
-			return
-		}
+		if conn.client != nil {
+			if conn.client.PendingMatchmakingId == nil {
+				return
+			}
 
-		match := matchmaker.Match(*conn.client.PendingMatchmakingId)
-		if match == nil {
-			return
-		}
+			match := matchmaker.Match(*conn.client.PendingMatchmakingId)
+			if match == nil {
+				return
+			}
 
-		if !match.longProcessActive {
-			return
-		}
+			if !match.longProcessActive {
+				return
+			}
 
-		if match.longProcessInitiator.Id != conn.client.Id {
-			match.longProcessResponse <- true
+			if match.longProcessInitiator.Id != conn.client.Id {
+				match.longProcessResponse <- true
+			}
 		}
 	}()
 
