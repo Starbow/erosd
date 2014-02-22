@@ -371,8 +371,8 @@ func NewMatchResult(replay *Replay, client *Client) (result *MatchResult, player
 
 		err = dbMap.Insert(&res)
 		if err != nil {
-			err = ErrDbInsert
 			matchmaker.logger.Println(err)
+			err = ErrDbInsert
 			return
 		}
 
