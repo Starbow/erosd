@@ -79,6 +79,7 @@ func loadConfig() error {
 		config.AddOption("ladder", "losepointsincrement", "12.5")
 		config.AddOption("ladder", "maxvetos", "3")
 		config.AddOption("ladder", "matchtimeout", "7200")
+		config.AddOption("ladder", "radiusminimumpoints", "750")
 
 		config.AddSection("database")
 		config.AddOption("database", "type", "sqlite3")
@@ -130,6 +131,7 @@ func loadConfig() error {
 	ladderLosePointsBase, _ = config.GetInt64("ladder", "losepointsbase")
 	ladderLosePointsIncrement, _ = config.GetFloat("ladder", "losepointsincrement")
 	ladderMaxMapVetos, _ = config.GetInt64("ladder", "maxvetos")
+	matchmakingMinimumSearchRangePoints, _ = config.GetInt64("ladder", "radiusminimumpoints")
 	rg, err := config.GetString("ladder", "activeregions")
 	if err == nil {
 		regions := strings.Split(rg, ";")

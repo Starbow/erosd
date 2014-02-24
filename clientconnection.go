@@ -991,6 +991,10 @@ func (conn *ClientConnection) OnQueueMatchmaking(txid int, data []byte) {
 			conn.client.LadderSearchRadius = 0
 		}
 
+		if conn.client.LadderPoints < matchmakingMinimumSearchRangePoints && matchmakingMinimumSearchRangePoints > 0 {
+			conn.client.LadderSearchRadius = 1
+		}
+
 		// Check we have registered characters for this region
 		if !conn.client.HasRegion(conn.client.LadderSearchRegion) {
 			conn.SendResponseMessage("401", txid, []byte{})

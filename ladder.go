@@ -253,11 +253,13 @@ func NewMatchResult(replay *Replay, client *Client) (result *MatchResult, player
 	}
 	if replay.Speed != "Faster" {
 		err = ErrLadderWrongSpeed
+		matchmaker.logger.Println("Wrong speed from", client.Username)
 		return
 	}
 
 	if replay.GameLength < 120 {
 		err = ErrLadderGameTooShort
+		matchmaker.logger.Println("Too short from", client.Username)
 		return
 	}
 

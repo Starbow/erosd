@@ -37,6 +37,8 @@ var (
 	matchmakingLongProcessUnlockTime int64 = 60
 	// The time that a long process takes.
 	matchmakingLongProcessResponseTime int64 = 240
+	// The minimum amount of points required for the user to be able to select search radius.
+	matchmakingMinimumSearchRangePoints int64 = 750
 )
 
 type Matchmaker struct {
