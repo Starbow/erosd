@@ -362,6 +362,7 @@ func NewMatchResult(replay *Replay, client *Client) (result *MatchResult, player
 
 		if client.PendingMatchmakingId != nil {
 			pendingMMID := *client.PendingMatchmakingId
+
 			res.MatchmakerMatchId = &pendingMMID
 		} else {
 			res.MatchmakerMatchId = nil
@@ -428,7 +429,10 @@ func NewMatchResult(replay *Replay, client *Client) (result *MatchResult, player
 			return
 		}
 
-		dbMap.Insert(player, opponent)
+		uerr = dbMap.Insert(player, opponent)
+		if uerr != nil {
+			matchmaker.logger.Println(uerr)
+		}
 		result = &res
 		players = []*MatchResultPlayer{player, opponent}
 
@@ -453,7 +457,8 @@ func calculateNewPoints(winner, loser int64) (winnerNew, loserNew int64) {
 	difference := divisions.GetDifference(winner, loser)
 	increase := ladderWinPointsBase + int64((ladderWinPointsIncrement * float64(difference)))
 	decrease := ladderLosePointsBase - (int64((ladderLosePointsIncrement * float64(difference))) * -1)
-	if increase < 0 {
+
+	if increase < 1 {
 		increase = 10
 	}
 

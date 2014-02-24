@@ -302,6 +302,7 @@ func (conn *ClientConnection) read() {
 // 106 - Generic error
 // 107 - Bad name.
 // 108 - Name in use.
+// 109 - Cannot do that while matched via matchmaking.
 // 201 - Bad character info
 // 202 - Character already exists
 // 203 - Error while communicating with Battle.net
@@ -776,6 +777,7 @@ func (conn *ClientConnection) OnAddCharacter(txid int, data []byte) {
 	err = dbMap.Insert(character)
 	if err != nil {
 		conn.SendResponseMessage("102", txid, []byte{})
+		log.Println("Error inserting character", err)
 		return
 	}
 
@@ -863,6 +865,12 @@ func (conn *ClientConnection) OnUpdateCharacter(txid int, data []byte) {
 
 func (conn *ClientConnection) OnRemoveCharacter(txid int, data []byte) {
 	defer conn.panicRecovery(txid)
+
+	// Preventing removing characters while we're matched.
+	if conn.client.PendingMatchmakingId != nil {
+		conn.SendResponseMessage("109", txid, []byte{})
+		return
+	}
 
 	if len(data) == 0 {
 		conn.SendResponseMessage("201", txid, []byte{})

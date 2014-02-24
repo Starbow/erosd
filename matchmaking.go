@@ -250,6 +250,7 @@ func (mmm *MatchmakerMatch) CreateForfeit(client *Client) (result *MatchResult, 
 
 	err = dbMap.Insert(result)
 	if err != nil {
+		matchmaker.logger.Println("Forfeit insert error", err)
 		result = nil
 		return
 	}
@@ -311,12 +312,15 @@ func (mmm *MatchmakerMatch) CreateForfeit(client *Client) (result *MatchResult, 
 	opponentClient.PendingMatchmakingOpponentId = nil
 	_, uerr := dbMap.Update(client, opponentClient)
 	if uerr != nil {
-		err = ErrDbInsert
 		matchmaker.logger.Println(uerr)
+		err = ErrDbInsert
 		return
 	}
 
-	dbMap.Insert(&player, &opponent)
+	uerr = dbMap.Insert(&player, &opponent)
+	if uerr != nil {
+		matchmaker.logger.Println(uerr)
+	}
 	players = []*MatchResultPlayer{&player, &opponent}
 
 	return
@@ -472,7 +476,10 @@ func (mm *Matchmaker) makeMatch(player1 *MatchmakerParticipant, player2 *Matchma
 			mm.matchParticipantCache[p2.Id] = &p2
 
 			mm.matchParticipantsCache[match.Id] = []*MatchmakerMatchParticipant{&p1, &p2}
+			matchmaker.logger.Println("Insert error", err)
 		}
+	} else {
+		matchmaker.logger.Println("Insert failed", err)
 	}
 
 	go func() {
