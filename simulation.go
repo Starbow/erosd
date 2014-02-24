@@ -150,7 +150,7 @@ func (user *SimulatedUser) Run() {
 
 				// Create player record for us
 				userPlayer := &MatchResultPlayer{
-					MatchId:     &match.Id,
+					MatchId:     &match_result.Id,
 					ClientId:    &user.client.Id,
 					CharacterId: &character.Id,
 					Race:        races[rand.Intn(len(races))],
@@ -158,7 +158,7 @@ func (user *SimulatedUser) Run() {
 
 				// Create player record for them
 				opponentPlayer := &MatchResultPlayer{
-					MatchId:     &match.Id,
+					MatchId:     &match_result.Id,
 					ClientId:    &opponent.client.Id,
 					CharacterId: &get_random_region_character(opponent.client, match_result.Region).Id,
 					Race:        races[rand.Intn(len(races))],
@@ -171,22 +171,37 @@ func (user *SimulatedUser) Run() {
 				result := rand.Intn(100)
 				if result < 50 {
 					// User win
+					userPlayer.Victory = true
+					opponentPlayer.Victory = false
+
 					if result < 3 {
 						// User walkover
 						opponent.client.ForfeitMatchmadeMatch()
+						opponentPlayer.Race = "Forfeit"
+						userPlayer.Race = "Walkover"
 					}
+
 					user.client.Defeat(opponent.client, match_result.Region)
 				} else {
 					// User loss
+					userPlayer.Victory = false
+					opponentPlayer.Victory = true
+
 					if result < 53 {
 						// User forfeit
 						user.client.ForfeitMatchmadeMatch()
+						userPlayer.Race = "Forfeit"
+						opponentPlayer.Race = "Walkover"
 					}
+
 					opponent.client.Defeat(user.client, match_result.Region)
 				}
 
 				userPlayer.PointsAfter = userRegion.LadderPoints
 				opponentPlayer.PointsAfter = opponentRegion.LadderPoints
+
+				userPlayer.PointsDifference = userPlayer.PointsAfter - userPlayer.PointsBefore
+				opponentPlayer.PointsDifference = opponentPlayer.PointsAfter - opponentPlayer.PointsBefore
 
 				// Reset our queue states
 				user.client.PendingMatchmakingId = nil
