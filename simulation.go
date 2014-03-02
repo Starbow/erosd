@@ -129,92 +129,97 @@ func (user *SimulatedUser) Run() {
 			// Force the highest id client to decide the match result
 			if user.client.Id > opponent.connection.client.Id {
 				log.Printf("%s (%d) found %s (%d) after %d seconds", user.client.Username, user.client.LadderPoints, opponent.connection.client.Username, opponent.connection.client.LadderPoints, elapsed)
-
-				// Insert a match result record for this match
-				bnet_map := maps.Get(character.Region, *mm_result.Map.BattleNetName)
-
-				match_result := &MatchResult{
-					DateTime:          time.Now().Unix(),
-					MapId:             &bnet_map.Id,
-					MatchmakerMatchId: &match.Id,
-					Region:            user.client.LadderSearchRegion,
-				}
-				err := dbMap.Insert(match_result)
-				if err != nil {
-					log.Println(err)
-				}
-
-				// Get region stats for us and them
-				userRegion, _ := user.client.RegionStats(character.Region)
-				opponentRegion, _ := opponent.client.RegionStats(character.Region)
-
-				// Create player record for us
-				userPlayer := &MatchResultPlayer{
-					MatchId:     &match_result.Id,
-					ClientId:    &user.client.Id,
-					CharacterId: &character.Id,
-					Race:        races[rand.Intn(len(races))],
-				}
-
-				// Create player record for them
-				opponentPlayer := &MatchResultPlayer{
-					MatchId:     &match_result.Id,
-					ClientId:    &opponent.client.Id,
-					CharacterId: &get_random_region_character(opponent.client, match_result.Region).Id,
-					Race:        races[rand.Intn(len(races))],
-				}
-
-				userPlayer.PointsBefore = userRegion.LadderPoints
-				opponentPlayer.PointsBefore = opponentRegion.LadderPoints
-
-				// Assign results for each player
 				result := rand.Intn(100)
 				if result < 50 {
-					// User win
-					userPlayer.Victory = true
-					opponentPlayer.Victory = false
-
-					if result < 3 {
-						// User walkover
-						opponent.client.ForfeitMatchmadeMatch()
-						opponentPlayer.Race = "Forfeit"
-						userPlayer.Race = "Walkover"
-					}
-
-					user.client.Defeat(opponent.client, match_result.Region)
+					match.CreateForfeit(user.client)
+				} else if result > 50 {
+					match.CreateForfeit(opponent.client)
 				} else {
-					// User loss
-					userPlayer.Victory = false
-					opponentPlayer.Victory = true
-
-					if result < 53 {
-						// User forfeit
-						user.client.ForfeitMatchmadeMatch()
-						userPlayer.Race = "Forfeit"
-						opponentPlayer.Race = "Walkover"
+					// Insert a match result record for this match
+					bnet_map := maps.Get(character.Region, *mm_result.Map.BattleNetName)
+					match_result := &MatchResult{
+						DateTime:          time.Now().Unix(),
+						MapId:             &bnet_map.Id,
+						MatchmakerMatchId: &match.Id,
+						Region:            user.client.LadderSearchRegion,
+					}
+					err := dbMap.Insert(match_result)
+					if err != nil {
+						log.Println(err)
 					}
 
-					opponent.client.Defeat(user.client, match_result.Region)
+					// Get region stats for us and them
+					userRegion, _ := user.client.RegionStats(character.Region)
+					opponentRegion, _ := opponent.client.RegionStats(character.Region)
+
+					// Create player record for us
+					userPlayer := &MatchResultPlayer{
+						MatchId:     &match_result.Id,
+						ClientId:    &user.client.Id,
+						CharacterId: &character.Id,
+						Race:        races[rand.Intn(len(races))],
+					}
+
+					// Create player record for them
+					opponentPlayer := &MatchResultPlayer{
+						MatchId:     &match_result.Id,
+						ClientId:    &opponent.client.Id,
+						CharacterId: &get_random_region_character(opponent.client, match_result.Region).Id,
+						Race:        races[rand.Intn(len(races))],
+					}
+
+					userPlayer.PointsBefore = userRegion.LadderPoints
+					opponentPlayer.PointsBefore = opponentRegion.LadderPoints
+
+					// Assign results for each player
+					result := rand.Intn(100)
+					if result < 50 {
+						// User win
+						userPlayer.Victory = true
+						opponentPlayer.Victory = false
+
+						if result < 3 {
+							// User walkover
+							opponent.client.ForfeitMatchmadeMatch()
+							opponentPlayer.Race = "Forfeit"
+							userPlayer.Race = "Walkover"
+						}
+
+						user.client.Defeat(opponent.client, match_result.Region)
+					} else {
+						// User loss
+						userPlayer.Victory = false
+						opponentPlayer.Victory = true
+
+						if result < 53 {
+							// User forfeit
+							user.client.ForfeitMatchmadeMatch()
+							userPlayer.Race = "Forfeit"
+							opponentPlayer.Race = "Walkover"
+						}
+
+						opponent.client.Defeat(user.client, match_result.Region)
+					}
+
+					userPlayer.PointsAfter = userRegion.LadderPoints
+					opponentPlayer.PointsAfter = opponentRegion.LadderPoints
+
+					userPlayer.PointsDifference = userPlayer.PointsAfter - userPlayer.PointsBefore
+					opponentPlayer.PointsDifference = opponentPlayer.PointsAfter - opponentPlayer.PointsBefore
+
+					// Reset our queue states
+					user.client.PendingMatchmakingId = nil
+					user.client.PendingMatchmakingOpponentId = nil
+					opponent.client.PendingMatchmakingId = nil
+					opponent.client.PendingMatchmakingOpponentId = nil
+
+					// Save our work
+					err = dbMap.Insert(userPlayer, opponentPlayer)
+					if err != nil {
+						log.Println(err)
+					}
+					dbMap.Update(user.client, opponent.client)
 				}
-
-				userPlayer.PointsAfter = userRegion.LadderPoints
-				opponentPlayer.PointsAfter = opponentRegion.LadderPoints
-
-				userPlayer.PointsDifference = userPlayer.PointsAfter - userPlayer.PointsBefore
-				opponentPlayer.PointsDifference = opponentPlayer.PointsAfter - opponentPlayer.PointsBefore
-
-				// Reset our queue states
-				user.client.PendingMatchmakingId = nil
-				user.client.PendingMatchmakingOpponentId = nil
-				opponent.client.PendingMatchmakingId = nil
-				opponent.client.PendingMatchmakingOpponentId = nil
-
-				// Save our work
-				err = dbMap.Insert(userPlayer, opponentPlayer)
-				if err != nil {
-					log.Println(err)
-				}
-				dbMap.Update(user.client, opponent.client)
 			}
 		}
 	}
