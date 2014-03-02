@@ -242,89 +242,95 @@ func (self *MatchmakerMatch) StartLongProcess(initiator *Client, process int) bo
 
 func (mmm *MatchmakerMatch) CreateForfeit(client *Client) (result *MatchResult, players []*MatchResultPlayer, err error) {
 	matchmaker.logger.Println("Forfeiting", client.Id, client.Username)
-	participants := matchmaker.MatchParticipants(mmm.Id)
+
+	// Attempt to find the opponent.
+	var opponentClient *Client
+	if client.PendingMatchmakingOpponentId != nil {
+		opponentClient = clientCache.Get(*client.PendingMatchmakingOpponentId)
+	}
+	if opponentClient == nil {
+		matchmaker.logger.Println("Opponent client not found")
+		return nil, nil, ErrLadderPlayerNotFound
+	}
+
+	// Attempt to find the region stats records for each player
+	playerRegion, err := client.RegionStats(mmm.Region)
+	if playerRegion == nil {
+		return nil, nil, ErrLadderPlayerNotFound
+	}
+	opponentRegion, err := opponentClient.RegionStats(mmm.Region)
+	if opponentRegion == nil {
+		return nil, nil, ErrLadderPlayerNotFound
+	}
+
+	// Wrap this in a transaction
+	transaction, err := dbMap.Begin();
+
+	// Attempt to record a new match result
 	result = &MatchResult{
 		DateTime:          time.Now().Unix(),
 		MapId:             mmm.MapId,
 		MatchmakerMatchId: &mmm.Id,
 		Region:            mmm.Region,
 	}
-
-	err = dbMap.Insert(result)
+	err = transaction.Insert(result)
 	if err != nil {
 		matchmaker.logger.Println("Forfeit insert error", err)
-		result = nil
-		return
+		return nil, nil, ErrDbInsert
 	}
 
-	var opponentClient *Client
+	// Create new match result players
 	var player, opponent MatchResultPlayer
-	for x := range participants {
-		if participants[x].ClientId != nil && *participants[x].ClientId != client.Id {
-			opponentClient = clientCache.Get(*participants[x].ClientId)
-		}
-	}
-
-	if opponentClient == nil {
-		matchmaker.logger.Println("Opponent client not found")
-		result = nil
-		client.ForfeitMatchmadeMatch()
-		err = ErrLadderPlayerNotFound
-
-		return
-	}
-
 	player.MatchId = &result.Id
 	player.ClientId = &client.Id
 	player.Victory = false
 	player.Race = "Forfeit"
-
 	opponent.MatchId = &result.Id
 	opponent.ClientId = &opponentClient.Id
 	opponent.Victory = true
 	opponent.Race = "Walkover"
 
-	playerRegion, _ := client.RegionStats(mmm.Region)
-	opponentRegion, _ := opponentClient.RegionStats(mmm.Region)
-
-	if playerRegion == nil || opponentRegion == nil {
-		player.PointsBefore = client.LadderPoints
-		opponent.PointsBefore = opponentClient.LadderPoints
-	} else {
-		player.PointsBefore = playerRegion.LadderPoints
-		opponent.PointsBefore = opponentRegion.LadderPoints
-	}
-
+	// Make the necessary record/point adjustments for a forfeit
+	player.PointsBefore = playerRegion.LadderPoints
+	opponent.PointsBefore = opponentRegion.LadderPoints
 	client.ForfeitMatchmadeMatch()
-
-	if playerRegion == nil || opponentRegion == nil {
-		player.PointsAfter = client.LadderPoints
-		opponent.PointsAfter = opponentClient.LadderPoints
-	} else {
-		player.PointsAfter = playerRegion.LadderPoints
-		opponent.PointsAfter = opponentRegion.LadderPoints
-	}
-
+	player.PointsAfter = playerRegion.LadderPoints
+	opponent.PointsAfter = opponentRegion.LadderPoints
 	player.PointsDifference = player.PointsAfter - player.PointsBefore
 	opponent.PointsDifference = opponent.PointsAfter - opponent.PointsBefore
 
+	// Update our regional stats
+	playerRegion.Forfeits += 1
+	opponentRegion.Walkovers += 1
+	_, uerr := dbMap.Update(playerRegion, opponentRegion);
+	if uerr != nil {
+		matchmaker.logger.Println(uerr)
+		transaction.Rollback()
+		return nil, nil, ErrDbInsert
+	}
+
+	// Remove pending matches from both clients.
 	client.PendingMatchmakingId = nil
 	client.PendingMatchmakingOpponentId = nil
 	opponentClient.PendingMatchmakingId = nil
 	opponentClient.PendingMatchmakingOpponentId = nil
-	_, uerr := dbMap.Update(client, opponentClient)
+	_, uerr = dbMap.Update(client, opponentClient)
 	if uerr != nil {
 		matchmaker.logger.Println(uerr)
-		err = ErrDbInsert
-		return
+		transaction.Rollback()
+		return nil, nil, ErrDbInsert
 	}
 
-	uerr = dbMap.Insert(&player, &opponent)
-	if uerr != nil {
-		matchmaker.logger.Println(uerr)
+	// Insert our match result players
+	err = dbMap.Insert(&player, &opponent)
+	if err != nil {
+		matchmaker.logger.Println(err)
+		transaction.Rollback()
+		return nil, nil, ErrDbInsert
 	}
 	players = []*MatchResultPlayer{&player, &opponent}
 
+	transaction.Commit()
 	return
 }
 
