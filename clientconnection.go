@@ -24,6 +24,7 @@ import (
 
 var (
 	clientConnections map[int64]*ClientConnection = make(map[int64]*ClientConnection)
+	activeClients     map[int64]*ClientConnection = make(map[int64]*ClientConnection)
 	usernameValidator *regexp.Regexp              = regexp.MustCompile(`^[a-zA-Z0-9_\-]{3,15}$`)
 	connectionIdBase  int64                       = 0
 )
@@ -137,6 +138,7 @@ func (conn *ClientConnection) read() {
 
 		// Accept draw/noshow if we're marked as that.
 		if conn.client != nil {
+			delete(activeClients, conn.client.Id)
 			if conn.client.PendingMatchmakingId == nil {
 				return
 			}
@@ -765,7 +767,7 @@ func (conn *ClientConnection) OnAddCharacter(txid int, data []byte) {
 
 	character := NewBattleNetCharacter(region, subregion, id, name)
 	character.ClientId = &conn.client.Id
-	character.IsVerified = false
+	character.IsVerified = testMode
 	err = character.SetVerificationPortrait()
 
 	if err != nil {
@@ -1170,7 +1172,11 @@ func (conn *ClientConnection) OnHandshake(txid int, data []byte) bool {
 
 		conn.logger.Printf("New client %+v %+v", *client, err)
 	}
-
+	if _, ok := activeClients[client.Id]; ok {
+		status = protobufs.HandshakeResponse_ALREADY_LOGGED_IN
+		return false
+	}
+	activeClients[client.Id] = conn
 	log.Println("client:", client.Id, client.Username)
 	conn.logger.Printf("Client %+v", *client)
 	conn.client = client

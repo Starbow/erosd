@@ -58,17 +58,20 @@ func (x *Region) UnmarshalJSON(data []byte) error {
 type HandshakeResponse_HandshakeStatus int32
 
 const (
-	HandshakeResponse_FAIL    HandshakeResponse_HandshakeStatus = 0
-	HandshakeResponse_SUCCESS HandshakeResponse_HandshakeStatus = 1
+	HandshakeResponse_FAIL              HandshakeResponse_HandshakeStatus = 0
+	HandshakeResponse_SUCCESS           HandshakeResponse_HandshakeStatus = 1
+	HandshakeResponse_ALREADY_LOGGED_IN HandshakeResponse_HandshakeStatus = 2
 )
 
 var HandshakeResponse_HandshakeStatus_name = map[int32]string{
 	0: "FAIL",
 	1: "SUCCESS",
+	2: "ALREADY_LOGGED_IN",
 }
 var HandshakeResponse_HandshakeStatus_value = map[string]int32{
-	"FAIL":    0,
-	"SUCCESS": 1,
+	"FAIL":              0,
+	"SUCCESS":           1,
+	"ALREADY_LOGGED_IN": 2,
 }
 
 func (x HandshakeResponse_HandshakeStatus) Enum() *HandshakeResponse_HandshakeStatus {
@@ -512,6 +515,7 @@ type ChatRoomInfo struct {
 	Fixed            *bool        `protobuf:"varint,5,req,name=fixed" json:"fixed,omitempty"`
 	Users            *int64       `protobuf:"varint,6,req,name=users" json:"users,omitempty"`
 	Participant      []*UserStats `protobuf:"bytes,7,rep,name=participant" json:"participant,omitempty"`
+	Forced           *bool        `protobuf:"varint,8,req,name=forced" json:"forced,omitempty"`
 	XXX_unrecognized []byte       `json:"-"`
 }
 
@@ -566,6 +570,13 @@ func (m *ChatRoomInfo) GetParticipant() []*UserStats {
 		return m.Participant
 	}
 	return nil
+}
+
+func (m *ChatRoomInfo) GetForced() bool {
+	if m != nil && m.Forced != nil {
+		return *m.Forced
+	}
+	return false
 }
 
 type ChatRoomIndex struct {

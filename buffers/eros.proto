@@ -22,6 +22,7 @@ message HandshakeResponse {
 	enum HandshakeStatus {
 		FAIL = 0;
 		SUCCESS = 1;
+		ALREADY_LOGGED_IN = 2;
 	}
 	required HandshakeStatus status = 1;
 	optional UserStats user = 2;
@@ -95,6 +96,7 @@ message ChatRoomInfo {
 	required bool fixed = 5;
 	required int64 users = 6;
 	repeated UserStats participant = 7;
+	required bool forced = 8;
 }
 
 message ChatRoomIndex {

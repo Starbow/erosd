@@ -230,7 +230,16 @@ func (ch *ChatRoom) ChatRoomInfoMessage(detailed bool) *protobufs.ChatRoomInfo {
 		chat       protobufs.ChatRoomInfo
 		users      int64 = int64(len(ch.members))
 		passworded bool  = ch.password != ""
+		forced     bool  = false
 	)
+
+	for x := range autoJoinChatRooms {
+		if autoJoinChatRooms[x] == ch.name {
+			forced = true
+			break
+		}
+	}
+
 	chat.Key = &ch.key
 	chat.Name = &ch.name
 
@@ -238,6 +247,7 @@ func (ch *ChatRoom) ChatRoomInfoMessage(detailed bool) *protobufs.ChatRoomInfo {
 	chat.Fixed = &ch.fixed
 	chat.Joinable = &ch.joinable
 	chat.Users = &users
+	chat.Forced = &forced
 
 	if detailed {
 		chat.Participant = make([]*protobufs.UserStats, 0, users)
