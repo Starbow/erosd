@@ -789,6 +789,8 @@ func (conn *ClientConnection) OnAddCharacter(txid int, data []byte) {
 	characterCache.profileIds[character.ProfileIdString()] = character
 	characterCache.Unlock()
 
+	delete(clientCharacters, conn.client.Id)
+
 	payload := character.CharacterMessage()
 	data, _ = Marshal(payload)
 	conn.SendResponseMessage("BNA", txid, data)
@@ -905,6 +907,8 @@ func (conn *ClientConnection) OnRemoveCharacter(txid int, data []byte) {
 		conn.logger.Println(err)
 		return
 	}
+
+	delete(clientCharacters, conn.client.Id)
 
 	conn.SendResponseMessage("BNR", txid, []byte{})
 }

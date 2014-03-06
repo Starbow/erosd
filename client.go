@@ -166,6 +166,8 @@ func (c *Client) Refresh() {
 			clientRegionStats[c.Id][x].Refresh()
 		}
 	}
+
+	delete(clientCharacters, c.Id)
 }
 
 func (c *Client) IsOnline() bool {
@@ -353,6 +355,7 @@ func (c *Client) Characters() (characters []*BattleNetCharacter, err error) {
 
 	chars, err := dbMap.Select(&BattleNetCharacter{}, "SELECT * FROM battle_net_characters WHERE ClientId=?", c.Id)
 	if err != nil {
+		log.Println(err)
 		characters = nil
 		return
 	}
