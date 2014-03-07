@@ -130,26 +130,28 @@ func NewClient(id int64) *Client {
 	return client
 }
 
-func (c *Client) Vetoes() []*Map {
+func (c *Client) Vetoes() (vetoes []*Map, err error) {
 	clientLockouts.LockId(c.Id)
-	v, ok := clientVetoes[c.Id]
+	vetoes, ok := clientVetoes[c.Id]
 	if !ok {
-
 		vetoRows, err := dbMap.Select(&MapVeto{}, "SELECT * FROM map_vetoes WHERE ClientId=?", c.Id)
-		if err != nil {
-			clientVetoes[c.Id] = make([]*Map, 0, 15)
+		vetoes = make([]*Map, 0, 15)
+		if err == nil {
 			for x := range vetoRows {
 				v := vetoRows[x].(*MapVeto)
 				m, ok := maps[v.MapId]
 				if ok {
-					clientVetoes[c.Id] = append(clientVetoes[c.Id], m)
+					vetoes = append(vetoes, m)
 				}
 			}
+			clientVetoes[c.Id] = vetoes
+		} else {
+			log.Println(err, c.Id)
+			return nil, err
 		}
-
 	}
 	clientLockouts.UnlockId(c.Id)
-	return v
+	return vetoes, nil
 }
 
 func (c *Client) Refresh() {
@@ -168,6 +170,7 @@ func (c *Client) Refresh() {
 	}
 
 	delete(clientCharacters, c.Id)
+	delete(clientVetoes, c.Id)
 }
 
 func (c *Client) IsOnline() bool {
@@ -305,6 +308,7 @@ func (c *Client) IsOnMap(id int64) bool {
 
 // Generate a UserStats protocol buffer message from this client.
 func (c *Client) UserStatsMessage() *protobufs.UserStats {
+	vetoes, _ := c.Vetoes()
 	var user protobufs.UserStats
 	user.Points = &c.LadderPoints
 	user.Username = &c.Username
@@ -314,6 +318,7 @@ func (c *Client) UserStatsMessage() *protobufs.UserStats {
 	user.Walkovers = &c.Walkovers
 	user.Forfeits = &c.Forfeits
 	user.Region = make([]*protobufs.UserRegionStats, 0, len(ladderActiveRegions))
+	user.Vetoes = make([]*protobufs.Map, 0, len(vetoes))
 
 	for _, region := range ladderActiveRegions {
 		stats, err := c.RegionStats(region)
@@ -322,6 +327,10 @@ func (c *Client) UserStatsMessage() *protobufs.UserStats {
 		} else {
 			log.Println(region, err, stats)
 		}
+	}
+
+	for _, veto := range vetoes {
+		user.Vetoes = append(user.Vetoes, veto.MapMessage())
 	}
 
 	return &user

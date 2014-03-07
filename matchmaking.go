@@ -428,8 +428,9 @@ func (mm *Matchmaker) makeMatch(player1 *MatchmakerParticipant, player2 *Matchma
 		mm.unregister <- player1.connection
 		mm.unregister <- player2.connection
 	}()
-
-	selectedMap := maps.Random(player1.region, player1.connection.client.Vetoes(), player2.connection.client.Vetoes())
+	vetoes1, _ := player1.connection.client.Vetoes()
+	vetoes2, _ := player2.connection.client.Vetoes()
+	selectedMap := maps.Random(player1.region, vetoes1, vetoes2)
 	battleNetChannel := fmt.Sprintf("eros%d%d%d%d", player1.region, player1.client.Id, player2.client.Id, rand.Intn(99))
 	erosChatRoom := cleanChatRoomName(fmt.Sprintf("MM%d%d%d", player1.region, player1.client.Id, player2.client.Id))
 

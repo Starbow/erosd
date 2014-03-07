@@ -146,6 +146,8 @@ type HandshakeResponse struct {
 	Character        []*Character                       `protobuf:"bytes,4,rep,name=character" json:"character,omitempty"`
 	Division         []*Division                        `protobuf:"bytes,5,rep,name=division" json:"division,omitempty"`
 	ActiveRegion     []Region                           `protobuf:"varint,6,rep,name=active_region,enum=protobufs.Region" json:"active_region,omitempty"`
+	MapPool          *MapPool                           `protobuf:"bytes,7,opt,name=map_pool" json:"map_pool,omitempty"`
+	MaxVetoes        *int64                             `protobuf:"varint,8,opt,name=max_vetoes" json:"max_vetoes,omitempty"`
 	XXX_unrecognized []byte                             `json:"-"`
 }
 
@@ -193,6 +195,20 @@ func (m *HandshakeResponse) GetActiveRegion() []Region {
 		return m.ActiveRegion
 	}
 	return nil
+}
+
+func (m *HandshakeResponse) GetMapPool() *MapPool {
+	if m != nil {
+		return m.MapPool
+	}
+	return nil
+}
+
+func (m *HandshakeResponse) GetMaxVetoes() int64 {
+	if m != nil && m.MaxVetoes != nil {
+		return *m.MaxVetoes
+	}
+	return 0
 }
 
 type UserRegionStats struct {
@@ -260,6 +276,7 @@ type UserStats struct {
 	Forfeits         *int64             `protobuf:"varint,6,req,name=forfeits" json:"forfeits,omitempty"`
 	Walkovers        *int64             `protobuf:"varint,7,req,name=walkovers" json:"walkovers,omitempty"`
 	Region           []*UserRegionStats `protobuf:"bytes,8,rep,name=region" json:"region,omitempty"`
+	Vetoes           []*Map             `protobuf:"bytes,9,rep,name=vetoes" json:"vetoes,omitempty"`
 	XXX_unrecognized []byte             `json:"-"`
 }
 
@@ -323,6 +340,13 @@ func (m *UserStats) GetRegion() []*UserRegionStats {
 	return nil
 }
 
+func (m *UserStats) GetVetoes() []*Map {
+	if m != nil {
+		return m.Vetoes
+	}
+	return nil
+}
+
 type MapPool struct {
 	Map              []*Map `protobuf:"bytes,1,rep,name=map" json:"map,omitempty"`
 	XXX_unrecognized []byte `json:"-"`
@@ -343,6 +367,9 @@ type Map struct {
 	Region           *Region `protobuf:"varint,1,req,name=region,enum=protobufs.Region" json:"region,omitempty"`
 	BattleNetName    *string `protobuf:"bytes,2,req,name=battle_net_name" json:"battle_net_name,omitempty"`
 	BattleNetId      *int32  `protobuf:"varint,3,req,name=battle_net_id" json:"battle_net_id,omitempty"`
+	Description      *string `protobuf:"bytes,4,opt,name=description" json:"description,omitempty"`
+	InfoUrl          *string `protobuf:"bytes,5,opt,name=info_url" json:"info_url,omitempty"`
+	PreviewUrl       *string `protobuf:"bytes,6,opt,name=preview_url" json:"preview_url,omitempty"`
 	XXX_unrecognized []byte  `json:"-"`
 }
 
@@ -369,6 +396,27 @@ func (m *Map) GetBattleNetId() int32 {
 		return *m.BattleNetId
 	}
 	return 0
+}
+
+func (m *Map) GetDescription() string {
+	if m != nil && m.Description != nil {
+		return *m.Description
+	}
+	return ""
+}
+
+func (m *Map) GetInfoUrl() string {
+	if m != nil && m.InfoUrl != nil {
+		return *m.InfoUrl
+	}
+	return ""
+}
+
+func (m *Map) GetPreviewUrl() string {
+	if m != nil && m.PreviewUrl != nil {
+		return *m.PreviewUrl
+	}
+	return ""
 }
 
 type SimulationResult struct {

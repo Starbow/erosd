@@ -285,6 +285,8 @@ func (conn *ClientConnection) read() {
 				go conn.OnLongProcessRequest(txid, data.Bytes())
 			case "LPR":
 				go conn.OnLongProcessResponse(txid, data.Bytes())
+			case "VET":
+				go conn.OnToggleVeto(txid, data.Bytes())
 			}
 		}
 	}
@@ -321,6 +323,8 @@ func (conn *ClientConnection) read() {
 // 309 - Player not found in database.
 // 310 - You didn't play your matchmade opponent. You have been forfeited from that game.
 // 311 - The game was not played on Faster.
+// 312 - Cannot add veto. Map not in ranked pool.
+// 313 - Cannot add veto. Maximum number of vetoes used.
 // 401 - Can't queue on this region without a character on this region.
 // 402 - The matchmaking request was cancelled.
 // 403 - Long process unavailable.
@@ -369,6 +373,92 @@ func ErrorCode(err error) string {
 
 func (conn *ClientConnection) Close() {
 	conn.conn.Close()
+}
+
+func (conn *ClientConnection) OnToggleVeto(txid int, data []byte) {
+	if len(data) == 0 {
+		conn.SendResponseMessage("106", txid, []byte{})
+		return
+	}
+
+	var mapMessage protobufs.Map
+	err := Unmarshal(data, &mapMessage)
+
+	if err != nil {
+		log.Println(err)
+		conn.SendResponseMessage("106", txid, []byte{})
+		return
+	}
+
+	mapObj := maps.GetId(BattleNetRegion(mapMessage.GetRegion()), int(mapMessage.GetBattleNetId()))
+	log.Println(mapObj)
+	if mapObj == nil || !mapObj.InRankedPool {
+		conn.SendResponseMessage("312", txid, []byte{})
+		return
+	}
+
+	vetoes, err := conn.client.Vetoes()
+	if err != nil {
+		log.Println(err)
+		conn.SendResponseMessage("101", txid, []byte{})
+		return
+	}
+	existing := false
+	regionVetoes := int64(0)
+	for _, x := range vetoes {
+		if x.Region == mapObj.Region {
+			regionVetoes += 1
+		}
+		if x.Id == mapObj.Id {
+			existing = true
+		}
+	}
+
+	if !existing {
+		if regionVetoes >= ladderMaxMapVetos {
+			conn.SendResponseMessage("313", txid, []byte{})
+			return
+		}
+
+		var veto MapVeto
+		veto.ClientId = conn.client.Id
+		veto.MapId = mapObj.Id
+		err := dbMap.Insert(&veto)
+		if err != nil {
+			log.Println(err)
+			conn.SendResponseMessage("102", txid, []byte{})
+			return
+		}
+	} else {
+		_, err := dbMap.Exec("DELETE FROM map_vetoes WHERE ClientId=? and MapId=?", conn.client.Id, mapObj.Id)
+		if err != nil {
+			log.Println(err)
+			conn.SendResponseMessage("102", txid, []byte{})
+			return
+		}
+	}
+
+	clientLockouts.LockId(conn.client.Id)
+	delete(clientVetoes, conn.client.Id)
+	clientLockouts.UnlockId(conn.client.Id)
+	vetoes, err = conn.client.Vetoes()
+
+	mapPoolMessage := &protobufs.MapPool{
+		Map: make([]*protobufs.Map, 0, len(vetoes)),
+	}
+
+	for _, x := range vetoes {
+		mapPoolMessage.Map = append(mapPoolMessage.Map, x.MapMessage())
+	}
+
+	data, err = Marshal(mapPoolMessage)
+	if err != nil {
+		log.Println(err)
+		conn.SendResponseMessage("106", txid, []byte{})
+		return
+	}
+	conn.SendResponseMessage("VET", txid, data)
+	return
 }
 
 func (conn *ClientConnection) OnLongProcessRequest(txid int, data []byte) {
@@ -1144,6 +1234,8 @@ func (conn *ClientConnection) OnHandshake(txid int, data []byte) bool {
 		data, err := Marshal(&resp)
 		if err == nil {
 			conn.SendResponseMessage("HSH", txid, data)
+		} else {
+			log.Println(err)
 		}
 	}()
 
@@ -1203,12 +1295,14 @@ func (conn *ClientConnection) OnHandshake(txid int, data []byte) bool {
 	resp.Id = &client.Id
 	resp.Division = make([]*protobufs.Division, 0, len(divisions))
 	resp.ActiveRegion = make([]protobufs.Region, 0, len(ladderActiveRegions))
+	resp.MapPool = maps.MapPoolMessage()
 	for x := range divisions {
 		resp.Division = append(resp.Division, divisions[x].DivisionMessage())
 	}
 	for _, region := range ladderActiveRegions {
 		resp.ActiveRegion = append(resp.ActiveRegion, protobufs.Region(region))
 	}
+	resp.MaxVetoes = &ladderMaxMapVetos
 	status = protobufs.HandshakeResponse_SUCCESS
 
 	return true

@@ -154,6 +154,20 @@ func (m Maps) Get(region BattleNetRegion, name string) *Map {
 	return nil
 }
 
+func (m Maps) GetId(region BattleNetRegion, id int) *Map {
+	for x := range m {
+		if m[x].Region != region {
+			continue
+		}
+
+		if m[x].BattleNetID == id {
+			return m[x]
+		}
+	}
+
+	return nil
+}
+
 func (m Maps) Random(region BattleNetRegion, veto ...[]*Map) *Map {
 	var pool []*Map = make([]*Map, 0, 5)
 
@@ -187,12 +201,34 @@ mapLoop:
 
 }
 
+func (self Maps) MapPoolMessage() *protobufs.MapPool {
+	var pool []*Map = make([]*Map, 0, 12*len(ladderActiveRegions))
+	for x := range self {
+		if self[x].InRankedPool {
+			pool = append(pool, self[x])
+		}
+	}
+
+	mapPoolMessage := &protobufs.MapPool{
+		Map: make([]*protobufs.Map, 0, len(pool)),
+	}
+
+	for x := range pool {
+		mapPoolMessage.Map = append(mapPoolMessage.Map, pool[x].MapMessage())
+	}
+
+	return mapPoolMessage
+}
+
 type Map struct {
 	Id            int64
 	Region        BattleNetRegion
 	BattleNetID   int
 	BattleNetName string
 	InRankedPool  bool
+	Description   string
+	InfoUrl       string
+	PreviewUrl    string
 	SanitizedName string `db:"-"`
 }
 
@@ -205,7 +241,9 @@ func (m *Map) MapMessage() *protobufs.Map {
 	msg.Region = &region
 	msg.BattleNetName = &m.BattleNetName
 	msg.BattleNetId = &id
-
+	msg.Description = &m.Description
+	msg.InfoUrl = &m.InfoUrl
+	msg.PreviewUrl = &m.PreviewUrl
 	return &msg
 }
 

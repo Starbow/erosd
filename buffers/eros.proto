@@ -30,6 +30,8 @@ message HandshakeResponse {
 	repeated Character character = 4;
 	repeated Division division = 5;
 	repeated Region active_region = 6;
+	optional MapPool map_pool = 7;
+	optional int64 max_vetoes = 8;
 }
 
 message UserRegionStats
@@ -51,6 +53,7 @@ message UserStats {
 	required int64 forfeits = 6;
 	required int64 walkovers = 7;
 	repeated UserRegionStats region = 8;
+	repeated Map vetoes = 9;
 }
 
 
@@ -63,6 +66,9 @@ message Map {
 	required Region region = 1;
 	required string battle_net_name = 2;
 	required int32 battle_net_id = 3;
+	optional string description = 4;
+	optional string info_url = 5;
+	optional string preview_url = 6;
 }
 
 message SimulationResult {
