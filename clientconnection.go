@@ -325,6 +325,7 @@ func (conn *ClientConnection) read() {
 // 311 - The game was not played on Faster.
 // 312 - Cannot add veto. Map not in ranked pool.
 // 313 - Cannot add veto. Maximum number of vetoes used.
+// 314 - You are not in a game arranged by the Eros matchmaker.
 // 401 - Can't queue on this region without a character on this region.
 // 402 - The matchmaking request was cancelled.
 // 403 - Long process unavailable.
@@ -365,6 +366,8 @@ func ErrorCode(err error) string {
 		return "504"
 	} else if err == ErrChatRoomNameTooShort {
 		return "509"
+	} else if err == ErrLadderGameNotPrearranged {
+		return "314"
 
 	} else {
 		return "106"
@@ -391,7 +394,6 @@ func (conn *ClientConnection) OnToggleVeto(txid int, data []byte) {
 	}
 
 	mapObj := maps.GetId(BattleNetRegion(mapMessage.GetRegion()), int(mapMessage.GetBattleNetId()))
-	log.Println(mapObj)
 	if mapObj == nil || !mapObj.InRankedPool {
 		conn.SendResponseMessage("312", txid, []byte{})
 		return

@@ -431,6 +431,19 @@ func (mm *Matchmaker) makeMatch(player1 *MatchmakerParticipant, player2 *Matchma
 	vetoes1, _ := player1.connection.client.Vetoes()
 	vetoes2, _ := player2.connection.client.Vetoes()
 	selectedMap := maps.Random(player1.region, vetoes1, vetoes2)
+	if selectedMap == nil {
+		selectedMap = maps.Random(player1.region)
+		if selectedMap == nil {
+			log.Println("No map found while matching", player1.client.Username, player2.client.Username)
+			go func() {
+				player1.abort <- true
+			}()
+			go func() {
+				player2.abort <- true
+			}()
+			return
+		}
+	}
 	battleNetChannel := fmt.Sprintf("eros%d%d%d%d", player1.region, player1.client.Id, player2.client.Id, rand.Intn(99))
 	erosChatRoom := cleanChatRoomName(fmt.Sprintf("MM%d%d%d", player1.region, player1.client.Id, player2.client.Id))
 

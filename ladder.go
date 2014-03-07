@@ -23,6 +23,7 @@ var (
 	ErrLadderWrongOpponent            = errors.New("The provided game was not against your matchmade opponent. You have been forfeited.")
 	ErrLadderWrongMap                 = errors.New("The provided game was not on the correct map.")
 	ErrLadderWrongSpeed               = errors.New("The provided game was not on the Faster speed setting.")
+	ErrLadderGameNotPrearranged       = errors.New("The provided game was not arranged by the Eros matchmaker.")
 )
 
 type Division struct {
@@ -367,6 +368,11 @@ func NewMatchResult(replay *Replay, client *Client) (result *MatchResult, player
 		return
 	}
 
+	if client.PendingMatchmakingId == nil || *client.PendingMatchmakingId == 0 {
+		matchmaker.logger.Println("Invalid match.")
+		err = ErrLadderGameNotPrearranged
+		return
+	}
 	// We're only going to accept replays from the victor.
 	// In future this should be changed to match games against the start time
 	// I made a nice client-ID based mutex manager just for this purpose.
