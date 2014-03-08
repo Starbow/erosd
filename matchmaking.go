@@ -263,9 +263,6 @@ func (mmm *MatchmakerMatch) CreateForfeit(client *Client) (result *MatchResult, 
 		return nil, nil, ErrLadderPlayerNotFound
 	}
 
-	// Wrap this in a transaction
-	transaction, err := dbMap.Begin();
-
 	// Attempt to record a new match result
 	result = &MatchResult{
 		DateTime:          time.Now().Unix(),
@@ -273,7 +270,7 @@ func (mmm *MatchmakerMatch) CreateForfeit(client *Client) (result *MatchResult, 
 		MatchmakerMatchId: &mmm.Id,
 		Region:            mmm.Region,
 	}
-	err = transaction.Insert(result)
+	err = dbMap.Insert(result)
 	if err != nil {
 		matchmaker.logger.Println("Forfeit insert error", err)
 		return nil, nil, ErrDbInsert
@@ -302,10 +299,9 @@ func (mmm *MatchmakerMatch) CreateForfeit(client *Client) (result *MatchResult, 
 	// Update our regional stats
 	playerRegion.Forfeits += 1
 	opponentRegion.Walkovers += 1
-	_, uerr := dbMap.Update(playerRegion, opponentRegion);
+	_, uerr := dbMap.Update(playerRegion, opponentRegion)
 	if uerr != nil {
 		matchmaker.logger.Println(uerr)
-		transaction.Rollback()
 		return nil, nil, ErrDbInsert
 	}
 
@@ -317,7 +313,6 @@ func (mmm *MatchmakerMatch) CreateForfeit(client *Client) (result *MatchResult, 
 	_, uerr = dbMap.Update(client, opponentClient)
 	if uerr != nil {
 		matchmaker.logger.Println(uerr)
-		transaction.Rollback()
 		return nil, nil, ErrDbInsert
 	}
 
@@ -325,12 +320,10 @@ func (mmm *MatchmakerMatch) CreateForfeit(client *Client) (result *MatchResult, 
 	err = dbMap.Insert(&player, &opponent)
 	if err != nil {
 		matchmaker.logger.Println(err)
-		transaction.Rollback()
 		return nil, nil, ErrDbInsert
 	}
 	players = []*MatchResultPlayer{&player, &opponent}
 
-	transaction.Commit()
 	return
 }
 
