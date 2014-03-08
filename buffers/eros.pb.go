@@ -277,6 +277,7 @@ type UserStats struct {
 	Walkovers        *int64             `protobuf:"varint,7,req,name=walkovers" json:"walkovers,omitempty"`
 	Region           []*UserRegionStats `protobuf:"bytes,8,rep,name=region" json:"region,omitempty"`
 	Vetoes           []*Map             `protobuf:"bytes,9,rep,name=vetoes" json:"vetoes,omitempty"`
+	Id               *int64             `protobuf:"varint,10,req,name=id" json:"id,omitempty"`
 	XXX_unrecognized []byte             `json:"-"`
 }
 
@@ -345,6 +346,13 @@ func (m *UserStats) GetVetoes() []*Map {
 		return m.Vetoes
 	}
 	return nil
+}
+
+func (m *UserStats) GetId() int64 {
+	if m != nil && m.Id != nil {
+		return *m.Id
+	}
+	return 0
 }
 
 type MapPool struct {

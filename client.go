@@ -319,6 +319,7 @@ func (c *Client) UserStatsMessage() *protobufs.UserStats {
 	user.Forfeits = &c.Forfeits
 	user.Region = make([]*protobufs.UserRegionStats, 0, len(ladderActiveRegions))
 	user.Vetoes = make([]*protobufs.Map, 0, len(vetoes))
+	user.Id = &c.Id
 
 	for _, region := range ladderActiveRegions {
 		stats, err := c.RegionStats(region)

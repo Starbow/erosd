@@ -54,6 +54,7 @@ message UserStats {
 	required int64 walkovers = 7;
 	repeated UserRegionStats region = 8;
 	repeated Map vetoes = 9;
+	required int64 id = 10;
 }
 
 
