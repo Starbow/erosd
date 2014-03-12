@@ -159,10 +159,10 @@ func (conn *ClientConnection) read() {
 	}()
 
 	go func() {
-		ticker := time.NewTicker(time.Second * 10)
+		ticker := time.NewTicker(time.Second * 30)
 		for _ = range ticker.C {
 			if conn.client == nil {
-				// We're not authed after 10 seconds. Disconnect.
+				// We're not authed after 30 seconds. Disconnect.
 				conn.Close()
 				return
 			}
