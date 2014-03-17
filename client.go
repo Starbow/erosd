@@ -100,8 +100,8 @@ type Client struct {
 	Forfeits  int64 `db:"ladder_forefeits"`
 	Walkovers int64 `db:"ladder_walkovers"`
 
-	chatLastMessageTime time.Time `db:-`
-	chatDelayScale      float64   `db:-`
+	chatLastMessageTime time.Time `db:"-"`
+	chatDelayScale      float64   `db:"-"`
 }
 
 type ClientRegionStats struct {
