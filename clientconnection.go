@@ -46,7 +46,6 @@ type ClientConnection struct {
 	lastPing          time.Time
 	lastPingChallenge string
 	latency           int64
-	lastMessage       time.Time
 
 	lastPong time.Time
 
@@ -63,7 +62,6 @@ func NewClientConnection(conn net.Conn) (clientConn *ClientConnection) {
 		reader:        bufio.NewReader(conn),
 		writer:        bufio.NewWriter(conn),
 		chatRooms:     make(map[string]*ChatRoom),
-		lastMessage:   time.Now(),
 	}
 	var source string = conn.RemoteAddr().String()
 	var logfile string = path.Join(logPath, fmt.Sprintf("%d-conn-%d.log", os.Getpid(), clientConn.id))
@@ -339,6 +337,7 @@ func (conn *ClientConnection) read() {
 // 508 - Can't send message. Missing fields.
 // 509 - Can't create room. Name too short.
 // 510 - Can't send message. Rate limit.
+// 511 - Can't send message. Message too long.
 func ErrorCode(err error) string {
 	if err == ErrLadderClientNotInvolved {
 		return "304"
@@ -687,16 +686,32 @@ func (conn *ClientConnection) OnPrivateMessage(txid int, data []byte) {
 
 func (conn *ClientConnection) OnChatMessage(txid int, data []byte) {
 	defer conn.panicRecovery(txid)
-	if time.Since(conn.lastMessage).Seconds() < 1 {
-		conn.SendResponseMessage("511", txid, []byte{})
+	now := time.Now()
+	difference := time.Now().Sub(conn.client.chatLastMessageTime)
+	switch {
+	case difference <= chatDelay:
+		conn.client.chatDelayScale *= 2
+	case difference > chatMaxThrottleTime:
+		conn.client.chatDelayScale = 1
+	}
+
+	sendtime := conn.client.chatLastMessageTime.Add(time.Duration(conn.client.chatDelayScale) * chatDelay)
+	if sendtime.After(now) {
+		conn.SendResponseMessage("510", txid, []byte{})
 		return
 	}
-	conn.lastMessage = time.Now()
+
+	conn.client.chatLastMessageTime = now
 
 	var message protobufs.ChatMessage
 	err := Unmarshal(data, &message)
 	if err != nil {
 		conn.Close()
+	}
+
+	if int64(len(message.GetMessage())) > chatMaxMessageLength {
+		conn.SendResponseMessage("511", txid, []byte{})
+		return
 	}
 
 	key := cleanChatRoomName(message.GetTarget())

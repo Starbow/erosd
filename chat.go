@@ -21,6 +21,9 @@ var (
 	autoJoinChatRooms        []string
 	maxChatRooms             int64 = 5
 	chatIdBase               int64 = 1
+	chatDelay                      = 250 * time.Millisecond
+	chatMaxThrottleTime            = time.Duration(5 * time.Minute)
+	chatMaxMessageLength     int64 = 256
 	ErrChatRoomAlreadyExists error = errors.New("The chat room name specified already exists.")
 	ErrChatRoomReserved      error = errors.New("The chat room name is reserved.")
 	ErrChatRoomNameTooShort  error = errors.New("The chat room name is too short")

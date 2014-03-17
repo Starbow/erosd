@@ -6,6 +6,7 @@ import (
 	"github.com/Starbow/erosd/buffers"
 	"log"
 	"sync"
+	"time"
 )
 
 var _ = log.Ldate
@@ -98,6 +99,9 @@ type Client struct {
 	Losses    int64 `db:"ladder_losses"`
 	Forfeits  int64 `db:"ladder_forefeits"`
 	Walkovers int64 `db:"ladder_walkovers"`
+
+	chatLastMessageTime time.Time `db:-`
+	chatDelayScale      float64   `db:-`
 }
 
 type ClientRegionStats struct {
@@ -120,11 +124,13 @@ type ClientRegionStats struct {
 
 func NewClient(id int64) *Client {
 	client := &Client{
-		Id:                 id,
-		RatingMean:         25,
-		RatingStdDev:       float64(25) / float64(3),
-		LadderSearchRadius: 1,
-		LadderPoints:       ladderStartingPoints,
+		Id:                  id,
+		RatingMean:          25,
+		RatingStdDev:        float64(25) / float64(3),
+		LadderSearchRadius:  1,
+		LadderPoints:        ladderStartingPoints,
+		chatLastMessageTime: time.Now(),
+		chatDelayScale:      1,
 	}
 
 	return client
@@ -205,6 +211,8 @@ func (c *ClientCache) Get(id int64) *Client {
 		}
 
 		client = &newClient
+		client.chatLastMessageTime = time.Now()
+		client.chatDelayScale = 1
 		c.clients[id] = client
 	} else {
 		defer c.RUnlock()
