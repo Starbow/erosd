@@ -116,14 +116,25 @@ func (m *Handshake) GetAuthKey() string {
 }
 
 type Division struct {
-	Name             *string `protobuf:"bytes,1,req,name=name" json:"name,omitempty"`
-	Points           *int64  `protobuf:"varint,2,req,name=points" json:"points,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+	Id                 *int64   `protobuf:"varint,1,req,name=id" json:"id,omitempty"`
+	Name               *string  `protobuf:"bytes,2,req,name=name" json:"name,omitempty"`
+	PromotionThreshold *float64 `protobuf:"fixed64,3,req,name=promotion_threshold" json:"promotion_threshold,omitempty"`
+	DemotionThreshold  *float64 `protobuf:"fixed64,4,req,name=demotion_threshold" json:"demotion_threshold,omitempty"`
+	IconUrl            *string  `protobuf:"bytes,5,req,name=icon_url" json:"icon_url,omitempty"`
+	SmallIconUrl       *string  `protobuf:"bytes,6,req,name=small_icon_url" json:"small_icon_url,omitempty"`
+	XXX_unrecognized   []byte   `json:"-"`
 }
 
 func (m *Division) Reset()         { *m = Division{} }
 func (m *Division) String() string { return proto.CompactTextString(m) }
 func (*Division) ProtoMessage()    {}
+
+func (m *Division) GetId() int64 {
+	if m != nil && m.Id != nil {
+		return *m.Id
+	}
+	return 0
+}
 
 func (m *Division) GetName() string {
 	if m != nil && m.Name != nil {
@@ -132,11 +143,32 @@ func (m *Division) GetName() string {
 	return ""
 }
 
-func (m *Division) GetPoints() int64 {
-	if m != nil && m.Points != nil {
-		return *m.Points
+func (m *Division) GetPromotionThreshold() float64 {
+	if m != nil && m.PromotionThreshold != nil {
+		return *m.PromotionThreshold
 	}
 	return 0
+}
+
+func (m *Division) GetDemotionThreshold() float64 {
+	if m != nil && m.DemotionThreshold != nil {
+		return *m.DemotionThreshold
+	}
+	return 0
+}
+
+func (m *Division) GetIconUrl() string {
+	if m != nil && m.IconUrl != nil {
+		return *m.IconUrl
+	}
+	return ""
+}
+
+func (m *Division) GetSmallIconUrl() string {
+	if m != nil && m.SmallIconUrl != nil {
+		return *m.SmallIconUrl
+	}
+	return ""
 }
 
 type HandshakeResponse struct {
@@ -212,13 +244,16 @@ func (m *HandshakeResponse) GetMaxVetoes() int64 {
 }
 
 type UserRegionStats struct {
-	Region           *Region `protobuf:"varint,1,req,name=region,enum=protobufs.Region" json:"region,omitempty"`
-	Points           *int64  `protobuf:"varint,2,req,name=points" json:"points,omitempty"`
-	Wins             *int64  `protobuf:"varint,3,req,name=wins" json:"wins,omitempty"`
-	Losses           *int64  `protobuf:"varint,4,req,name=losses" json:"losses,omitempty"`
-	Forfeits         *int64  `protobuf:"varint,5,req,name=forfeits" json:"forfeits,omitempty"`
-	Walkovers        *int64  `protobuf:"varint,6,req,name=walkovers" json:"walkovers,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+	Region              *Region  `protobuf:"varint,1,req,name=region,enum=protobufs.Region" json:"region,omitempty"`
+	Points              *int64   `protobuf:"varint,2,req,name=points" json:"points,omitempty"`
+	Wins                *int64   `protobuf:"varint,3,req,name=wins" json:"wins,omitempty"`
+	Losses              *int64   `protobuf:"varint,4,req,name=losses" json:"losses,omitempty"`
+	Forfeits            *int64   `protobuf:"varint,5,req,name=forfeits" json:"forfeits,omitempty"`
+	Walkovers           *int64   `protobuf:"varint,6,req,name=walkovers" json:"walkovers,omitempty"`
+	Mmr                 *float64 `protobuf:"fixed64,7,req,name=mmr" json:"mmr,omitempty"`
+	PlacementsRemaining *int64   `protobuf:"varint,8,req,name=placements_remaining" json:"placements_remaining,omitempty"`
+	Division            *int64   `protobuf:"varint,9,req,name=division" json:"division,omitempty"`
+	XXX_unrecognized    []byte   `json:"-"`
 }
 
 func (m *UserRegionStats) Reset()         { *m = UserRegionStats{} }
@@ -267,18 +302,42 @@ func (m *UserRegionStats) GetWalkovers() int64 {
 	return 0
 }
 
+func (m *UserRegionStats) GetMmr() float64 {
+	if m != nil && m.Mmr != nil {
+		return *m.Mmr
+	}
+	return 0
+}
+
+func (m *UserRegionStats) GetPlacementsRemaining() int64 {
+	if m != nil && m.PlacementsRemaining != nil {
+		return *m.PlacementsRemaining
+	}
+	return 0
+}
+
+func (m *UserRegionStats) GetDivision() int64 {
+	if m != nil && m.Division != nil {
+		return *m.Division
+	}
+	return 0
+}
+
 type UserStats struct {
-	Username         *string            `protobuf:"bytes,1,req,name=username" json:"username,omitempty"`
-	SearchRadius     *int64             `protobuf:"varint,2,req,name=search_radius" json:"search_radius,omitempty"`
-	Points           *int64             `protobuf:"varint,3,req,name=points" json:"points,omitempty"`
-	Wins             *int64             `protobuf:"varint,4,req,name=wins" json:"wins,omitempty"`
-	Losses           *int64             `protobuf:"varint,5,req,name=losses" json:"losses,omitempty"`
-	Forfeits         *int64             `protobuf:"varint,6,req,name=forfeits" json:"forfeits,omitempty"`
-	Walkovers        *int64             `protobuf:"varint,7,req,name=walkovers" json:"walkovers,omitempty"`
-	Region           []*UserRegionStats `protobuf:"bytes,8,rep,name=region" json:"region,omitempty"`
-	Vetoes           []*Map             `protobuf:"bytes,9,rep,name=vetoes" json:"vetoes,omitempty"`
-	Id               *int64             `protobuf:"varint,10,req,name=id" json:"id,omitempty"`
-	XXX_unrecognized []byte             `json:"-"`
+	Username            *string            `protobuf:"bytes,1,req,name=username" json:"username,omitempty"`
+	SearchRadius        *int64             `protobuf:"varint,2,req,name=search_radius" json:"search_radius,omitempty"`
+	Points              *int64             `protobuf:"varint,3,req,name=points" json:"points,omitempty"`
+	Wins                *int64             `protobuf:"varint,4,req,name=wins" json:"wins,omitempty"`
+	Losses              *int64             `protobuf:"varint,5,req,name=losses" json:"losses,omitempty"`
+	Forfeits            *int64             `protobuf:"varint,6,req,name=forfeits" json:"forfeits,omitempty"`
+	Walkovers           *int64             `protobuf:"varint,7,req,name=walkovers" json:"walkovers,omitempty"`
+	Region              []*UserRegionStats `protobuf:"bytes,8,rep,name=region" json:"region,omitempty"`
+	Vetoes              []*Map             `protobuf:"bytes,9,rep,name=vetoes" json:"vetoes,omitempty"`
+	Id                  *int64             `protobuf:"varint,10,req,name=id" json:"id,omitempty"`
+	Mmr                 *float64           `protobuf:"fixed64,11,req,name=mmr" json:"mmr,omitempty"`
+	PlacementsRemaining *int64             `protobuf:"varint,12,req,name=placements_remaining" json:"placements_remaining,omitempty"`
+	Division            *int64             `protobuf:"varint,13,req,name=division" json:"division,omitempty"`
+	XXX_unrecognized    []byte             `json:"-"`
 }
 
 func (m *UserStats) Reset()         { *m = UserStats{} }
@@ -351,6 +410,27 @@ func (m *UserStats) GetVetoes() []*Map {
 func (m *UserStats) GetId() int64 {
 	if m != nil && m.Id != nil {
 		return *m.Id
+	}
+	return 0
+}
+
+func (m *UserStats) GetMmr() float64 {
+	if m != nil && m.Mmr != nil {
+		return *m.Mmr
+	}
+	return 0
+}
+
+func (m *UserStats) GetPlacementsRemaining() int64 {
+	if m != nil && m.PlacementsRemaining != nil {
+		return *m.PlacementsRemaining
+	}
+	return 0
+}
+
+func (m *UserStats) GetDivision() int64 {
+	if m != nil && m.Division != nil {
+		return *m.Division
 	}
 	return 0
 }
@@ -460,20 +540,20 @@ func (m *SimulationResult) GetMatchQuality() float64 {
 }
 
 type MatchmakingQueue struct {
-	Region           *Region `protobuf:"varint,1,req,name=region,enum=protobufs.Region" json:"region,omitempty"`
-	Radius           *int64  `protobuf:"varint,2,req,name=radius" json:"radius,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+	Region           []Region `protobuf:"varint,1,rep,name=region,enum=protobufs.Region" json:"region,omitempty"`
+	Radius           *int64   `protobuf:"varint,2,req,name=radius" json:"radius,omitempty"`
+	XXX_unrecognized []byte   `json:"-"`
 }
 
 func (m *MatchmakingQueue) Reset()         { *m = MatchmakingQueue{} }
 func (m *MatchmakingQueue) String() string { return proto.CompactTextString(m) }
 func (*MatchmakingQueue) ProtoMessage()    {}
 
-func (m *MatchmakingQueue) GetRegion() Region {
-	if m != nil && m.Region != nil {
-		return *m.Region
+func (m *MatchmakingQueue) GetRegion() []Region {
+	if m != nil {
+		return m.Region
 	}
-	return Region_NA
+	return nil
 }
 
 func (m *MatchmakingQueue) GetRadius() int64 {

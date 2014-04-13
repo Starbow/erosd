@@ -37,8 +37,9 @@ var (
 	matchmakingLongProcessUnlockTime int64 = 60
 	// The time that a long process takes.
 	matchmakingLongProcessResponseTime int64 = 240
-	// The minimum amount of points required for the user to be able to select search radius.
-	matchmakingMinimumSearchRangePoints int64 = 750
+
+	matchmakingRatingScalePerSecond float64 = 0.08
+	matchmakingRadiusMultiplier     float64 = 5.00
 )
 
 type Matchmaker struct {
@@ -62,8 +63,9 @@ type MatchmakerParticipant struct {
 	enrollTime  time.Time // We track when this started, so
 	team        skills.Team
 	points      int64
+	rating      float64
 	radius      int64 // x * points per division
-	region      BattleNetRegion
+	regions     []BattleNetRegion
 	queueType   int64 // 1v1, 2v2
 	match       chan *MatchmakerMatch
 	abort       chan bool
@@ -74,8 +76,9 @@ type MatchmakerParticipant struct {
 }
 
 type MatchmakerPotentialMatch struct {
-	opponent        *MatchmakerParticipant
-	pointDifference int64
+	opponent         *MatchmakerParticipant
+	ratingDifference float64
+	region           BattleNetRegion
 }
 
 type MatchmakerMatch struct {
@@ -138,29 +141,21 @@ func initMatchmaking() {
 }
 
 func NewMatchmakerParticipant(connection *ClientConnection) *MatchmakerParticipant {
-	region, _ := connection.client.RegionStats(connection.client.LadderSearchRegion)
 
 	// TrueSkill stuff
 	team := skills.NewTeam()
 	player := skills.NewPlayer(connection.client.Id)
 	team.AddPlayer(*player, skills.NewRating(connection.client.RatingMean, connection.client.RatingStdDev))
-	var points int64
-	if region == nil {
-		team.AddPlayer(*player, skills.NewRating(connection.client.RatingMean, connection.client.RatingStdDev))
-		points = connection.client.LadderPoints
-	} else {
-		team.AddPlayer(*player, skills.NewRating(region.RatingMean, region.RatingStdDev))
-		points = region.LadderPoints
-	}
 
 	return &MatchmakerParticipant{
 		connection: connection,
 		client:     connection.client,
 		enrollTime: time.Now(),
 		team:       team,
-		points:     points,
+		points:     connection.client.LadderPoints,
+		rating:     connection.client.RatingMean,
 		radius:     connection.client.LadderSearchRadius,
-		region:     connection.client.LadderSearchRegion,
+		regions:    connection.client.LadderSearchRegions,
 		matching:   false,
 		abort:      make(chan bool),
 		match:      make(chan *MatchmakerMatch),
@@ -421,7 +416,7 @@ func (mm *Matchmaker) EndMatch(id int64) {
 }
 
 //Match 2 players against each other.
-func (mm *Matchmaker) makeMatch(player1 *MatchmakerParticipant, player2 *MatchmakerParticipant) {
+func (mm *Matchmaker) makeMatch(player1, player2 *MatchmakerParticipant, region BattleNetRegion) {
 	quality := player1.Quality(player2)
 	go func() {
 		mm.unregister <- player1.connection
@@ -429,9 +424,9 @@ func (mm *Matchmaker) makeMatch(player1 *MatchmakerParticipant, player2 *Matchma
 	}()
 	vetoes1, _ := player1.connection.client.Vetoes()
 	vetoes2, _ := player2.connection.client.Vetoes()
-	selectedMap := maps.Random(player1.region, vetoes1, vetoes2)
+	selectedMap := maps.Random(region, vetoes1, vetoes2)
 	if selectedMap == nil {
-		selectedMap = maps.Random(player1.region)
+		selectedMap = maps.Random(region)
 		if selectedMap == nil {
 			log.Println("No map found while matching", player1.client.Username, player2.client.Username)
 			go func() {
@@ -443,8 +438,8 @@ func (mm *Matchmaker) makeMatch(player1 *MatchmakerParticipant, player2 *Matchma
 			return
 		}
 	}
-	battleNetChannel := fmt.Sprintf("eros%d%d%d%d", player1.region, player1.client.Id, player2.client.Id, rand.Intn(99))
-	erosChatRoom := cleanChatRoomName(fmt.Sprintf("MM%d%d%d", player1.region, player1.client.Id, player2.client.Id))
+	battleNetChannel := fmt.Sprintf("eros%d%d%d%d", region, player1.client.Id, player2.client.Id, rand.Intn(99))
+	erosChatRoom := cleanChatRoomName(fmt.Sprintf("MM%d%d%d", region, player1.client.Id, player2.client.Id))
 
 	player1.opponent = player2
 	player2.opponent = player1
@@ -454,7 +449,7 @@ func (mm *Matchmaker) makeMatch(player1 *MatchmakerParticipant, player2 *Matchma
 	var match MatchmakerMatch
 	match.AddTime = time.Now().Unix()
 	match.Quality = quality
-	match.Region = player1.region
+	match.Region = region
 	match.MapId = &selectedMap.Id
 	match.Channel = battleNetChannel
 	match.longProcessActive = false
@@ -557,9 +552,10 @@ func (mm *Matchmaker) run() {
 
 						//log.Println("Compare", k.client.Id, "to", l.client.Id, "quality", quality, b1, b2)
 
-						if v.IsMatch(w) {
+						if match, regions := v.IsMatch(w); match {
 							potentials = append(potentials, MatchmakerPotentialMatch{opponent: w,
-								pointDifference: int64(math.Abs(float64(v.points - w.points))),
+								ratingDifference: math.Abs(float64(v.rating - w.rating)),
+								region:           regions[rand.Intn(len(regions))],
 							})
 						}
 					}
@@ -572,7 +568,7 @@ func (mm *Matchmaker) run() {
 
 						v.matching = true
 						x.matching = true
-						go mm.makeMatch(v, x)
+						go mm.makeMatch(v, x, potentials[0].region)
 					}
 
 					//Mark our scent
@@ -587,7 +583,10 @@ func (mm *Matchmaker) run() {
 				delete(mm.regionParticipants[BATTLENET_REGION_SEA], client)
 
 				mm.participants[client] = NewMatchmakerParticipant(client)
-				mm.regionParticipants[client.client.LadderSearchRegion][client] = mm.participants[client]
+				for _, region := range client.client.LadderSearchRegions {
+					mm.regionParticipants[region][client] = mm.participants[client]
+				}
+
 				go func() {
 					mm.callback <- true
 				}()
@@ -613,47 +612,54 @@ func (mp *MatchmakerParticipant) Quality(opponent *MatchmakerParticipant) float6
 }
 
 // Worst math ever
-func (mp *MatchmakerParticipant) SearchBoundaries() (lower, upper, variance int64) {
+func (mp *MatchmakerParticipant) SearchBoundaries() (lower, upper, variance float64) {
 	var (
-		elapsed              = float64(time.Since(mp.enrollTime).Seconds())
-		participants float64 = float64(len(matchmaker.regionParticipants[mp.region]))
-		r            int64
+		elapsed = float64(time.Since(mp.enrollTime).Seconds())
+		r       float64
 	)
 
-	if participants < 20 {
-		r = int64(12 + (elapsed * 12))
-	} else if participants < 140 {
-		r = int64(15 + (200*elapsed)/participants)
-	} else {
-		r = int64(15 + (2 * elapsed))
-	}
+	r = 1 + float64(matchmakingRatingScalePerSecond*elapsed)
 
 	if mp.radius > 0 {
-		cap := mp.radius * divisionPoints
+		cap := float64(mp.radius) * matchmakingRadiusMultiplier
 		if r > cap {
 			r = cap
 		}
 	}
-	return mp.points - r, mp.points + r, r
+	return mp.rating - r, mp.rating + r, r
 }
 
-func (mp *MatchmakerParticipant) IsMatch(mp2 *MatchmakerParticipant) bool {
-	if mp.region != mp2.region {
-		return false
+func (mp *MatchmakerParticipant) IsMatch(mp2 *MatchmakerParticipant) (match bool, regions []BattleNetRegion) {
+	match = false
+	regions = make([]BattleNetRegion, 0, 5)
+
+	for _, x := range mp.regions {
+		for _, y := range mp2.regions {
+			if x == y {
+				regions = append(regions, x)
+				break
+			}
+		}
 	}
 
-	r1 := mp.points
-	r2 := mp2.points
+	if len(regions) == 0 {
+		return
+	}
+
+	r1 := mp.rating
+	r2 := mp2.rating
 	r1l, r1u, r1v := mp.SearchBoundaries()
 	r2l, r2u, r2v := mp2.SearchBoundaries()
 
 	r1Match := (r1+r1v >= r2l && r1-r1v <= r2u)
 	r2Match := (r2+r2v >= r1l && r2-r2v <= r1u)
-	return (r1Match && r2Match)
+	match = r1Match && r2Match
+
+	return
 }
 
 type ByRatingDifference []MatchmakerPotentialMatch
 
 func (a ByRatingDifference) Len() int           { return len(a) }
 func (a ByRatingDifference) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a ByRatingDifference) Less(i, j int) bool { return a[i].pointDifference < a[j].pointDifference }
+func (a ByRatingDifference) Less(i, j int) bool { return a[i].ratingDifference < a[j].ratingDifference }

@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"github.com/ChrisHines/GoSkills/skills"
 	"github.com/ChrisHines/GoSkills/skills/trueskill"
 	"github.com/Starbow/erosd/buffers"
@@ -27,30 +26,39 @@ var (
 )
 
 type Division struct {
-	Name   string
-	Points int64
+	Id                 int64   `db:"id"`
+	Name               string  `db:"name"`
+	PromotionThreshold float64 `db:"promotion_threshold"`
+	DemotionThreshold  float64 `db:"demotion_threshold"`
+	IconUrl            string  `db:"icon_url"`
+	SmallIconUrl       string  `db:"small_icon_url"`
+	LadderGroup        int64   `db:"ladder_group"`
 }
 
 func (d *Division) DivisionMessage() *protobufs.Division {
 	var division protobufs.Division
 	division.Name = &d.Name
-	division.Points = &d.Points
+	division.PromotionThreshold = &d.PromotionThreshold
+	division.DemotionThreshold = &d.DemotionThreshold
+	division.Id = &d.Id
+	division.IconUrl = &d.IconUrl
+	division.SmallIconUrl = &d.SmallIconUrl
 
 	return &division
 }
 
-type Divisions []Division
+type Divisions []*Division
 type Maps map[int64]*Map
 
 var (
-	divisionNames []string = []string{"Bronze", "Silver", "Gold", "Platinum", "Diamond"}
+	divisionNames []string = []string{"E", "D", "C", "B", "A"}
 	divisions     Divisions
 	maps          Maps = Maps{}
 
 	divisionCount             int64
-	subdivisionCount          int64
-	divisionPoints            int64
-	ladderStartingPoints      int64             = 1250
+	divisionIncrements        float64
+	divisionFirstRating       float64
+	ladderStartingPoints      int64             = 0
 	ladderWinPointsBase       int64             = 100
 	ladderLosePointsBase      int64             = 50
 	ladderWinPointsIncrement  float64           = 25
@@ -80,48 +88,85 @@ func loadMaps() {
 // Create divisions. There will be [subdivisionCount] subdivisions per division.
 // The final division will only have one subdivision.
 func initDivisions() {
-	divisions = make(Divisions, 0, divisionCount*subdivisionCount+1)
+	divisions = make(Divisions, 0, divisionCount)
 
-	divisionSize := divisionPoints * subdivisionCount
-
-	i := int64(0)
-	for {
-		if i == divisionCount {
-			break
-		}
-
-		j := int64(0)
-		for {
-			if j == subdivisionCount {
-				break
-			}
-
-			divisions = append(divisions, Division{
-				Points: int64((divisionSize * i) + (divisionPoints * j)),
-				Name:   fmt.Sprintf("%s %d", divisionNames[i], subdivisionCount-j),
-			})
-
-			j++
-		}
-
-		i++
+	div, err := dbMap.Select(Division{}, "SELECT * FROM divisions ORDER BY promotion_threshold")
+	if err != nil {
+		panic(err)
 	}
 
-	divisions = append(divisions, Division{
-		Points: int64((divisionSize * i)),
-		Name:   fmt.Sprintf("%s", divisionNames[i]),
-	})
+	if len(div) > 0 {
+		for x := range div {
+			divisions = append(divisions, div[x].(*Division))
+		}
+	} else {
+		i := int64(0)
+		for {
+			if i > divisionCount {
+				break
+			}
+			var rating float64
+			if i == 0 {
+				rating = 0
+			} else {
+				rating = divisionFirstRating + (float64(i-1) * divisionIncrements)
+			}
+
+			divisions = append(divisions, &Division{
+				PromotionThreshold: rating,
+				DemotionThreshold:  rating - 1,
+				Name:               divisionNames[i],
+				Id:                 0,
+				LadderGroup:        i,
+			})
+
+			i++
+		}
+
+		for _, x := range divisions {
+			err = dbMap.Insert(x)
+			if err != nil {
+				panic(err)
+			}
+		}
+	}
 
 	return
 }
 
-func (d Divisions) GetDivision(points int64) (division *Division, position int64) {
+func (this *Division) GetDifference(other *Division) int64 {
+	if this == nil || other == nil {
+		return 0
+	}
+	var (
+		p1, p2 int64
+		i      = int64(len(divisions))
+	)
+
+	for {
+		i--
+
+		if divisions[i] == this {
+			p1 = i
+		} else if divisions[i] == other {
+			p2 = i
+		}
+
+		if i == 0 {
+			break
+		}
+	}
+
+	return p2 - p1
+}
+
+func (d Divisions) GetDivision(mmr float64) (division *Division, position int64) {
 	i := int64(len(d))
 	for {
 		i--
 
-		if points >= d[i].Points {
-			return &d[i], i
+		if mmr >= d[i].PromotionThreshold {
+			return d[i], i
 		}
 
 		if i == 0 {
@@ -133,9 +178,9 @@ func (d Divisions) GetDivision(points int64) (division *Division, position int64
 }
 
 // Get the difference in ranks
-func (d Divisions) GetDifference(points, points2 int64) int64 {
-	_, p1 := d.GetDivision(points)
-	_, p2 := d.GetDivision(points2)
+func (d Divisions) GetDifference(mmr, mmr2 float64) int64 {
+	_, p1 := d.GetDivision(mmr)
+	_, p2 := d.GetDivision(mmr2)
 
 	return p2 - p1
 }
@@ -495,12 +540,12 @@ func NewMatchResult(replay *Replay, client *Client) (result *MatchResult, player
 	return
 }
 
-func calculateNewPoints(winner, loser int64) (winnerNew, loserNew int64) {
+func calculateNewPoints(winner, loser int64, winnerDivision, loserDivision *Division) (winnerNew, loserNew int64) {
 	// Update points
 	// GetDifference(2000, 1000) would return -1
 	// GetDifference(2000, 3000) would return 1
 
-	difference := divisions.GetDifference(winner, loser)
+	difference := winnerDivision.GetDifference(loserDivision)
 	increase := ladderWinPointsBase + int64((ladderWinPointsIncrement * float64(difference)))
 	decrease := ladderLosePointsBase - (int64((ladderLosePointsIncrement * float64(difference))) * -1)
 

@@ -1097,21 +1097,25 @@ func (conn *ClientConnection) OnQueueMatchmaking(txid int, data []byte) {
 			conn.logger.Println(err)
 		}
 
-		conn.client.LadderSearchRegion = BattleNetRegion(queue.GetRegion())
+		// We're storing the search regions in one field using bit shifting.
+		conn.client.LadderSearchRegions = make([]BattleNetRegion, 0, len(queue.GetRegion()))
+
+		for _, region := range queue.GetRegion() {
+			if !conn.client.HasRegion(BattleNetRegion(region)) {
+				conn.SendResponseMessage("401", txid, []byte{})
+				return
+			}
+			conn.client.LadderSearchRegions = append(conn.client.LadderSearchRegions, BattleNetRegion(region))
+		}
+
+		if len(conn.client.LadderSearchRegions) == 0 {
+			conn.SendResponseMessage("401", txid, []byte{})
+			return
+		}
 		conn.client.LadderSearchRadius = queue.GetRadius()
 
 		if conn.client.LadderSearchRadius < 0 {
 			conn.client.LadderSearchRadius = 0
-		}
-
-		if conn.client.LadderPoints < matchmakingMinimumSearchRangePoints && matchmakingMinimumSearchRangePoints > 0 {
-			conn.client.LadderSearchRadius = 1
-		}
-
-		// Check we have registered characters for this region
-		if !conn.client.HasRegion(conn.client.LadderSearchRegion) {
-			conn.SendResponseMessage("401", txid, []byte{})
-			return
 		}
 
 		// Resume pending matches

@@ -4,6 +4,7 @@ package main
 
 import (
 	"github.com/Starbow/erosd/buffers"
+	"github.com/coopernurse/gorp"
 	"log"
 	"sync"
 	"time"
@@ -88,8 +89,8 @@ type Client struct {
 	LadderPoints int64 `db:"ladder_points"` // Global ladder points
 
 	//Display this ranking to the world.
-	LadderSearchRadius int64           `db:"ladder_search_radius"` // Search Radius.
-	LadderSearchRegion BattleNetRegion `db:"ladder_search_region"`
+	LadderSearchRadius int64 `db:"ladder_search_radius"` // Search Radius.
+	LadderSearchRegion int64 `db:"ladder_search_region"`
 
 	PendingMatchmakingId         *int64 `db:"matchmaking_pending_match_id"`
 	PendingMatchmakingOpponentId *int64 `db:"matchmaking_pending_opponent_id"`
@@ -100,8 +101,62 @@ type Client struct {
 	Forfeits  int64 `db:"ladder_forefeits"`
 	Walkovers int64 `db:"ladder_walkovers"`
 
-	chatLastMessageTime time.Time `db:"-"`
-	chatDelayScale      float64   `db:"-"`
+	DivisionId                *int64 `db:"division_id"`
+	PlacementMatchesRemaining int64  `db:"placement_matches_remaining"`
+
+	// Transient
+	chatLastMessageTime time.Time
+	chatDelayScale      float64
+	Division            *Division
+	LadderSearchRegions []BattleNetRegion
+}
+
+func (this *Client) PreUpdate(_ gorp.SqlExecutor) error {
+	if this.Division == nil {
+		this.DivisionId = nil
+	} else {
+		this.DivisionId = &this.Division.Id
+	}
+
+	this.LadderSearchRegion = 0
+	for _, region := range this.LadderSearchRegions {
+		this.LadderSearchRegion += 1 << uint(region)
+	}
+
+	return nil
+}
+
+func (this *Client) PostGet(_ gorp.SqlExecutor) error {
+	if this.DivisionId != nil {
+		for _, division := range divisions {
+			if division.Id == *this.DivisionId {
+				this.Division = division
+				break
+			}
+		}
+	}
+	this.LadderSearchRegions = make([]BattleNetRegion, 0, 5)
+	if (this.LadderSearchRegion & 1 << uint(BATTLENET_REGION_NA)) == (1 << uint(BATTLENET_REGION_NA)) {
+		this.LadderSearchRegions = append(this.LadderSearchRegions, BATTLENET_REGION_NA)
+	}
+
+	if (this.LadderSearchRegion & 1 << uint(BATTLENET_REGION_EU)) == (1 << uint(BATTLENET_REGION_EU)) {
+		this.LadderSearchRegions = append(this.LadderSearchRegions, BATTLENET_REGION_EU)
+	}
+
+	if (this.LadderSearchRegion & 1 << uint(BATTLENET_REGION_KR)) == (1 << uint(BATTLENET_REGION_KR)) {
+		this.LadderSearchRegions = append(this.LadderSearchRegions, BATTLENET_REGION_KR)
+	}
+
+	if (this.LadderSearchRegion & 1 << uint(BATTLENET_REGION_CN)) == (1 << uint(BATTLENET_REGION_CN)) {
+		this.LadderSearchRegions = append(this.LadderSearchRegions, BATTLENET_REGION_CN)
+	}
+
+	if (this.LadderSearchRegion & 1 << uint(BATTLENET_REGION_SEA)) == (1 << uint(BATTLENET_REGION_SEA)) {
+		this.LadderSearchRegions = append(this.LadderSearchRegions, BATTLENET_REGION_SEA)
+	}
+
+	return nil
 }
 
 type ClientRegionStats struct {
@@ -120,17 +175,47 @@ type ClientRegionStats struct {
 	Losses    int64 `db:"ladder_losses"`
 	Forfeits  int64 `db:"ladder_forefeits"`
 	Walkovers int64 `db:"ladder_walkovers"`
+
+	DivisionId                *int64 `db:"division_id"`
+	PlacementMatchesRemaining int64  `db:"placement_matches_remaining"`
+
+	// Transient
+	Division *Division
+}
+
+func (this *ClientRegionStats) PreUpdate(_ gorp.SqlExecutor) error {
+	if this.Division == nil {
+		this.DivisionId = nil
+	} else {
+		this.DivisionId = &this.Division.Id
+	}
+
+	return nil
+}
+
+func (this *ClientRegionStats) PostGet(_ gorp.SqlExecutor) error {
+	if this.DivisionId != nil {
+		for _, division := range divisions {
+			if division.Id == *this.DivisionId {
+				this.Division = division
+				break
+			}
+		}
+	}
+
+	return nil
 }
 
 func NewClient(id int64) *Client {
 	client := &Client{
-		Id:                  id,
-		RatingMean:          25,
-		RatingStdDev:        float64(25) / float64(3),
-		LadderSearchRadius:  1,
-		LadderPoints:        ladderStartingPoints,
-		chatLastMessageTime: time.Now(),
-		chatDelayScale:      1,
+		Id:                        id,
+		RatingMean:                25,
+		RatingStdDev:              float64(25) / float64(3),
+		LadderSearchRadius:        1,
+		LadderPoints:              ladderStartingPoints,
+		chatLastMessageTime:       time.Now(),
+		chatDelayScale:            1,
+		PlacementMatchesRemaining: 5,
 	}
 
 	return client
@@ -230,6 +315,53 @@ func (c *Client) GetLadderPoints(region BattleNetRegion) int64 {
 	}
 }
 
+// Run after a game ends. Checks to see if the client's division needs to be updated.
+func (client *Client) PostGame(region BattleNetRegion) {
+	regionStats, err := client.RegionStats(region)
+
+	if err != nil {
+		return
+	}
+
+	if client.PlacementMatchesRemaining > 0 {
+		client.PlacementMatchesRemaining -= 1
+
+	}
+
+	division, _ := divisions.GetDivision(client.RatingMean)
+	if client.PlacementMatchesRemaining == 0 && client.Division == nil {
+		if client.RatingMean < client.Division.DemotionThreshold {
+			client.Division = division
+		} else if client.Division != division {
+			client.Division = division
+		}
+	}
+
+	if client.Division != nil {
+		client.Division = division
+	}
+
+	if regionStats.PlacementMatchesRemaining > 0 {
+		regionStats.PlacementMatchesRemaining -= 1
+
+	}
+
+	division, _ = divisions.GetDivision(regionStats.RatingMean)
+	if regionStats.PlacementMatchesRemaining == 0 && regionStats.Division == nil {
+
+		regionStats.Division = division
+	}
+
+	if regionStats.Division != nil {
+		if regionStats.RatingMean < regionStats.Division.DemotionThreshold {
+			regionStats.Division = division
+		} else if regionStats.Division != division {
+			regionStats.Division = division
+		}
+	}
+
+}
+
 // Have Client c defeat Client o and update their ratings.
 func (client *Client) Defeat(opponent *Client, region BattleNetRegion) float64 {
 
@@ -238,8 +370,9 @@ func (client *Client) Defeat(opponent *Client, region BattleNetRegion) float64 {
 	opponent.Losses += 1
 
 	var quality float64
+
+	client.LadderPoints, opponent.LadderPoints = calculateNewPoints(client.LadderPoints, opponent.LadderPoints, client.Division, opponent.Division)
 	client.RatingMean, client.RatingStdDev, opponent.RatingMean, opponent.RatingStdDev, quality = calculateNewRating(client.Id, opponent.Id, client.RatingMean, client.RatingStdDev, opponent.RatingMean, opponent.RatingStdDev)
-	client.LadderPoints, opponent.LadderPoints = calculateNewPoints(client.LadderPoints, opponent.LadderPoints)
 
 	regionStats, err := client.RegionStats(region)
 
@@ -251,12 +384,15 @@ func (client *Client) Defeat(opponent *Client, region BattleNetRegion) float64 {
 		return quality
 	}
 
+	regionStats.LadderPoints, opponentRegionStats.LadderPoints = calculateNewPoints(regionStats.LadderPoints, opponentRegionStats.LadderPoints, regionStats.Division, opponentRegionStats.Division)
 	regionStats.RatingMean, regionStats.RatingStdDev, opponentRegionStats.RatingMean, opponentRegionStats.RatingStdDev, quality = calculateNewRating(client.Id, opponent.Id, regionStats.RatingMean, regionStats.RatingStdDev, opponentRegionStats.RatingMean, opponentRegionStats.RatingStdDev)
-	regionStats.LadderPoints, opponentRegionStats.LadderPoints = calculateNewPoints(regionStats.LadderPoints, opponentRegionStats.LadderPoints)
 	regionStats.Wins += 1
 	opponentRegionStats.Losses += 1
 
-	dbMap.Update(regionStats, opponentRegionStats)
+	client.PostGame(region)
+	opponent.PostGame(region)
+
+	dbMap.Update(regionStats, opponentRegionStats, client, opponent)
 
 	log.Println(client.Username, client.LadderPoints, "defeated", opponent.Username, opponent.LadderPoints)
 
@@ -327,6 +463,14 @@ func (c *Client) UserStatsMessage() *protobufs.UserStats {
 	user.Forfeits = &c.Forfeits
 	user.Region = make([]*protobufs.UserRegionStats, 0, len(ladderActiveRegions))
 	user.Vetoes = make([]*protobufs.Map, 0, len(vetoes))
+	divisionId := int64(0)
+	if c.Division != nil {
+		divisionId = c.Division.Id
+	}
+	user.PlacementsRemaining = &c.PlacementMatchesRemaining
+	user.Division = &divisionId
+	user.Mmr = &c.RatingMean
+
 	user.Id = &c.Id
 
 	for _, region := range ladderActiveRegions {
@@ -446,7 +590,13 @@ func (crs *ClientRegionStats) UserRegionStatsMessage() *protobufs.UserRegionStat
 	stats.Walkovers = &crs.Walkovers
 	stats.Forfeits = &crs.Forfeits
 	stats.Region = &region
-
+	stats.PlacementsRemaining = &crs.PlacementMatchesRemaining
+	divisionId := int64(0)
+	if crs.Division != nil {
+		divisionId = crs.Division.Id
+	}
+	stats.Division = &divisionId
+	stats.Mmr = &crs.RatingMean
 	return &stats
 }
 

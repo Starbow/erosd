@@ -96,7 +96,7 @@ func (user *SimulatedUser) Run() {
 	for {
 		// Pick a random character to queue with
 		character := get_random_character(user.client)
-		user.client.LadderSearchRegion = character.Region
+		user.client.LadderSearchRegions = []BattleNetRegion{character.Region}
 
 		// Join the matchmaking queue
 		matchmaker.register <- user.conn
@@ -141,7 +141,7 @@ func (user *SimulatedUser) Run() {
 						DateTime:          time.Now().Unix(),
 						MapId:             &bnet_map.Id,
 						MatchmakerMatchId: &match.Id,
-						Region:            user.client.LadderSearchRegion,
+						Region:            user.client.LadderSearchRegions[0],
 					}
 					err := dbMap.Insert(match_result)
 					if err != nil {

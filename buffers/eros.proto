@@ -14,8 +14,12 @@ message Handshake {
 }
 
 message Division {
-	required string name = 1;
-	required int64 points = 2;
+	required int64 id = 1;
+	required string name = 2;
+	required double promotion_threshold = 3;
+	required double demotion_threshold = 4;
+	required string icon_url = 5;
+	required string small_icon_url = 6;
 }
 
 message HandshakeResponse {
@@ -42,6 +46,9 @@ message UserRegionStats
 	required int64 losses = 4;
 	required int64 forfeits = 5;
 	required int64 walkovers = 6;
+	required double mmr = 7;
+	required int64 placements_remaining = 8;
+	required int64 division = 9;
 }
 
 message UserStats {
@@ -55,6 +62,9 @@ message UserStats {
 	repeated UserRegionStats region = 8;
 	repeated Map vetoes = 9;
 	required int64 id = 10;
+	required double mmr = 11;
+	required int64 placements_remaining = 12;
+	required int64 division = 13;
 }
 
 
@@ -79,7 +89,7 @@ message SimulationResult {
 }
 
 message MatchmakingQueue {
-	required Region region = 1;
+	repeated Region region = 1;
 	required int64 radius = 2;
 }
 
