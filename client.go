@@ -330,15 +330,17 @@ func (client *Client) PostGame(region BattleNetRegion) {
 
 	division, _ := divisions.GetDivision(client.RatingMean)
 	if client.PlacementMatchesRemaining == 0 && client.Division == nil {
-		if client.RatingMean < client.Division.DemotionThreshold {
-			client.Division = division
-		} else if client.Division != division {
-			client.Division = division
-		}
+		client.Division = division
 	}
 
 	if client.Division != nil {
-		client.Division = division
+		if client.RatingMean < client.Division.PromotionThreshold {
+			if client.RatingMean < client.Division.DemotionThreshold {
+				client.Division = division
+			}
+		} else if client.Division != division {
+			client.Division = division
+		}
 	}
 
 	if regionStats.PlacementMatchesRemaining > 0 {
@@ -353,8 +355,10 @@ func (client *Client) PostGame(region BattleNetRegion) {
 	}
 
 	if regionStats.Division != nil {
-		if regionStats.RatingMean < regionStats.Division.DemotionThreshold {
-			regionStats.Division = division
+		if regionStats.RatingMean < regionStats.Division.PromotionThreshold {
+			if regionStats.RatingMean < regionStats.Division.DemotionThreshold {
+				client.Division = division
+			}
 		} else if regionStats.Division != division {
 			regionStats.Division = division
 		}
