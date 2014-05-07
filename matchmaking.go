@@ -651,8 +651,9 @@ func (mp *MatchmakerParticipant) IsMatch(mp2 *MatchmakerParticipant) (match bool
 	r1l, r1u, r1v := mp.SearchBoundaries()
 	r2l, r2u, r2v := mp2.SearchBoundaries()
 
-	r1Match := (r1+r1v >= r2l && r1-r1v <= r2u)
-	r2Match := (r2+r2v >= r1l && r2-r2v <= r1u)
+	r1Match := (r1+r1v >= r2l) && (r1-r1v <= r2u) && (r1+r1v >= r2) && (r1-r1v <= r2)
+	r2Match := (r2+r2v >= r1l) && (r2-r2v <= r1u) && (r2+r2v >= r1) && (r2-r2v <= r1)
+
 	match = r1Match && r2Match
 
 	return
