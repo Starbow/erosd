@@ -612,21 +612,15 @@ func (mp *MatchmakerParticipant) Quality(opponent *MatchmakerParticipant) float6
 }
 
 // Worst math ever
-func (mp *MatchmakerParticipant) SearchBoundaries() (lower, upper, variance float64) {
+func (mp *MatchmakerParticipant) SearchBoundaries() (maxDifference, variance float64) {
 	var (
 		elapsed = float64(time.Since(mp.enrollTime).Seconds())
 		r       float64
 	)
 
 	r = 1 + float64(matchmakingRatingScalePerSecond*elapsed)
-
-	if mp.radius > 0 {
-		cap := float64(mp.radius) * matchmakingRadiusMultiplier
-		if r > cap {
-			r = cap
-		}
-	}
-	return mp.rating - r, mp.rating + r, r
+	matchmakingRadiusMultiplier := math.Floor(elapsed / matchmakingRadiusMultiplier)
+	return matchmakingRadiusMultiplier, r
 }
 
 func (mp *MatchmakerParticipant) IsMatch(mp2 *MatchmakerParticipant) (match bool, regions []BattleNetRegion) {
@@ -648,11 +642,12 @@ func (mp *MatchmakerParticipant) IsMatch(mp2 *MatchmakerParticipant) (match bool
 
 	r1 := mp.rating
 	r2 := mp2.rating
-	r1l, r1u, r1v := mp.SearchBoundaries()
-	r2l, r2u, r2v := mp2.SearchBoundaries()
+	mp1d, r1v := mp.SearchBoundaries()
+	mp2d, r2v := mp2.SearchBoundaries()
+	diff := math.Abs(float64(divisions.GetDifference(mp.rating, mp2.rating)))
 
-	r1Match := (r1+r1v >= r2l) && (r1-r1v <= r2u) && (r1+r1v >= r2) && (r1-r1v <= r2)
-	r2Match := (r2+r2v >= r1l) && (r2-r2v <= r1u) && (r2+r2v >= r1) && (r2-r2v <= r1)
+	r1Match := (r1+r1v >= r2) && (r1-r1v <= r2) && (mp.radius == 0 || diff < float64(mp.radius)) && diff <= mp1d
+	r2Match := (r2+r2v >= r1) && (r2-r2v <= r1) && (mp2.radius == 0 || diff < float64(mp2.radius)) && diff <= mp2d
 
 	match = r1Match && r2Match
 
