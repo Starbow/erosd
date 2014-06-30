@@ -144,8 +144,7 @@ func NewMatchmakerParticipant(connection *ClientConnection) *MatchmakerParticipa
 
 	// TrueSkill stuff
 	team := skills.NewTeam()
-	player := skills.NewPlayer(connection.client.Id)
-	team.AddPlayer(*player, skills.NewRating(connection.client.RatingMean, connection.client.RatingStdDev))
+	team.AddPlayer(connection.client.Id, skills.NewRating(connection.client.RatingMean, connection.client.RatingStdDev))
 
 	return &MatchmakerParticipant{
 		connection: connection,

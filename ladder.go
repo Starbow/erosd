@@ -572,14 +572,11 @@ func calculateNewPoints(winner, loser int64, winnerDivision, loserDivision *Divi
 }
 
 func calculateNewRating(winnerId, loserId int64, winnerRating, winnerStdDev, loserRating, loserStdDev float64) (winnerNewRating, winnerNewStdDev, loserNewRating, loserNewStdDev, quality float64) {
-	player1 := skills.NewPlayer(winnerId)
-	player2 := skills.NewPlayer(loserId)
-
 	team1 := skills.NewTeam()
 	team2 := skills.NewTeam()
 
-	team1.AddPlayer(*player1, skills.NewRating(winnerRating, winnerStdDev))
-	team2.AddPlayer(*player2, skills.NewRating(loserRating, loserStdDev))
+	team1.AddPlayer(winnerId, skills.NewRating(winnerRating, winnerStdDev))
+	team2.AddPlayer(loserId, skills.NewRating(loserRating, loserStdDev))
 
 	teams := []skills.Team{team1, team2}
 
@@ -587,7 +584,7 @@ func calculateNewRating(winnerId, loserId int64, winnerRating, winnerStdDev, los
 	ratings := calc.CalcNewRatings(skills.DefaultGameInfo, teams, 1, 2)
 	quality = calc.CalcMatchQual(skills.DefaultGameInfo, teams)
 
-	return ratings[*player1].Mean(), ratings[*player1].Stddev(), ratings[*player2].Mean(), ratings[*player2].Stddev(), quality
+	return ratings[winnerId].Mean(), ratings[winnerId].Stddev(), ratings[loserId].Mean(), ratings[loserId].Stddev(), quality
 }
 
 func NewMatchResultPlayer(replay *Replay, player *ReplayPlayer) (matchplayer *MatchResultPlayer, err error) {
