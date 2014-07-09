@@ -16,6 +16,7 @@ var (
 	randomSource         rand.Source = rand.NewSource(time.Now().Unix())
 	listenAddresses      []string
 	adminListenAddresses []string
+	httpListenAddresses  []string
 	simulator            bool
 	allowsimulations     bool
 	matchmaker           *Matchmaker
@@ -56,6 +57,7 @@ func loadConfig() error {
 		config = conf.NewConfigFile()
 		config.AddSection("erosd")
 		config.AddOption("erosd", "listen", ":12345")
+		config.AddOption("erosd", "httplisten", ":9090")
 		config.AddOption("erosd", "adminlisten", "127.0.0.1:12346")
 		config.AddOption("erosd", "simulator", "false")
 		config.AddOption("erosd", "allowsimulations", "false")
@@ -109,6 +111,10 @@ func loadConfig() error {
 	listen, err = config.GetString("erosd", "adminlisten")
 	if err == nil {
 		adminListenAddresses = strings.Split(listen, ";")
+	}
+	listen, err = config.GetString("erosd", "httplisten")
+	if err == nil {
+		httpListenAddresses = strings.Split(listen, ";")
 	}
 	simulator, _ = config.GetBool("erosd", "simulator")
 	pythonPort, _ = config.GetString("python", "port")
@@ -240,6 +246,10 @@ func main() {
 
 	for _, listen := range adminListenAddresses {
 		go listenAndServe(listen, true)
+	}
+
+	for _, listen := range httpListenAddresses {
+		go listenAndServeHTTP(listen)
 	}
 
 	log.Println("Initialization complete")
