@@ -34,3 +34,7 @@ mpyq.py
 
 #logs
 logs/*
+
+#Web stuff
+web/node_modules
+web/static/components
