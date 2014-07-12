@@ -46,7 +46,7 @@ func (this ClientConnectionType) String() string {
 
 const MAXIMUM_DATA_SIZE = 500 * 1024
 const READ_BUFFER_SIZE = 4096
-const PING_TIMEOUT = 30
+const PING_TIMEOUT = 60
 const (
 	CLIENT_CONNECTION_TYPE_SOCKET    ClientConnectionType = iota
 	CLIENT_CONNECTION_TYPE_WEBSOCKET ClientConnectionType = iota
@@ -109,7 +109,7 @@ func NewClientConnection(conn net.Conn) (clientConn *ClientConnection) {
 func NewWebsocketClientConnection(conn websocket.Conn) (clientConn *ClientConnection) {
 	conn.SetReadLimit(MAXIMUM_DATA_SIZE + 1024)
 	conn.SetReadDeadline(time.Now().Add(PING_TIMEOUT * time.Second))
-	conn.SetPongHandler(func(string) error { conn.SetReadDeadline(time.Now().Add(PING_TIMEOUT * time.Second)); return nil })
+
 	return newClientConnection(conn, CLIENT_CONNECTION_TYPE_WEBSOCKET)
 }
 
@@ -259,28 +259,33 @@ func (conn *ClientConnection) read() {
 		}
 	}()
 
-	// We only need this for regular connections. WebSockets handles its own pingery/pongery.
-	if conn.connType == CLIENT_CONNECTION_TYPE_SOCKET {
-		go func() {
-			ticker := time.NewTicker(time.Second * 30)
-			for _ = range ticker.C {
-				if conn.lastPingChallenge != "" {
-					if time.Since(conn.lastPong).Seconds() > 30 {
-						// ping timeout
-						conn.Close()
-						return
-					}
-				}
+	// Ping/pongery
 
-				conn.lastPing = time.Now()
-				conn.lastPingChallenge = fmt.Sprintf("%d", conn.lastPing.Second()*conn.lastPing.Minute())
-				err := conn.SendServerMessage("PNG", []byte(conn.lastPingChallenge))
-				if err != nil {
+	go func() {
+		ticker := time.NewTicker(time.Second * (PING_TIMEOUT / 2))
+		for _ = range ticker.C {
+			if conn.lastPingChallenge != "" {
+				if time.Since(conn.lastPong).Seconds() > PING_TIMEOUT {
+					// ping timeout
+					conn.Close()
 					return
 				}
 			}
-		}()
-	}
+
+			switch conn.conn.(type) {
+			case websocket.Conn:
+				ws := conn.conn.(websocket.Conn)
+				ws.SetReadDeadline(time.Now().Add(PING_TIMEOUT * time.Second))
+			}
+
+			conn.lastPing = time.Now()
+			conn.lastPingChallenge = fmt.Sprintf("%d", conn.lastPing.Second()*conn.lastPing.Minute())
+			err := conn.SendServerMessage("PNG", []byte(conn.lastPingChallenge))
+			if err != nil {
+				return
+			}
+		}
+	}()
 
 	//Infinite loop
 	for {
@@ -880,8 +885,9 @@ func (conn *ClientConnection) OnPong(txid int, data []byte) {
 
 	conn.lastPong = time.Now()
 	conn.latency = conn.lastPong.Sub(conn.lastPing).Nanoseconds() / 1000000
-
+	data = bytes.TrimRight(data, "\000")
 	if conn.lastPingChallenge == "" || string(data) != conn.lastPingChallenge {
+		conn.logger.Printf("Bad PNR response. Expected %s, got %v", conn.lastPingChallenge, data)
 		conn.Close()
 	} else {
 		conn.SendResponseMessage("PNR", txid, []byte{})
