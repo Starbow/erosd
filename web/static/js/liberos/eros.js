@@ -26,7 +26,7 @@
 
         this.update = update;
 
-        if (typeof (u) !== 'undefined') {
+        if (typeof (u) === 'object') {
             update(u);
         }
     }
@@ -35,11 +35,11 @@
         var user = this;    
 
         if (typeof (u) === 'string') {
-            this.username = u;
-            his.stats = new ErosUserStats(u);
+            user.username = u;
+            user.stats = new ErosUserStats(u);
         } else {
-            this.username = u.username;
-            this.stats = new ErosUserStats(u);
+            user.username = u.username;
+            user.stats = new ErosUserStats(u);
         }
 
 
@@ -303,7 +303,7 @@
             if (key in users) {
                 return users[key];
             } else {
-                var user = new ErosUser(username.trim());
+                var user = new ErosUser(eros, username.trim());
                 user.local = false;
                 users[key] = user;
 
