@@ -5,6 +5,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"github.com/Starbow/erosd/buffers"
 	"github.com/gorilla/websocket"
@@ -147,7 +148,8 @@ func (conn *ClientConnection) panicRecovery(txid int) {
 }
 
 // Read the next message from a regular socket
-func (conn *ClientConnection) readPayload(reader *bufio.Reader) (event string, txid int, length int, data bytes.Buffer, err error) {
+func (conn *ClientConnection) readPayload(reader *bufio.Reader) (event string, txid int, length int, data []byte, err error) {
+	data = make([]byte, 0)
 	var line string
 	line, err = reader.ReadString('\n')
 
@@ -170,9 +172,11 @@ func (conn *ClientConnection) readPayload(reader *bufio.Reader) (event string, t
 		return
 	}
 
+	var buffer bytes.Buffer
 	if length > 0 {
+
 		var written int64
-		written, err = io.CopyN(&data, reader, int64(length))
+		written, err = io.CopyN(&buffer, reader, int64(length))
 		if err != nil {
 
 			conn.logger.Println(err)
@@ -183,6 +187,8 @@ func (conn *ClientConnection) readPayload(reader *bufio.Reader) (event string, t
 			conn.logger.Println("Expecting", length, "got", written)
 			err = io.ErrUnexpectedEOF
 		}
+
+		data = buffer.Bytes()
 	}
 
 	return
@@ -283,7 +289,7 @@ func (conn *ClientConnection) read() {
 			event  string
 			txid   int
 			length int
-			data   bytes.Buffer
+			data   []byte
 			err    error
 		)
 		switch conn.conn.(type) {
@@ -298,6 +304,9 @@ func (conn *ClientConnection) read() {
 			reader := bufio.NewReader(r)
 
 			event, txid, length, data, err = conn.readPayload(reader)
+			var decoded []byte = make([]byte, base64.StdEncoding.DecodedLen(len(data)))
+			base64.StdEncoding.Decode(decoded, data)
+			data = decoded
 		}
 
 		if length > MAXIMUM_DATA_SIZE {
@@ -316,7 +325,7 @@ func (conn *ClientConnection) read() {
 
 		if conn.client == nil {
 			if event == "HSH" {
-				if !conn.OnHandshake(txid, data.Bytes()) {
+				if !conn.OnHandshake(txid, data) {
 					return
 				} else {
 					stats := NewServerStats()
@@ -341,39 +350,39 @@ func (conn *ClientConnection) read() {
 			// dispatch
 			switch event {
 			case "SIM":
-				go conn.OnSimulation(txid, data.Bytes())
+				go conn.OnSimulation(txid, data)
 			case "MMQ":
-				go conn.OnQueueMatchmaking(txid, data.Bytes())
+				go conn.OnQueueMatchmaking(txid, data)
 			case "MMD":
-				go conn.OnDequeueMatchmaking(txid, data.Bytes())
+				go conn.OnDequeueMatchmaking(txid, data)
 			case "MMF":
-				go conn.OnForfeitMatchmaking(txid, data.Bytes())
+				go conn.OnForfeitMatchmaking(txid, data)
 			case "BNA":
-				go conn.OnAddCharacter(txid, data.Bytes())
+				go conn.OnAddCharacter(txid, data)
 			case "BNU":
-				go conn.OnUpdateCharacter(txid, data.Bytes())
+				go conn.OnUpdateCharacter(txid, data)
 			case "BNR":
-				go conn.OnRemoveCharacter(txid, data.Bytes())
+				go conn.OnRemoveCharacter(txid, data)
 			case "REP":
-				go conn.OnReplay(txid, data.Bytes())
+				go conn.OnReplay(txid, data)
 			case "PNR":
-				go conn.OnPong(txid, data.Bytes())
+				go conn.OnPong(txid, data)
 			case "UCJ":
-				go conn.OnChatJoin(txid, data.Bytes())
+				go conn.OnChatJoin(txid, data)
 			case "UCL":
-				go conn.OnChatLeave(txid, data.Bytes())
+				go conn.OnChatLeave(txid, data)
 			case "UCM":
-				go conn.OnChatMessage(txid, data.Bytes())
+				go conn.OnChatMessage(txid, data)
 			case "UPM":
-				go conn.OnPrivateMessage(txid, data.Bytes())
+				go conn.OnPrivateMessage(txid, data)
 			case "UCI":
-				go conn.OnChatIndex(txid, data.Bytes())
+				go conn.OnChatIndex(txid, data)
 			case "RLP":
-				go conn.OnLongProcessRequest(txid, data.Bytes())
+				go conn.OnLongProcessRequest(txid, data)
 			case "LPR":
-				go conn.OnLongProcessResponse(txid, data.Bytes())
+				go conn.OnLongProcessResponse(txid, data)
 			case "VET":
-				go conn.OnToggleVeto(txid, data.Bytes())
+				go conn.OnToggleVeto(txid, data)
 			}
 		}
 	}
@@ -1428,13 +1437,7 @@ func (conn *ClientConnection) OnHandshake(txid int, data []byte) bool {
 }
 
 func (conn *ClientConnection) SendResponseMessage(command string, txid int, data []byte) error {
-	var header string
-	if txid >= 0 {
-		header = fmt.Sprintf("%s %d %d", command, txid, len(data))
-	} else {
-		header = fmt.Sprintf("%s %d", command, len(data))
-	}
-	conn.logger.Println("send:", header)
+
 	conn.Lock()
 	defer conn.Unlock()
 
@@ -1445,7 +1448,7 @@ func (conn *ClientConnection) SendResponseMessage(command string, txid int, data
 		writer = conn.writer
 	case websocket.Conn:
 		ws := conn.conn.(websocket.Conn)
-		w, err := ws.NextWriter(websocket.BinaryMessage)
+		w, err := ws.NextWriter(websocket.TextMessage)
 		if err != nil {
 			return err
 		}
@@ -1456,7 +1459,21 @@ func (conn *ClientConnection) SendResponseMessage(command string, txid int, data
 		if err != nil {
 			return err
 		}
+
+		// Base64 encode so we can safely send data as TextMessage over websocket.
+		// The flash fallback doesn't support BinaryMessage.
+		var encoded []byte = make([]byte, base64.StdEncoding.EncodedLen(len(data)))
+		base64.StdEncoding.Encode(encoded, data)
+		data = encoded
 	}
+
+	var header string
+	if txid >= 0 {
+		header = fmt.Sprintf("%s %d %d", command, txid, len(data))
+	} else {
+		header = fmt.Sprintf("%s %d", command, len(data))
+	}
+	conn.logger.Println("send:", header)
 
 	_, err := writer.WriteString(header)
 
