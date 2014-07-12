@@ -4,6 +4,7 @@ var version = new Date().getTime();
 // Declare app level module which depends on filters, and services
 var erosApp = angular.module('erosApp', [
   'ngRoute',
+  'luegg.directives',
   'erosApp.filters',
   'erosApp.services',
   'erosApp.directives',

@@ -13,6 +13,7 @@
     "html5-boilerplate": "~4.3.0",
     "protobuf": "~3.0.0",
     "web-socket-js": "~1.0.2",
-    "long": "~1.1.4"
+    "long": "~1.1.4",
+    "angularjs-scroll-glue": "~0.0.1"
   }
 }
