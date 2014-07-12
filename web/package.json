@@ -22,6 +22,6 @@
     "test-single-run": "karma start test/karma.conf.js  --single-run",
 
     "prebuildproto": "npm install",
-    "buildproto": "proto2js ../buffers/eros.proto > static/js/eros.proto.js"
+    "buildproto": "proto2js ../buffers/eros.proto -class=protobufs > static/js/liberos/protobufs.js"
   }
 }
