@@ -7,7 +7,8 @@
         this.command = command;
         this.complete = false;
         this.result = undefined;
-
+        var request = this;
+        
         if (typeof (payload) === "undefined") {
             this.payload = "";
         } else {
@@ -16,8 +17,8 @@
 
         if (typeof (errorHandlers) === "undefined") {
             errorHandlers = function (code, payload) {
-                this.status = code;
-                this.complete = true;
+                request.status = code;
+                request.complete = true;
             }
         }
 
