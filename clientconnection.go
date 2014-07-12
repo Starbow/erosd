@@ -310,8 +310,8 @@ func (conn *ClientConnection) read() {
 
 			event, txid, length, data, err = conn.readPayload(reader)
 			var decoded []byte = make([]byte, base64.StdEncoding.DecodedLen(len(data)))
-			base64.StdEncoding.Decode(decoded, data)
-			data = decoded
+			decodedLength, _ := base64.StdEncoding.Decode(decoded, data)
+			data = decoded[:decodedLength]
 		}
 
 		if length > MAXIMUM_DATA_SIZE {
@@ -885,7 +885,6 @@ func (conn *ClientConnection) OnPong(txid int, data []byte) {
 
 	conn.lastPong = time.Now()
 	conn.latency = conn.lastPong.Sub(conn.lastPing).Nanoseconds() / 1000000
-	data = bytes.TrimRight(data, "\000")
 	if conn.lastPingChallenge == "" || string(data) != conn.lastPingChallenge {
 		conn.logger.Printf("Bad PNR response. Expected %s, got %v", conn.lastPingChallenge, data)
 		conn.Close()
