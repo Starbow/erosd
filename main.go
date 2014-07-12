@@ -58,6 +58,7 @@ func loadConfig() error {
 		config.AddSection("erosd")
 		config.AddOption("erosd", "listen", ":12345")
 		config.AddOption("erosd", "httplisten", ":9090")
+		config.AddOption("erosd", "werbroot", "web/")
 		config.AddOption("erosd", "adminlisten", "127.0.0.1:12346")
 		config.AddOption("erosd", "simulator", "false")
 		config.AddOption("erosd", "allowsimulations", "false")
@@ -122,6 +123,11 @@ func loadConfig() error {
 	allowsimulations, _ = config.GetBool("erosd", "allowsimulations")
 	logPath, _ = config.GetString("erosd", "logpath")
 	replayPath, _ = config.GetString("erosd", "replaypath")
+	webRoot, _ = config.GetString("erosd", "webroot")
+
+	if webRoot == "" {
+		webRoot = "web/"
+	}
 
 	divisionCount, _ = config.GetInt64("ladderdivisions", "divisions")
 	divisionIncrements, _ = config.GetFloat("ladderdivisions", "divisionincrements")
