@@ -63,6 +63,10 @@ func broadcastMessage(command string, message proto.Message) {
 		if v == nil {
 			continue
 		}
+
+		if v.client == nil {
+			continue
+		}
 		go v.SendServerMessage(command, data)
 	}
 }
