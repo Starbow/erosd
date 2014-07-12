@@ -1,6 +1,71 @@
 (function (global) {
     "use strict";
 
+    var ErosUserStats = function(u) {
+        var stats = this;
+
+        stats.division = 0;
+        stats.forfeits = 0;
+        stats.losses = 0;
+        stats.mmr = 0;
+        stats.placementsRemaining = 0;
+        stats.points = 0;
+        stats.wins = 0;
+        stats.walkovers = 0;
+
+        function update(u) {
+            stats.division = u.division.low;
+            stats.forfeits = u.forfeits.low;    
+            stats.losses = u.losses.low;
+            stats.mmr = u.mmr;
+            stats.placementsRemaining = u.placements_remaining.low;
+            stats.points = u.points.low;
+            stats.wins = u.wins.low;
+            stats.walkovers = u.walkovers.low;
+        }
+
+        this.update = update;
+
+        if (typeof (u) !== 'undefined') {
+            update(u);
+        }
+    }
+
+    var ErosUser = function(eros, u) {  
+        var user = this;    
+
+        if (typeof (u) === 'string') {
+            this.username = u;
+            his.stats = new ErosUserStats(u);
+        } else {
+            this.username = u.username;
+            this.stats = new ErosUserStats(u);
+        }
+
+
+        this.regions = {};
+
+        function update(u) {
+            user.stats.update(u);
+            user.id = u.id.low;
+
+            for (var i = 0; i < u.region.length; i++) {
+                var region = u.region[i];
+                var name = eros.regionFromCode(region.region);
+
+                if (!(name in user.regions)) {
+                    user.regions[name] = new ErosUserStats(region);
+                } else {
+                    user.regions[name].update(region);
+                }
+            }
+        }
+
+        this.update = update;
+        if (typeof (u) === 'object') {
+            update(u);
+        }
+    };
 
     var Eros = function (options) {
     	if (typeof (options) !== "object") {
@@ -9,8 +74,7 @@
         // We don't want these to be modifiable from the outside world.
         var eros = this,
         	socket = undefined,
-            users = [],
-            mapPool = [],
+            users = {},
             requests = {},
             txBase = 0,
             connected = false,
@@ -22,19 +86,39 @@
             //this.modules is the public facing list that we load.
             modules = {};
 
-        this.users = [];
-        this.divisions = [];
-        this.matchmakingState = 'idle';
-        this.activeRegions = [];
-        this.mapPool = [];
-        this.stats = {
-        	users: {
-        		active: 0,
-        		searching: 0
-        	}
+        
+        function reset() {
+            eros.matchmakingState = 'idle';
+            eros.activeRegions = [];
+            eros.mapPool = [];
+            eros.stats = {
+                users: {
+                    active: 0,
+                    searching: 0
+                }
+            };
+            eros.localUser = {};
+            eros.regions = {};
+            eros.ladder = {
+                maps: [],
+                divisions: [],
+                vetoes: 0,
+            };
+            eros.latency = 0;
+            users = {};
         };
-        this.regions = {};
 
+
+        function sendRequest(request) {
+            if (!connected) {
+                return;
+            }
+            var tx = ++txBase;
+
+            requests[String(tx)] = request;
+
+            socket.send(request.command + ' ' + tx + ' ' + request.payload.length + '\n' + request.payload);
+        }
 
         function loadModules() {
             eros.commandHandlers = {};
@@ -50,12 +134,13 @@
                 var moduleOptions = undefined;
                 if (typeof (options) === "object") {
                     if (typeof (options[module]) === "object") {
-                        moduleOptions = options["module"]
+                        moduleOptions = options[module];
                     }
                 }
 
+                console.log(moduleOptions);
                 // Init the module
-                eros[module] = new eros.modules[module](eros, moduleOptions);
+                eros[module] = new eros.modules[module](eros, sendRequest, moduleOptions);
 
                 // Add to our internal list.
                 modules[module] = eros[module];
@@ -70,29 +155,6 @@
         }
 
         loadModules();
-
-        function regionFromCode(code) {
-        	for (var i in protobufs.Region) {
-        		if (protobufs.Region[i] == code) {
-        			return i;
-        		}
-        	}
-
-        	return null;
-        }
-
-        this.regionFromCode = regionFromCode;
-
-        function sendRequest(request) {
-            if (!connected) {
-                return;
-            }
-            var tx = ++txBase;
-
-            requests[String(tx)] = request;
-
-            socket.send(request.command + ' ' + tx + ' ' + request.payload.length + '\n' + request.payload);
-        }
 
         function processServerMessage(command, payload) {
             if (command == "PNG") {
@@ -124,7 +186,7 @@
                 
                 for (var i = 0; i < stats.region.length; i++) {
                 	update = false;
-                	var name = regionFromCode(stats.region[i].region);
+                	var name = eros.regionFromCode(stats.region[i].region);
 
                 	if (!(name in eros.regions)) {
                 		eros.regions[name] = {
@@ -145,6 +207,8 @@
 	                	options.regionUpdate(eros, name);
 	                }
                 }
+            } else if (command == "USU") {
+                processUserStats(protobufs.UserStats.decode64(payload));
             } else {
                 if (command in eros.commandHandlers) {
                     if(!eros.commandHandlers[command](command, payload)) {
@@ -168,6 +232,25 @@
             }
         }
 
+        function processUserStats(stats) {
+            var key = stats.username.toLowerCase();
+
+            if (key in users) {
+                users[key].update(stats);
+
+                var callback;
+                if (users[key] === localUser) {
+                    callback = options.localUserStatsUpdate;
+                } else {
+                    callback = options.userStatsUpdate;
+                }
+
+                if (typeof (callback) === "function") {
+                    callback(eros, users[key]);
+                }
+            }
+        }
+
         function handshakeRequestComplete(request) {
         	var callback = undefined
         	console.log(request);
@@ -178,13 +261,19 @@
         		callback = options.loginFailed;
         	}
 
+            if (authenticated) {
+                eros.localUser = new ErosUser(eros, request.result.user);
+                eros.localUser.local = true;
+                users[eros.localUser.username.toLowerCase()] = eros.localUser;
+            }
+
         	if (typeof (callback) === "function") {
-        		callback(this, request.result.status);
+        		callback(eros, request.result.status);
         	}
 
         	if (authenticated) {
                 for (var i = 0; i < request.result.active_region.length; i++) {
-                	var name = regionFromCode(request.result.active_region[i]);
+                	var name = eros.regionFromCode(request.result.active_region[i]);
 
             		eros.regions[name] = {
             			active: true,
@@ -201,8 +290,26 @@
         };
 
         this.users = function () {
-            return users.slice(0);
+            var copy = {}
+            for (var x in users) {
+                copy[x] = users[x]
+            }
+            return copy;
         };
+
+        this.user = function(username) {
+            var key = username.toLowerCase();
+
+            if (key in users) {
+                return users[key];
+            } else {
+                var user = new ErosUser(username.trim());
+                user.local = false;
+                users[key] = user;
+
+                return user;
+            }
+        }
 
         this.mapPool = function () {
             return mapPool.slice(0);
@@ -217,8 +324,7 @@
                 socket.close();
             };
 
-            users = [];
-            mapPool = [];
+            users = {};
             requests = [];
             connected = false;
             authenticated = false;
@@ -239,8 +345,7 @@
             socket.onopen = function () {
                 loadModules();
                 connected = true;
-                eros.latency = 0;
-                eros.regions = {};
+                reset();
                 if (typeof (options.connected) === "function") {
                 	options.connected(eros);
                 }
@@ -275,6 +380,16 @@
         	return connected && authenticated;
         }
     };
+
+    Eros.prototype.regionFromCode = function (code) {
+        for (var i in protobufs.Region) {
+            if (protobufs.Region[i] == code) {
+                return i;
+            }
+        }
+
+        return null;
+    }
 
     Eros.prototype.modules = {};
 
