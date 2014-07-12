@@ -12,6 +12,11 @@ controllers.controller('ErosTestCtrl', ['$scope', function($scope) {
 	$scope.activeUsers = 0;
 	$scope.connected = false;
 	$scope.latency = 0;
+	$scope.rooms = {};
+
+	function updateChatRooms() {
+		console.log(eros);
+	}
 
 	var eros = new starbow.Eros({
 		// The first parameter of every callback is the Eros object that initiated it.
@@ -65,14 +70,69 @@ controllers.controller('ErosTestCtrl', ['$scope', function($scope) {
 			$scope.$apply(function() {
 				$scope.latency = eros.latency;
 			});
+		},
+
+		chat: {
+			joined: function(eros, room) {
+				$scope.$apply(function() {
+					if (!(room.key in $scope.rooms)) {
+						$scope.rooms[room.key] = {
+							room: room,
+							messages: []
+						}
+					}
+					$scope.rooms[room.key].active = true;
+					$scope.rooms[room.key].messages.push({
+						sender: eros.localUser,
+						message: 'joined the channel.',
+						event: true,
+						date: new Date()
+					});
+					updateChatRooms();
+				});
+			},
+			left: function(eros, room) {
+				$scope.$apply(function() {
+					$scope.rooms[room.key].active = false;
+					$scope.rooms[room.key].messages.push({
+						sender: eros.localUser,
+						message: 'left the channel.',
+						event: true,
+						date: new Date()
+					});
+				});
+			},
+			userJoined: function(eros, room, user) {
+
+			},
+			userLeft: function(eros, room, user) {
+
+			},
+			message: function(eros, room, user, message) {
+				$scope.$apply(function() {
+					$scope.rooms[room.key].messages.push({
+						sender: user,
+						message: message,
+						event: false,
+						date: new Date()
+					});
+				});
+			}
 		}
 	});
+
+	// Horrible uglyness. Remove in production.
+	window.eros = eros;
 
 	$scope.$on('$destroy', function(){
 		// Disconnect when changing controller.
 		// We absolutely don't want to do this in the real world.
 		eros.disconnect();
 	});
+
+	$scope.sendChatMessage = function(target, message) {
+		eros.chat.sendToRoom(target, message);
+	}
 
 
 	$scope.connect = function(username, password) {

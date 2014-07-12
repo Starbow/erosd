@@ -10,7 +10,30 @@
 </div>
 
 <div ng-if="connected">
-	<p>Our server latency is {{latency}}ms.</p>
-	<p>There are currently {{stats.users.active}} users online.</p>
-	<p ng-repeat="(name, region) in regions" ng-if="region.active">{{name}} is active with {{region.users.searching}} users currently searching.</p>
+	<div style="float: right">
+		<p>Our server latency is {{latency}}ms.</p>
+		<p>There are currently {{stats.users.active}} users online.</p>
+		<p ng-repeat="(name, region) in regions" ng-if="region.active">{{name}} is active with {{region.users.searching}} users currently searching.</p>
+	</div>
+	<p>
+		Rooms we know about:
+		<ul>
+			<li ng-repeat="room in rooms">
+				<a href="#" ng-if="room.active" ng-click="leaveRoom(room)">(Leave)</a>
+				<a href="#" ng-if="!room.active" ng-click="joinRoom(room)">(Join)</a>
+				{{room.room.name}}
+				<a href="#" ng-click="$parent.selectedRoom = room">(select)</a>
+			</li>
+		</ul>
+	</p>
+	<div ng-repeat="room in rooms" ng-show="selectedRoom == room">
+		<h2>{{room.room.name}}</h2>
+		<form><input type="text" ng-model="chatMessage"> <button type="submit" ng-click="sendChatMessage(room.room, chatMessage); chatMessage = ''" ng-disabled="!chatMessage">Send Message</button></form>
+		<div style="height: 150px; overflow-y: scroll; background-color: #ddd" scroll-glue>
+			<p ng-repeat="message in room.messages">
+				<span ng-if="message.event">{{message.date}} <strong>{{message.sender.username}} {{message.message}}</strong></span>
+				<span ng-if="!message.event">{{message.date}} {{message.sender.username}}: {{message.message}}</span>
+			</p>
+		</div>
+	</div>
 </div>
