@@ -14,10 +14,6 @@ controllers.controller('ErosTestCtrl', ['$scope', function($scope) {
 	$scope.latency = 0;
 	$scope.rooms = {};
 
-	function updateChatRooms() {
-		console.log(eros);
-	}
-
 	var eros = new starbow.Eros({
 		// The first parameter of every callback is the Eros object that initiated it.
 		// We don't care, so we're not providing parameters except when we're interested
@@ -88,7 +84,6 @@ controllers.controller('ErosTestCtrl', ['$scope', function($scope) {
 						event: true,
 						date: new Date()
 					});
-					updateChatRooms();
 				});
 			},
 			left: function(eros, room) {
@@ -103,10 +98,26 @@ controllers.controller('ErosTestCtrl', ['$scope', function($scope) {
 				});
 			},
 			userJoined: function(eros, room, user) {
-
+				$scope.$apply(function() {
+					$scope.rooms[room.key].active = true;
+					$scope.rooms[room.key].messages.push({
+						sender: user,
+						message: 'joined the channel.',
+						event: true,
+						date: new Date()
+					});
+				});
 			},
 			userLeft: function(eros, room, user) {
-
+				$scope.$apply(function() {
+					$scope.rooms[room.key].active = false;
+					$scope.rooms[room.key].messages.push({
+						sender: user,
+						message: 'left the channel.',
+						event: true,
+						date: new Date()
+					});
+				});
 			},
 			message: function(eros, room, user, message) {
 				$scope.$apply(function() {
