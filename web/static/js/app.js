@@ -11,12 +11,14 @@ var erosApp = angular.module('erosApp', [
   'erosApp.controllers'
 ]);
 
-erosApp.config(['$routeProvider', '$locationProvider', function($routeProvider, $locationProvider) {
+erosApp.config(['$routeProvider', '$locationProvider', '$httpProvider', function($routeProvider, $locationProvider, $httpProvider) {
 	$routeProvider.when('/', {templateUrl: '/static/partials/test.html?_='+version, controller: 'ErosTestCtrl'});
 	
 	$routeProvider.otherwise({redirectTo: '/'});
 
 	$locationProvider.html5Mode(true);
+
+	$httpProvider.defaults.withCredentials = true;
 }]);
 
 erosApp.run(['$window', '$rootScope', function($window, $rootScope) {

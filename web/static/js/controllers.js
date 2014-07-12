@@ -4,7 +4,7 @@
 
 var controllers = angular.module('erosApp.controllers', []);
 
-controllers.controller('ErosTestCtrl', ['$scope', function($scope) {
+controllers.controller('ErosTestCtrl', ['$scope', '$http', function($scope, $http) {
 
 	var server = window.location.host;
 
@@ -13,6 +13,22 @@ controllers.controller('ErosTestCtrl', ['$scope', function($scope) {
 	$scope.connected = false;
 	$scope.latency = 0;
 	$scope.rooms = {};
+	$scope.login = {};
+
+	$http({
+		method: 'GET',
+		url:'http://starbowmod.com/user/api/info'
+	}).success(function(data, status, headers, config) {
+		if (data.success) {
+			$scope.login.username = data.username;
+			$scope.login.password = data.token;
+		} else {
+			$scope.message = 'Please log in to starbowmod.com to auto-fill your login details.';
+		}
+    }).
+    error(function(data, status, headers, config) {
+    	$scope.message = 'Unable to autograb login info. ' + status;
+    });
 
 	var eros = new starbow.Eros({
 		// The first parameter of every callback is the Eros object that initiated it.
