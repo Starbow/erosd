@@ -11,11 +11,11 @@ var erosApp = angular.module('erosApp', [
 ]);
 
 erosApp.config(['$routeProvider', '$locationProvider', function($routeProvider, $locationProvider) {
-	$routeProvider.when('/view1', {templateUrl: '/static/partials/partial1.html?_='+version, controller: 'MyCtrl1'});
-	$routeProvider.when('/view2', {templateUrl: '/static/partials/partial2.html?_='+version, controller: 'MyCtrl2'});
-	$routeProvider.otherwise({redirectTo: '/view1'});
+	$routeProvider.when('/', {templateUrl: '/static/partials/test.html?_='+version, controller: 'ErosTestCtrl'});
+	
+	$routeProvider.otherwise({redirectTo: '/'});
 
-	$locationProvider.html5Mode(true).hashPrefix('!');
+	$locationProvider.html5Mode(true);
 }]);
 
 erosApp.run(['$window', '$rootScope', function($window, $rootScope) {
