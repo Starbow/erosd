@@ -30,7 +30,6 @@
         var start = +new Date();
 
         var request = new starbow.ErosRequests.Request("PNR", data, function (command, payload) {
-            console.log('has pong', payload)
             if (command === "PNR") {
                 var end = +new Date();
                 request.result = end - start;
