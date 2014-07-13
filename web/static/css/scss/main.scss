@@ -1,0 +1,43 @@
+/*
+ * main.scss
+ *
+ * Desc: general page styling
+ */
+
+body {
+  background-color: $whiteColor;
+  font-family: $bodyFont;
+  margin: 0;
+  padding: 0;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: $darkRedColor;
+  font-family: $headerFont;
+}
+
+blockquote {
+  border: {
+    left: 5px solid $darkRedColor;
+  }
+  color: rgba($grayColor, 0.75);
+  padding: {
+    left: 5px;
+  }
+}
+
+hr {
+  background-color: $darkRedColor;
+  border: 0;
+  color: $darkRedColor;
+  height: 2px;
+}
+
+a {
+  color: $lightRedColor;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}

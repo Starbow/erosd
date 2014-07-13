@@ -1,0 +1,87 @@
+/*
+ * forms.scss
+ *
+ * Desc: styling for input tags, buttons, etc.
+ */
+
+input {
+  background-color: rgba($grayColor, 0.10);
+  border: 1px solid  $darkRedColor;
+  font-size: 12px;
+  padding: 5px;
+
+  @include transition(background-color, 0.10s);
+
+  &:focus {
+    background-color: $whiteColor;
+    outline-width: 0;
+
+    @include box-shadow(0, 0, 5px, $darkRedColor);
+  }
+
+  &[type=submit] {
+    background-color: $darkRedColor;
+    color: $whiteColor;
+    font-family: $headerFont;
+    font-size: 16px;
+    font-weight: bold;
+
+    &:hover {
+      background-color: rgba($whiteColor, 0.80);
+      color: $darkRedColor;
+      cursor: pointer;
+
+      @include box-shadow(0, 0, 5px, $darkRedColor);
+    }
+  }
+}
+
+.button {
+  background-color: $darkRedColor;
+  border: 1px solid  $darkRedColor;
+  color: $whiteColor;
+  font-family: $headerFont;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 5px;
+  text-shadow: 0 0 2px $blackColor;
+
+  @include transition(background-color, 0.10s);
+
+  &:hover {
+    background-color: rgba($whiteColor, 0.80);
+    color: $darkRedColor;
+    cursor: pointer;
+
+    @include box-shadow(0, 0, 5px, $darkRedColor);
+  }
+}
+
+.errorlist {
+  color: $lightRedColor;
+  font-weight: bold;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.helptext {
+  display: block;
+  font-size: 12px;
+  margin: {
+    top: 5px;
+    bottom: 5px;
+  }
+}
+
+label {
+  padding: {
+    right: 5px;
+  }
+}
+
+.form-label {
+  margin: {
+    right: 5px;
+  }
+}

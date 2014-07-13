@@ -6,7 +6,7 @@
 	<p>Set <em>testmode=true</em> in your config to dynamically create users.</p>
 	<input type="text" placeholder="username" ng-model="login.username" />
 	<input type="text" placeholder="password" ng-model="login.password" />
-	<button ng-click="connect(login.username, login.password)">Connect</button>
+	<button ng-click="connect(login.username, login.password)" class="button">Connect</button>
 </div>
 
 <div ng-if="connected">
