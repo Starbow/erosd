@@ -73,12 +73,14 @@ func initDb() (err error) {
 	// add tables
 	table := dbMap.AddTableWithName(Client{}, "clients").SetKeys(false, "Id")
 	table.ColMap("Division").Transient = true
+	table.ColMap("DivisionRank").Transient = true
 	table.ColMap("chatDelayScale").Transient = true
 	table.ColMap("chatLastMessageTime").Transient = true
 	table.ColMap("LadderSearchRegions").Transient = true
 
 	table = dbMap.AddTableWithName(ClientRegionStats{}, "client_region_stats").SetKeys(true, "Id")
 	table.ColMap("Division").Transient = true
+	table.ColMap("DivisionRank").Transient = true
 
 	dbMap.AddTableWithName(Division{}, "divisions").SetKeys(true, "Id")
 

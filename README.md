@@ -25,3 +25,8 @@ Todo (Long Term)
 - Modify the ladder code to support more game types.
 - Reloadable config.
 - Logging.
+
+Tidbits
+=========
+Need to regenerate the protocol buffers?
+    protoc --go_out=. buffers/eros.proto --plugin=$GOPATH/bin/protoc-gen-go

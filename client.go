@@ -108,7 +108,24 @@ type Client struct {
 	chatLastMessageTime time.Time
 	chatDelayScale      float64
 	Division            *Division
+	DivisionRank        int64
 	LadderSearchRegions []BattleNetRegion
+}
+
+func (this *Client) UpdateDivisionRank(ex gorp.SqlExecutor) error {
+	if this.DivisionId != nil {
+		if *this.DivisionId > 0 {
+			result, err := ex.SelectInt("SELECT COUNT(*) from clients WHERE division_id=? AND ladder_points > (SELECT ladder_points FROM clients WHERE client_id=?)", *this.DivisionId, this.Id)
+			if err != nil {
+				return err
+			}
+
+			this.DivisionRank = result + 1 //Zero indexed.
+		}
+	}
+
+	this.DivisionRank = 0
+	return nil
 }
 
 func (this *Client) PreUpdate(_ gorp.SqlExecutor) error {
@@ -126,7 +143,11 @@ func (this *Client) PreUpdate(_ gorp.SqlExecutor) error {
 	return nil
 }
 
-func (this *Client) PostGet(_ gorp.SqlExecutor) error {
+func (this *Client) PostUpdate(ex gorp.SqlExecutor) error {
+	return this.UpdateDivisionRank(ex)
+}
+
+func (this *Client) PostGet(ex gorp.SqlExecutor) error {
 	if this.DivisionId != nil {
 		for _, division := range divisions {
 			if division.Id == *this.DivisionId {
@@ -156,7 +177,7 @@ func (this *Client) PostGet(_ gorp.SqlExecutor) error {
 		this.LadderSearchRegions = append(this.LadderSearchRegions, BATTLENET_REGION_SEA)
 	}
 
-	return nil
+	return this.UpdateDivisionRank(ex)
 }
 
 type ClientRegionStats struct {
@@ -180,7 +201,24 @@ type ClientRegionStats struct {
 	PlacementMatchesRemaining int64  `db:"placement_matches_remaining"`
 
 	// Transient
-	Division *Division
+	Division     *Division
+	DivisionRank int64
+}
+
+func (this *ClientRegionStats) UpdateDivisionRank(ex gorp.SqlExecutor) error {
+	if this.DivisionId != nil {
+		if *this.DivisionId > 0 {
+			result, err := ex.SelectInt("SELECT COUNT(*) from client_region_stats WHERE division_id=? AND region=? AND ladder_points > (SELECT ladder_points FROM client_region_stats WHERE client_id=? AND region=?);", *this.DivisionId, this.Region, *this.ClientId, this.Region)
+			if err != nil {
+				return err
+			}
+
+			this.DivisionRank = result + 1 //Zero indexed.
+		}
+	}
+
+	this.DivisionRank = 0
+	return nil
 }
 
 func (this *ClientRegionStats) PreUpdate(_ gorp.SqlExecutor) error {
@@ -193,7 +231,11 @@ func (this *ClientRegionStats) PreUpdate(_ gorp.SqlExecutor) error {
 	return nil
 }
 
-func (this *ClientRegionStats) PostGet(_ gorp.SqlExecutor) error {
+func (this *ClientRegionStats) PostUpdate(ex gorp.SqlExecutor) error {
+	return this.UpdateDivisionRank(ex)
+}
+
+func (this *ClientRegionStats) PostGet(ex gorp.SqlExecutor) error {
 	if this.DivisionId != nil {
 		for _, division := range divisions {
 			if division.Id == *this.DivisionId {
@@ -203,7 +245,7 @@ func (this *ClientRegionStats) PostGet(_ gorp.SqlExecutor) error {
 		}
 	}
 
-	return nil
+	return this.UpdateDivisionRank(ex)
 }
 
 func NewClient(id int64) *Client {
@@ -473,6 +515,7 @@ func (c *Client) UserStatsMessage() *protobufs.UserStats {
 	}
 	user.PlacementsRemaining = &c.PlacementMatchesRemaining
 	user.Division = &divisionId
+	user.DivisionRank = &c.DivisionRank
 	user.Mmr = &c.RatingMean
 
 	user.Id = &c.Id
@@ -601,6 +644,7 @@ func (crs *ClientRegionStats) UserRegionStatsMessage() *protobufs.UserRegionStat
 	}
 	stats.Division = &divisionId
 	stats.Mmr = &crs.RatingMean
+	stats.DivisionRank = &crs.DivisionRank
 	return &stats
 }
 
