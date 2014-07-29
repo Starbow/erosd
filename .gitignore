@@ -38,3 +38,11 @@ logs/*
 #Web stuff
 web/node_modules
 web/static/components
+*.scssc
+
+#Mac crap
+.DS_Store
+pid
+erosd
+
+
