@@ -9,7 +9,7 @@
 	<button ng-click="connect(login.username, login.password)" class="button">Connect</button>
 </div>
 
-<div ng-if="connected">
+<!-- <div ng-if="connected">
 	<div style="float: right">
 		<p>Our server latency is {{latency}}ms.</p>
 		<p>There are currently {{stats.users.active}} users online.</p>
@@ -36,4 +36,37 @@
 			</p>
 		</div>
 	</div>
+</div> -->
+
+<div ng-if="connected" class='col-md-12'>
+	<div id="server-stats">
+		<p>Our server latency is {{latency}}ms.</p>
+		<p>There are currently {{stats.users.active}} users online.</p>
+		<p ng-repeat="(name, region) in regions" ng-if="region.active">{{name}} is active with {{region.users.searching}} users currently searching.</p>
+	</div>
+
+	<div id="chat">
+		<ul id="chat-left-nav" ng-mouseenter="navhover = true" ng-mouseleave="navhover = false" ng-class="{'expand': navhover}">
+			<div id="chat-hide"><a href="#" class="glyphicon glyphicon-minus"></a></div>
+			<li id="chat-channels" ng-repeat="room in rooms">
+				<a href="#" ng-click="$parent.selectedRoom = room" ng-class="{'selected': selectedRoom==room}">
+					<span ng-hide="navhover">{{room.room.name.slice(0,1).toUpperCase()}}</span>
+					<span ng-show="navhover" ng-if="room.room.name.length > 18">{{room.room.name.slice(0,15)}}...</span>
+					<span ng-show="navhover" ng-if="room.room.name.length < 19">{{room.room.name}}</span>
+				</a>
+			</li>
+		</ul>
+
+		<div id="chat-content">
+			<h2 id="chat-channel-name">{{selectedRoom.room.name}}</h2>
+			<div id="chat-text" scroll-glue>
+				<p ng-repeat="message in selectedRoom.messages">
+					<span ng-if="message.event">{{message.date}} <strong>{{message.sender.username}} {{message.message}}</strong></span>
+					<span ng-if="!message.event">{{message.date}} {{message.sender.username}}: {{message.message}}</span>
+				</p>
+			</div>
+			<form id="chat-input"><input type="text" ng-model="chatMessage"> <button type="submit" ng-click="sendChatMessage(selectedRoom.room, chatMessage); chatMessage = ''" ng-disabled="!chatMessage"><span class="glyphicon glyphicon-chevron-right"></span></button></form>
+		</div>
+	</div>
+
 </div>

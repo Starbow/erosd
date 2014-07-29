@@ -1,43 +1,68 @@
+
 /*
- * main.scss
- *
- * Desc: general page styling
+ * Navigation
  */
 
-body {
-  background-color: $whiteColor;
-  font-family: $bodyFont;
-  margin: 0;
-  padding: 0;
+$navWidth: 270px;
+$lightGrey: #393939;
+$navGrey: #2e2e2e;
+$navButtonColor: #acacac;
+$navButtonColorHover: #e9e9e9;
+
+#left-nav {
+    position: absolute;
+    bottom: 0;
+    top: 0;
+    width: $navWidth;
+
+    background-color: $navGrey;
+    color: $navButtonColor;
+
+    font-family: $headerFont;
+
+    #brand{
+    	font-family: "Technonomicon";
+    	// height: 200px;
+    	margin-top: 40px;
+    	margin-bottom: 120px;
+    	text-align: center;
+    	margin-right: 7px;
+
+    	.title{
+    		color:$lightRedColor;
+    		font-size: 23px;
+    	}
+    	.subtitle{
+    		color:#fff;
+    		font-size: 12px;
+    	}
+
+    }
+
+    .navigation{
+    	font-size: 17px;
+    	cursor: pointer;
+
+    	.button {
+    		padding-left: 25px;
+    		height: 40px;
+    		line-height: 40px;
+    		width: 100%;
+
+    		&:hover{
+    			background-color: $lightGrey;
+    			color: $navButtonColorHover;
+    		}
+
+    		&.selected {
+    			border-right: 4px solid $lightRedColor;
+    			color: $lightRedColor;
+    			background-color: $lightGrey;
+    		}
+    	}
+    }
 }
 
-h1, h2, h3, h4, h5, h6 {
-  color: $darkRedColor;
-  font-family: $headerFont;
-}
-
-blockquote {
-  border: {
-    left: 5px solid $darkRedColor;
-  }
-  color: rgba($grayColor, 0.75);
-  padding: {
-    left: 5px;
-  }
-}
-
-hr {
-  background-color: $darkRedColor;
-  border: 0;
-  color: $darkRedColor;
-  height: 2px;
-}
-
-a {
-  color: $lightRedColor;
-  text-decoration: none;
-
-  &:hover {
-    text-decoration: underline;
-  }
+#main-content {
+	padding-left: $navWidth;
 }

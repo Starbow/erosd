@@ -20,6 +20,7 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http', function($scope, $htt
 		url:'http://starbowmod.com/user/api/info'
 	}).success(function(data, status, headers, config) {
 		if (data.success) {
+			$scope.connect(data.username,  data.token)
 			$scope.login.username = data.username;
 			$scope.login.password = data.token;
 		} else {
