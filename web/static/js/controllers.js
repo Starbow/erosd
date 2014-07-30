@@ -4,7 +4,7 @@
 
 var controllers = angular.module('erosApp.controllers', []);
 
-controllers.controller('ErosTestCtrl', ['$scope', '$http', function($scope, $http) {
+controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl', function($scope, $http, $connGrowl) {
 
 	var server = window.location.host;
 
@@ -17,7 +17,8 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http', function($scope, $htt
 
 	$http({
 		method: 'GET',
-		url:'http://starbowmod.com/user/api/info'
+		// url:'http://starbowmod.com/user/api/info'
+		url:'http://127.0.0.1:12345/user/api/info'
 	}).success(function(data, status, headers, config) {
 		if (data.success) {
 			$scope.connect(data.username,  data.token)
@@ -25,10 +26,12 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http', function($scope, $htt
 			$scope.login.password = data.token;
 		} else {
 			$scope.message = 'Please log in to starbowmod.com to auto-fill your login details.';
+			$connGrowl.sendMsg('Please log in to starbowmod.com to auto-fill your login details.')
 		}
     }).
     error(function(data, status, headers, config) {
     	$scope.message = 'Unable to autograb login info. ' + status;
+    	$connGrowl.sendMsg('Unable to autograb login info.')
     });
 
 	var eros = new starbow.Eros({
@@ -41,6 +44,8 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http', function($scope, $htt
 			$scope.$apply(function() {
 				$scope.message = 'Connected. Authenticating...';
 			});
+			$connGrowl.sendMsg('Connected. Authenticating...')
+
 		},
 		loggedIn: function() {
 			// We're logged in. Fo real connected.
@@ -48,6 +53,7 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http', function($scope, $htt
 				$scope.message = 'Authenticated! Wahoo.';
 				$scope.connected = true;
 			});
+			$connGrowl.sendMsg('Authenticated! Wahoo.',1)
 		},
 		loginFailed: function(eros, status) {
 			// This shouldn't ever happen if we're pulling our auth direct from the API.
@@ -59,6 +65,11 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http', function($scope, $htt
 				}
 				$scope.connected = false;
 			});
+			if (status === 2) {
+				$connGrowl.sendMsg('Already logged in from another location.', 0)
+			} else {
+				$connGrowl.sendMsg('Authentication failed. Stay shit.',2)
+			}
 		},
 		disconnected: function() {
 			$scope.$apply(function() {

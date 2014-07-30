@@ -43,6 +43,7 @@ web/node_modules
 web/static/components
 *.scssc
 web/static/css/app.css
+*.psd
 
 #Mac crap
 .DS_Store
