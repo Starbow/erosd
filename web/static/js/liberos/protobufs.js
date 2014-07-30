@@ -221,6 +221,13 @@ var protobufs = dcodeIO.ProtoBuf.newBuilder().import({
                     "type": "int64",
                     "name": "division",
                     "id": 9
+                },
+                {
+                    "rule": "required",
+                    "options": {},
+                    "type": "int64",
+                    "name": "division_rank",
+                    "id": 10
                 }
             ],
             "enums": [],
@@ -320,6 +327,13 @@ var protobufs = dcodeIO.ProtoBuf.newBuilder().import({
                     "type": "int64",
                     "name": "division",
                     "id": 13
+                },
+                {
+                    "rule": "required",
+                    "options": {},
+                    "type": "int64",
+                    "name": "division_rank",
+                    "id": 14
                 }
             ],
             "enums": [],
