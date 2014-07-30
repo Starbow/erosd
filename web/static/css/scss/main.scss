@@ -28,6 +28,10 @@ $navButtonColorHover: #e9e9e9;
     	text-align: center;
     	margin-right: 7px;
 
+        a {
+            text-decoration: none;
+        }
+
     	.title{
     		color:$lightRedColor;
     		font-size: 23px;

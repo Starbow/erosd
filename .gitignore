@@ -3,6 +3,9 @@
 *.a
 *.so
 
+# Binaries
+erosd
+
 # Folders
 _obj
 _test
@@ -39,6 +42,7 @@ logs/*
 web/node_modules
 web/static/components
 *.scssc
+web/static/css/app.css
 
 #Mac crap
 .DS_Store

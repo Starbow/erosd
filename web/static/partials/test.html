@@ -46,16 +46,7 @@
 	</div>
 
 	<div id="chat">
-		<ul id="chat-left-nav" ng-mouseenter="navhover = true" ng-mouseleave="navhover = false" ng-class="{'expand': navhover}">
-			<div id="chat-hide"><a href="#" class="glyphicon glyphicon-minus"></a></div>
-			<li id="chat-channels" ng-repeat="room in rooms">
-				<a href="#" ng-click="$parent.selectedRoom = room" ng-class="{'selected': selectedRoom==room}">
-					<span ng-hide="navhover">{{room.room.name.slice(0,1).toUpperCase()}}</span>
-					<span ng-show="navhover" ng-if="room.room.name.length > 18">{{room.room.name.slice(0,15)}}...</span>
-					<span ng-show="navhover" ng-if="room.room.name.length < 19">{{room.room.name}}</span>
-				</a>
-			</li>
-		</ul>
+		
 
 		<div id="chat-content">
 			<h2 id="chat-channel-name">{{selectedRoom.room.name}}</h2>
@@ -66,6 +57,16 @@
 				</p>
 			</div>
 			<form id="chat-input"><input type="text" ng-model="chatMessage"> <button type="submit" ng-click="sendChatMessage(selectedRoom.room, chatMessage); chatMessage = ''" ng-disabled="!chatMessage"><span class="glyphicon glyphicon-chevron-right"></span></button></form>
+		</div>
+		<div id="chat-left-nav" ng-mouseenter="navhover = true" ng-mouseleave="navhover = false" ng-class="{'expand': navhover}">
+			<div id="chat-hide"><a href="#" class="glyphicon glyphicon-minus"></a></div>
+			<li id="chat-channels" ng-repeat="room in rooms">
+				<a href="#" ng-click="$parent.selectedRoom = room" ng-class="{'selected': selectedRoom==room}">
+					<span ng-hide="navhover">{{room.room.name.slice(0,1).toUpperCase()}}</span>
+					<span ng-show="navhover" ng-if="room.room.name.length > 18">{{room.room.name.slice(0,15)}}...</span>
+					<span ng-show="navhover" ng-if="room.room.name.length < 19">{{room.room.name}}</span>
+				</a>
+			</li>
 		</div>
 	</div>
 

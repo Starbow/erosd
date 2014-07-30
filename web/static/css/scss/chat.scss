@@ -12,19 +12,24 @@ $chat-input-height:27px;
 	#chat-left-nav {
 		list-style: none;
 		height: $chat-height - 4;
-		margin-top:2px;
-		margin-left: 2px;
+		position: absolute;
+		top: 2px;
+		left: 2px;
+		/*margin-top:2px;
+		margin-left: 2px;*/
 		width: $chat-nav-width-min;
 		
-		display: inline-block;
+		/*display: inline-block;*/
 		padding:0;
-		float:left;
+		/*float:left;*/
 		text-align: left;
 
 		background-color: $navGrey;
 		font-family:$headerFont;
 		font-size: 16px;
 		padding-top: 0px;
+
+		z-index: 3;
 
 		&.expand{
 			width: $chat-nav-width-max;
@@ -71,6 +76,7 @@ $chat-input-height:27px;
 	}
 
 	#chat-content{
+		z-index: 2;
 
 		#chat-channel-name{
 			position:absolute;
@@ -83,6 +89,9 @@ $chat-input-height:27px;
 			overflow-y: auto;
 			height: $chat-height - $chat-input-height - 4;
 			padding-top: 35px;
+			position: absolute;
+			left:$chat-nav-width-min+4;
+			top: 0;
 		}
 
 		#chat-input {
@@ -92,6 +101,7 @@ $chat-input-height:27px;
 			left:$chat-nav-width-min+4;
 
 			input {
+				z-index: 0;
 				position:absolute;
 				bottom:0;
 				right:0;
