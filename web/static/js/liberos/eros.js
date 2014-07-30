@@ -5,6 +5,7 @@
         var stats = this;
 
         stats.division = 0;
+        stats.divisionRank = 0;
         stats.forfeits = 0;
         stats.losses = 0;
         stats.mmr = 0;
@@ -15,7 +16,8 @@
 
         function update(u) {
             stats.division = u.division.low;
-            stats.forfeits = u.forfeits.low;    
+            stats.divisionRank = u.division_rank.low;
+            stats.forfeits = u.forfeits.low;
             stats.losses = u.losses.low;
             stats.mmr = u.mmr;
             stats.placementsRemaining = u.placements_remaining.low;
