@@ -29,4 +29,5 @@ Todo (Long Term)
 Tidbits
 =========
 Need to regenerate the protocol buffers?
-    protoc --go_out=. buffers/eros.proto --plugin=$GOPATH/bin/protoc-gen-go
+
+`protoc --go_out=. buffers/eros.proto --plugin=$GOPATH/bin/protoc-gen-go`

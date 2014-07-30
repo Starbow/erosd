@@ -113,18 +113,20 @@ type Client struct {
 }
 
 func (this *Client) UpdateDivisionRank(ex gorp.SqlExecutor) error {
+	this.DivisionRank = 0
+
 	if this.DivisionId != nil {
 		if *this.DivisionId > 0 {
-			result, err := ex.SelectInt("SELECT COUNT(*) from clients WHERE division_id=? AND ladder_points > (SELECT ladder_points FROM clients WHERE client_id=?)", *this.DivisionId, this.Id)
+			result, err := ex.SelectInt("SELECT COUNT(*) from clients WHERE division_id=? AND ladder_points > (SELECT ladder_points FROM clients WHERE id=?)", *this.DivisionId, this.Id)
 			if err != nil {
-				return err
+				log.Println(err)
+				return nil
 			}
 
-			this.DivisionRank = result + 1 //Zero indexed.
+			this.DivisionRank = result + 1 //Zero indexed
 		}
 	}
 
-	this.DivisionRank = 0
 	return nil
 }
 
@@ -177,7 +179,8 @@ func (this *Client) PostGet(ex gorp.SqlExecutor) error {
 		this.LadderSearchRegions = append(this.LadderSearchRegions, BATTLENET_REGION_SEA)
 	}
 
-	return this.UpdateDivisionRank(ex)
+	err := this.UpdateDivisionRank(ex)
+	return err
 }
 
 type ClientRegionStats struct {
@@ -206,18 +209,20 @@ type ClientRegionStats struct {
 }
 
 func (this *ClientRegionStats) UpdateDivisionRank(ex gorp.SqlExecutor) error {
+	this.DivisionRank = 0
+
 	if this.DivisionId != nil {
 		if *this.DivisionId > 0 {
 			result, err := ex.SelectInt("SELECT COUNT(*) from client_region_stats WHERE division_id=? AND region=? AND ladder_points > (SELECT ladder_points FROM client_region_stats WHERE client_id=? AND region=?);", *this.DivisionId, this.Region, *this.ClientId, this.Region)
 			if err != nil {
-				return err
+				log.Println(err)
+				return nil
 			}
 
 			this.DivisionRank = result + 1 //Zero indexed.
 		}
 	}
 
-	this.DivisionRank = 0
 	return nil
 }
 
