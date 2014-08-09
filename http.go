@@ -20,7 +20,7 @@ func handleWebsocketConnection(conn *websocket.Conn) {
 }
 
 func httpServeHomeFunc(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, webRoot+"/index.html")
+	http.ServeFile(w, r, webRoot+"/dist/index.html")
 }
 
 func httpServeWsFunc(w http.ResponseWriter, r *http.Request) {
@@ -37,7 +37,8 @@ func httpServeWsFunc(w http.ResponseWriter, r *http.Request) {
 func listenAndServeHTTP(address string) {
 	r := mux.NewRouter()
 	r.HandleFunc("/ws", httpServeWsFunc).Methods("GET")
-	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(webRoot+"/static")))).Methods("GET")
+	// r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(webRoot+"/static")))).Methods("GET")
+	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(webRoot+"/dist")))).Methods("GET")
 	r.HandleFunc("/{path:.*}", httpServeHomeFunc).Methods("GET")
 	log.Println("Listening HTTP on ", address)
 	log.Fatalln(http.ListenAndServe(address, r))

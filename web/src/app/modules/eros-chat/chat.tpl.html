@@ -1,0 +1,27 @@
+<div id="chat-content">
+	<h2 id="chat-channel-name">{{selectedRoom.room.name}}</h2>
+	<div id="chat-text" scroll-glue>
+		<div ng-repeat="message in selectedRoom.messages">
+			<span ng-if="message.event"><span class="message-date">[{{message.date.toLocaleTimeString()}}]</span> <strong>{{message.sender.username}} {{message.message}}</strong></span>
+			<span ng-if="!message.event"><span class="message-date">[{{message.date.toLocaleTimeString()}}]</span> <a href='#' class="message-sender" user="{{message.sender.username}}" ng-bind="message.sender.username" ng-click="addUserMsg(message.sender.username)"></a>: <span chat-message></span></span>
+		</div>
+	</div>
+	<form id="chat-input"><input type="text" ng-model="$parent.chatMessage" placeholder="Message" ng-change="updateChatInput($parent.chatMessage)"> <button type="submit" ng-click="sendChatMessage(selectedRoom.room, $parent.chatMessage); $parent.chatMessage = ''" ng-disabled="!$parent.chatMessage"><span class="glyphicon glyphicon-chevron-right"></span></button></form>
+</div>
+<div id="chat-left-nav" ng-mouseenter="navhover = true" ng-mouseleave="navhover = false" ng-class="{'expand': navhover}">
+	<div id="chat-hide"><a href="#" class="glyphicon glyphicon-minus"></a></div>
+	<li id="chat-channels" ng-repeat="room in rooms" ng-init="setDefaultRoom(room)">
+		<!-- <a href="#" ng-click="$parent.selectedRoom = room" ng-class="{'selected': selectedRoom==room}"> -->
+		<a href="#" ng-click="selectRoom(room)" ng-class="{'selected': selectedRoom==room}">
+			<span ng-hide="navhover">{{room.room.name.slice(0,1).toUpperCase()}}</span>
+			<span ng-show="navhover" ng-if="room.room.name.length > 18">{{room.room.name.slice(0,15)}}...</span>
+			<span ng-show="navhover" ng-if="room.room.name.length < 19">{{room.room.name}}</span>
+		</a>
+	</li>
+</div>
+<style>
+	#chat-right-nav{
+		float: right;
+	}
+</style>
+<div id="chat-right-nav" room-users></div>
