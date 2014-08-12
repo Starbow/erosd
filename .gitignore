@@ -37,10 +37,14 @@ mpyq.py
 
 #logs
 logs/*
+log
+nohup.out
 
 #Web stuff
 web/node_modules
-web/static/components
+web/components
+web/dist
+web/.tmp
 *.scssc
 web/static/css/app.css
 *.psd
@@ -49,5 +53,3 @@ web/static/css/app.css
 .DS_Store
 pid
 erosd
-
-

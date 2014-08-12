@@ -15,6 +15,7 @@
     "web-socket-js": "~1.0.2",
     "long": "~1.1.4",
     "angularjs-scroll-glue": "~0.0.1",
-    "angular-animate": "~1.2.21"
+    "angular-animate": "~1.2.21",
+    "jquery": "~2.1.1"
   }
 }

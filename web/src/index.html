@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html lang="en" ng-app="erosApp" class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html lang="en" ng-app="erosApp" class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html lang="en" ng-app="erosApp" class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!-->
+<html lang="en" ng-app="erosApp" class="no-js">
+<!--<![endif]-->
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>My AngularJS App</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    
+    <link rel="stylesheet" href="/static/html5-boilerplate/normalize.css">
+    <link rel="stylesheet" href="/static/html5-boilerplate/main.css">
+    
+    <script type="text/javascript" src="/static/jquery.js"></script>
+    <script type="text/javascript" src="/static/angular.js"></script>
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+    <!-- Check if modernizr must be included in head
+    <script src="/static/components/html5-boilerplate/js/vendor/modernizr-2.6.2.min.js"></script> -->
+
+    <!-- Customized bootstrap -->
+    <!-- <link rel="stylesheet" href="/static/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/bootstrap/css/bootstrap-theme.min.css"> -->
+    <link rel="stylesheet" href="/static/css/<%= grunt.config.get('pkg.name') %>.css?v=<%=version%>" />
+    <!-- <script src="/bootstrap/js/bootstrap.min.js"></script> -->
+</head>
+
+
+<body>
+
+    <div id="left-nav">
+        <div id='brand'>
+            <a href="#">
+                <div class='title'>Starbow</div>
+                <div class='subtitle'>Eros Web Client</div>
+            </a>
+        </div>
+        <div class='navigation'>
+            <div class='button selected'>Home</div>
+            
+            <div class='button'>Matchmaking</div>
+            <div class='button'>Replays</div>
+            <div class='button'>Profile</div>
+
+        </div>
+
+    </div>
+    <!-- <div class="navbar navbar-fixed-top">
+        <a href="/" class="navbar-logo"></a>
+        <ul>
+            <li>
+                <a href="/404">Reload<i class="fa fa-angle-down"></i></a>
+                <ul class="ui-menu">
+                    <li><a href="/">Fix this to show on parent menu item hover. We don't need javascript.</a>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+        <div class="authentication">
+          
+        </div>
+    </div> -->
+
+
+
+    <!--[if lt IE 7]>
+      <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
+  <![endif]-->
+    <div id="main-content" class="container" ng-controller="ErosTestCtrl">
+        <div class="page">
+            <div>
+                <div ng-if="!connected">
+                    <p>Set <em>testmode=true</em> in your config to dynamically create users.</p>
+                    <input type="text" placeholder="username" ng-model="login.username" />
+                    <input type="text" placeholder="password" ng-model="login.password" />
+                    <button ng-click="connect(login.username, login.password)" class="button">Connect</button>
+                </div>
+                <div ng-if="connected" class='col-md-12'>
+                    <div id="server-stats">
+                        <p>Our server latency is {{latency}}ms.</p>
+                        <p>There are currently {{stats.users.active}} users online.</p>
+                        <p ng-repeat="(name, region) in regions" ng-if="region.active">{{name}} is active with {{region.users.searching}} users currently searching.</p>
+                    </div>
+
+                    <div eros-chat>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <div conn-growl></div>
+    <!-- In production use:
+  <script src="//ajax.googleapis.com/ajax/libs/angularjs/x.x.x/angular.min.js"></script>
+  -->
+
+    <script type="text/javascript" src="/static/components.js?v=<%=version%>"></script>
+    <script type="text/javascript" src="/static/<%= grunt.config.get('pkg.name') %>.js?v=<%=version%>"></script>
+
+    <script type="text/javascript">
+        var WEB_SOCKET_SWF_LOCATION = "/static/components/web-socket-js/WebSocketMain.swf";
+    </script>
+
+</body>
+
+</html>
