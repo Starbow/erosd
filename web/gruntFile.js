@@ -28,9 +28,9 @@ module.exports = function (grunt) {
         compiled: ['<%= tmpdir %>/templates/**/*.js']
       },
       css: [
-        'src/css/<%= pkg.name %>.css',
-        'components/bootstrap/css/bootstrap.css', // min.js is throwing exception
-        'components/bootstrap/css/bootstrap-theme.min.css'
+        'src/css/app.css',
+        'src/bootstrap/css/bootstrap.css', // min.css is throwing exception
+        'src/bootstrap/css/bootstrap-theme.min.css'
       ], 
       cssWatch: ['src/css/*.css'],
       // locales: {
@@ -48,16 +48,15 @@ module.exports = function (grunt) {
         files: [{ dest: '<%= distdir %>/html5-boilerplate', src : ['normalize.css', 'main.css'], expand: true, cwd: 'components/html5-boilerplate/css' }]
       },
       glyphicons: {
-        files: [{ dest: '<%= distdir %>/fonts', src : '**', expand: true, cwd: 'components/bootstrap/fonts'}]
+        files: [{ dest: '<%= distdir %>/fonts', src : '**', expand: true, cwd: 'src/bootstrap/fonts'}]
       },
       cssMap: {
-        files: [{ dest: '<%= distdir %>/css', src: "*map", expand: true, cwd: 'src/css'}]
+        files: [{ dest: '<%= distdir %>/css', src: "*.map", expand: true, cwd: 'src/css'}]
+      },
+      jsMap: {
+        files: [{ dest: '<%= distdir %>', src: ["*.map"], expand: true, cwd: 'components/angular-route'}]
       }
     },
-    // karma: {
-    //   unit: { configFile: '<%= src.specsConfig %>' },
-    //   watch: { configFile: '<%= src.specsConfig %>', singleRun:false, autoWatch: true}
-    // },
     html2js: {
       app: {
         options: {
@@ -127,12 +126,11 @@ module.exports = function (grunt) {
         // Not minimized, use only for dev
         src:['src/app/eros.proto.js'],
         dest: '<%= distdir %>/eros.proto.js'
-
       },
       dev: {
         src:[
           'components/angularjs-scroll-glue/src/scrollglue.js',
-          'components/bootstrap/js/bootstrap.min.js',
+          'src/bootstrap/js/bootstrap.min.js',
           'components/html5-boilerplate/js/vendor/modernizr-2.6.2.min.js',
 
           // Outdated jquery that may back-support more IE versions. 
@@ -152,7 +150,6 @@ module.exports = function (grunt) {
       }
     },
     recess: {
-      // TODO: Change for scss compiler
       build: {
         files: {
           '<%= distdir %>/css/<%= pkg.name %>.css': ['<%= src.css %>'] },
@@ -167,7 +164,7 @@ module.exports = function (grunt) {
             'outputStyle': 'compressed'
           },                             // target
           files: {                        // dictionary of files
-              '<%= distdir %>/css/<%= pkg.name %>.css': 'src/css/scss/app.scss'     // 'destination': 'source'
+              '<%= src.css[0] %>': 'src/css/scss/app.scss'     // 'destination': 'source'
           }
       },
       dev: {                              // another target
@@ -175,27 +172,27 @@ module.exports = function (grunt) {
               sourceMap: true
           },
           files: {
-              'src/css/<%= pkg.name %>.css': 'src/css/scss/app.scss'
+              '<%= src.css[0] %>': 'src/css/scss/app.scss'
           }
       }
     },
-    watch:{
+    watch: {
       css: {
         files:['<%= src.cssWatch %>'],
         tasks: ['recess:build', 'timestamp']
       }
-      // ,assets: {
-      //   files:['<%= copy.assets.files[0].cwd %>/<%= copy.assets.files[0].src %>'],
-      //   tasks: ['copy:assets', 'timestamp']
-      // }
+      ,assets: {
+        files:['<%= copy.assets.files[0].cwd %>/<%= copy.assets.files[0].src %>'],
+        tasks: ['copy:assets', 'timestamp']
+      }
       ,html2jsApp: {
         files:['<%= src.tpl.app %>'],
         tasks: ['html2js:app', 'concat:js', 'timestamp']
       }
-      ,karma: {
-        files:['<%= src.specs %>', '<%= src.specsConfig %>'],
-        tasks: ['karma:unit', 'timestamp']
-      }
+      // ,karma: {
+      //   files:['<%= src.specs %>', '<%= src.specsConfig %>'],
+      //   tasks: ['karma:unit', 'timestamp']
+      // }
       ,html: {
         files:['<%= src.html %>'],
         tasks: ['concat:index', 'concat:404', 'concat:500', 'timestamp']
@@ -207,7 +204,6 @@ module.exports = function (grunt) {
       ,js: {
         files:['<%= src.js %>'],
         tasks: ['concat:js', 'timestamp']
-
       }
     },
     jshint: {
@@ -234,10 +230,11 @@ module.exports = function (grunt) {
 
   // The build
   grunt.registerTask('build', ['clean', 'html2js', 'concat', 'sass:dev', 'recess:build', 'copy']);
-  grunt.registerTask('live', ['clean', 'html2js', 'concat', 'recess:build', 'copy', 'sass:dist'])
+  grunt.registerTask('live', ['clean', 'html2js', 'concat', 'sass:dist', 'recess:build', 'copy'])
 
   // Default task.
-  grunt.registerTask('default', ['jshint', 'config:dev', 'sbuild']);
+  // grunt.registerTask('default', ['jshint', 'config:dev', 'sbuild']);
+  grunt.registerTask('default', ['sass', 'watch']);
 
   // Print a timestamp (useful for when watching)
   grunt.registerTask('timestamp', function() {
