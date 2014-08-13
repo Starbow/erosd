@@ -43,11 +43,13 @@ nohup.out
 #Web stuff
 web/node_modules
 web/components
+web/static/components
 web/dist
 web/.tmp
 *.scssc
 web/static/css/app.css
 *.psd
+npm-debug.log
 
 #Mac crap
 .DS_Store
