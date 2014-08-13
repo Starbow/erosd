@@ -1,7 +1,7 @@
 (function (global) {
     "use strict";
 
-    var ChatRoom = function(eros, chat, registerJoin, registerLeave) {
+    var ChatRoom = function(eros, chat, registerJoin, registerLeave, joinCallback, leaveCallback) {
     	var users = {},
     	room = this;
 
@@ -96,6 +96,14 @@
             return copy;
         };
 
+        this.join = function(password) {
+            joinCallback(password);
+        }
+
+        this.leave = function() {
+            leaveCallback();
+        }
+
     };
 
     var ChatModule = function (eros, sendRequest, options) {
@@ -134,6 +142,7 @@
                         roomJoinedHandlers[room.key](user);
 					}
 				} else if (command == "CHL") {
+                    // Doesn't get sent when local user leaves.
                     roomLeftHandlers[room.key](user);
 
 					if (eros.localUser == user) {
@@ -145,7 +154,6 @@
 						}
 					} else {
                         callback = options.userLeft;
-
                     }
 				}
 
@@ -194,19 +202,43 @@
             if (key in rooms) {
                 return rooms[key];
             } else {
+                var chat = this;
+
                 var room = new ChatRoom(
                     eros,
                     name.trim(),
-                    function(joinHandler) {
+                    function(joinHandler) { // user joined room callback
                         roomJoinedHandlers[key] = joinHandler;
                     },
-                    function(leaveHandler) {
+                    function(leaveHandler) { // user left room callback
                         roomLeftHandlers[key] = leaveHandler;
+                    },
+                    function(password) { // room.join() proxy handler
+                        chat.joinRoom(this, password);
+                    },
+                    function() { // room.leave() proxy handler
+                        chat.leaveRoom(this);
                     }
                 );
                 return room;
             }
-        }
+        };
+
+        this.joinRoom = function(room, password) {
+            sendRequest(new starbow.ErosRequests.ChatJoinRequest(room, password));
+        };
+
+        this.leaveRoom = function(room, password) {
+            var chat = this;
+            sendRequest(new starbow.ErosRequests.ChatLeaveRequest(room, function() {
+                delete rooms[room.key];
+                delete roomJoinedHandlers[room.key];
+                delete roomLeftHandlers[room.key];
+                if (typeof (options.left) === "function") {
+                    options.left(eros, room);
+                }
+            }));
+        };
 
         this.sendToRoom = function(room, message) {
         	message = message.trim();
@@ -215,7 +247,7 @@
         	}
 
         	sendRequest(new starbow.ErosRequests.ChatMessageRequest(room, message));
-        }
+        };
     };
 
     global.starbow.Eros.prototype.modules.chat = ChatModule;
