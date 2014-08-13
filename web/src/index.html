@@ -99,13 +99,12 @@
   <script src="//ajax.googleapis.com/ajax/libs/angularjs/x.x.x/angular.min.js"></script>
   -->
 
-    <script type="text/javascript" src="/static/components.js?v=<%=version%>"></script>
-    <script type="text/javascript" src="/static/<%= grunt.config.get('pkg.name') %>.js?v=<%=version%>"></script>
-
     <script type="text/javascript">
         var WEB_SOCKET_SWF_LOCATION = "/static/components/web-socket-js/WebSocketMain.swf";
     </script>
 
+    <script type="text/javascript" src="/static/components.js?v=<%=version%>"></script>
+    <script type="text/javascript" src="/static/<%= grunt.config.get('pkg.name') %>.js?v=<%=version%>"></script>
 </body>
 
 </html>
