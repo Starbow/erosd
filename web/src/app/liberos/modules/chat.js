@@ -1,15 +1,36 @@
 (function (global) {
     "use strict";
 
-    var ChatRoom = function(eros, chat, r) {
-    	
+    var ChatRoom = function(eros, chat, registerJoin, registerLeave) {
     	var users = {},
     	room = this;
 
-    	if (typeof(r) === 'string') {
-    		this.name = r;
-    		this.key = r.toLowerCase().trim();
+    	if (typeof(chat) === 'string') {
+    		this.name = chat;
+    		this.key = chat.toLowerCase().trim();
     	}
+
+        registerJoin(function(user) {
+            var key = user.username.toLowerCase();
+
+            if (!(key in users)) {
+                users[key] = user;
+                return true;
+            }
+
+            return false;
+        });
+
+        registerLeave(function(user) {
+            var key = user.username.toLowerCase();
+
+            if ((key in users)) {
+                delete users[key];
+                return true;
+            }
+
+            return false;
+        });
 
     	this.fixed = false;
     	this.joinable = false;
@@ -63,8 +84,8 @@
 
         this.update = update;
 
-        if (typeof(r) === "object") {
-        	update(r);
+        if (typeof(chat) === "object") {
+        	update(chat);
         }
 
         this.users = function () {
@@ -84,6 +105,8 @@
 
     	var chat = this,
     	rooms = {},
+        roomJoinedHandlers = {},
+        roomLeftHandlers = {},
         selected = "";
 
     	function processServerMessage(command, payload) {
@@ -100,22 +123,30 @@
 				if (command == "CHJ") {
 					if (!(room.key in rooms)) {
 						rooms[room.key] = room;
+                    }
 
+                    if (eros.localUser == user) {
 						if (typeof (options.joined) === "function") {
 							options.joined(eros, room);
 						}
-
+                    } else {
 						callback = options.userJoined;
+                        roomJoinedHandlers[room.key](user);
 					}
 				} else if (command == "CHL") {
+                    roomLeftHandlers[room.key](user);
+
 					if (eros.localUser == user) {
 						delete rooms[room.key];
+                        delete roomJoinedHandlers[room.key];
+                        delete roomLeftHandlers[room.key];
 						if (typeof (options.left) === "function") {
 							options.left(eros, room);
 						}
+					} else {
+                        callback = options.userLeft;
 
-						callback = options.userLeft;
-					}
+                    }
 				}
 
 				if (typeof (callback) === "function") {
@@ -159,11 +190,20 @@
 
         this.room = function(name) {
             var key = name.toLowerCase().trim();
-            
+
             if (key in rooms) {
                 return rooms[key];
             } else {
-                var room = new ChatRoom(eros, name.trim());
+                var room = new ChatRoom(
+                    eros,
+                    name.trim(),
+                    function(joinHandler) {
+                        roomJoinedHandlers[key] = joinHandler;
+                    },
+                    function(leaveHandler) {
+                        roomLeftHandlers[key] = leaveHandler;
+                    }
+                );
                 return room;
             }
         }
