@@ -106,6 +106,21 @@
 
     };
 
+    var ChatPrivate = function(eros, user){
+        // var user,
+        var priv = this;
+
+        if (typeof(user) === 'string') {
+            this.name = user;
+            this.key = user.toLowerCase().trim();
+        }
+
+        this.user = function() {
+            var copy = user;
+            return user;
+        }
+    }
+
     var ChatModule = function (eros, sendRequest, options) {
     	if (typeof (options) !== "object") {
     		options = {};
@@ -115,7 +130,8 @@
     	rooms = {},
         roomJoinedHandlers = {},
         roomLeftHandlers = {},
-        selected = "";
+        selected = "",
+        privs = {};
 
     	function processServerMessage(command, payload) {
     		if (command == "CHJ" || command == "CHL") {
@@ -162,7 +178,7 @@
 				}
 
     			return true;
-    		} else if (command == "CHM") {
+    		} else if (command == "CHM") { // Chat message
     			var message = protobufs.ChatRoomMessage.decode64(payload);
     			var user = eros.user(message.sender.username);
 				user.update(message.sender);
@@ -175,7 +191,28 @@
 				}
 
 				return true;
-    		} else {
+    		} else if (command == "CHP"){ // Private message
+                var message = protobufs.ChatPrivateMessage.decode64(payload);
+                var senderUser = eros.user(message.sender.username);
+                // user.update(message.sender);
+
+                // var targetUser = eros.user(message.target.username); 
+                var targetUser = eros.localUser
+                var priv_return = chat.priv(message.sender.username)
+                var priv = priv_return[0]
+                var joined = priv_return[1]
+
+                if(!joined){
+                    if (typeof (options.privjoined) === "function") {
+                        options.privjoined(eros, priv);
+                    } 
+                }
+
+                // Display message
+                if (typeof (options.privmessage) === "function") {
+                    options.privmessage(eros, priv, senderUser, message.message);
+                }
+            } else{
     			return false;
     		}
     	}
@@ -185,7 +222,6 @@
     		"CHL": processServerMessage, // User left chat
     		"CHM": processServerMessage, // Incoming chat room messae
     		"CHP": processServerMessage  // Incoming private message
-
     	}
 
         this.rooms = function () {
@@ -248,6 +284,59 @@
 
         	sendRequest(new starbow.ErosRequests.ChatMessageRequest(room, message));
         };
+
+        // Private messages
+
+        this.privs = function(){
+            var copy = {}
+            for (var x in privs) {
+                copy[x] = privs[x]
+            }
+            return copy;
+        };
+
+        this.priv = function(user){
+            var key = user.toLowerCase().trim();
+
+            if (key in privs) {
+                return [privs[key], true];
+            } else {
+                var chat = this;
+
+                var priv = new ChatPrivate(
+                    eros,
+                    user
+                );
+                return [priv, false];
+            }
+        };
+
+        this.sendToPriv = function(user, message){
+            message = message.trim();
+            if (message == '') {
+                return;
+            }
+
+            sendRequest(new starbow.ErosRequests.PrivateMessageRequest(user, message, function(asd){
+                // Only if request is successful
+                var priv_return = chat.priv(user)
+                var priv = priv_return[0]
+                var joined = priv_return[1]
+
+                var senderUser = eros.user(user)
+
+                if(!joined){
+                    if (typeof (options.privjoined) === "function") {
+                        options.privjoined(eros, priv);
+                    } 
+                }
+
+                // Display message
+                if (typeof (options.privmessage) === "function") {
+                    options.privmessage(eros, priv, senderUser, message);
+                }  
+            }));
+        }
     };
 
     global.starbow.Eros.prototype.modules.chat = ChatModule;

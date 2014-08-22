@@ -120,6 +120,8 @@
             requests[String(tx)] = request;
 
             socket.send(request.command + ' ' + tx + ' ' + request.payload.length + '\n' + request.payload);
+
+            return request
         }
 
         function loadModules() {

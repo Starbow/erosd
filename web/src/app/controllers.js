@@ -4,7 +4,7 @@
 
 var controllers = angular.module('erosApp.controllers', []);
 
-controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl', function($scope, $http, $connGrowl) {
+controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScope', function($scope, $http, connGrowl, $rootScope) {
 
 	var server = window.location.host;
 
@@ -13,6 +13,7 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl', function(
 	$scope.connected = false;
 	$scope.latency = 0;
 	$scope.rooms = {};
+	$scope.privs = {};
 	$scope.login = {};
 
 	$http({
@@ -26,12 +27,12 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl', function(
 			$scope.login.password = data.token;
 		} else {
 			$scope.message = 'Please log in to starbowmod.com to auto-fill your login details.';
-			$connGrowl.sendMsg('Please log in to starbowmod.com to auto-fill your login details.')
+			connGrowl.sendMsg('Please log in to starbowmod.com to auto-fill your login details.')
 		}
     }).
     error(function(data, status, headers, config) {
     	$scope.message = 'Unable to autograb login info. ' + status;
-    	$connGrowl.sendMsg('Unable to autograb login info.')
+    	connGrowl.sendMsg('Unable to autograb login info.')
     });
 
 	var eros = new starbow.Eros({
@@ -44,7 +45,7 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl', function(
 			$scope.$apply(function() {
 				$scope.message = 'Connected. Authenticating...';
 			});
-			$connGrowl.sendMsg('Connected. Authenticating...')
+			connGrowl.sendMsg('Connected. Authenticating...')
 
 		},
 		loggedIn: function() {
@@ -53,7 +54,7 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl', function(
 				$scope.message = 'Authenticated! Wahoo.';
 				$scope.connected = true;
 			});
-			$connGrowl.sendMsg('Authenticated! Wahoo.',1)
+			connGrowl.sendMsg('Authenticated! Wahoo.',1)
 		},
 		loginFailed: function(eros, status) {
 			// This shouldn't ever happen if we're pulling our auth direct from the API.
@@ -66,9 +67,9 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl', function(
 				$scope.connected = false;
 			});
 			if (status === 2) {
-				$connGrowl.sendMsg('Already logged in from another location.', 0)
+				connGrowl.sendMsg('Already logged in from another location.', 0)
 			} else {
-				$connGrowl.sendMsg('Authentication failed. Stay shit.',2)
+				connGrowl.sendMsg('Authentication failed.',2)
 			}
 		},
 		disconnected: function() {
@@ -134,6 +135,7 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl', function(
 						event: true,
 						date: new Date()
 					});
+					$rootScope.$emit("chat_room","joined")
 				});
 			},
 			userLeft: function(eros, room, user) {
@@ -145,6 +147,7 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl', function(
 						event: true,
 						date: new Date()
 					});
+					$rootScope.$emit("chat_room","left")
 				});
 			},
 			message: function(eros, room, user, message) {
@@ -156,7 +159,29 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl', function(
 						date: new Date()
 					});
 				});
-			}
+			},
+			privjoined: function(eros, room){
+				// $scope.$apply(function() {
+					if (!(room.key in $scope.privs)) {
+						$scope.privs[room.key] = {
+							priv: room,
+							messages: []
+						}
+					}
+					$scope.privs[room.key].active = true;
+					$scope.selectedRoom = $scope.privs[room.key]
+				// });
+			},
+			privmessage: function(eros, room, user, message) {
+				// $scope.$apply(function() {
+					$scope.privs[room.key].messages.push({
+						sender: user,
+						message: message,
+						event: false,
+						date: new Date()
+					});
+				// });
+			},
 		}
 	});
 
@@ -170,11 +195,6 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl', function(
 		eros.disconnect();
 	});
 
-	$scope.sendChatMessage = function(target, message) {
-		eros.chat.sendToRoom(target, message);
-		$scope.chatMessage = "real"
-	}
-
 
 	$scope.connect = function(username, password) {
 		if (!username) {
@@ -187,34 +207,5 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl', function(
 		eros.connect(username, password);
 	}
 
-	$scope.selectRoom = function(room){
-		if(typeof room == "object"){
-			$scope.$parent.selectedRoom = room
-		}else{
-			$scope.$parent.selectedRoom = $scope.rooms[Object.keys($scope.rooms)[0]]
-		}
-	}
-
-	$scope.setDefaultRoom = function(room){
-		if(typeof $scope.$parent.selectedRoom == 'undefined'){
-			$scope.selectRoom(room)
-		}
-	}
-
-	// $scope.chatMessage = ""
-	$scope.addUserMsg = function(user){
-		if($scope.chatMessage.length == 0){
-			$scope.chatMessage = "@" + user + " "
-		}else{
-			$scope.chatMessage = $scope.chatMessage + " @" + user + " "
-		}
-		document.getElementById("chat-input").childNodes[0].focus()
-
-	}
-
-	$scope.updateChatInput = function(message){
-		// Replace user names
-		$scope.chatMessage;
-	}
 }]);
 

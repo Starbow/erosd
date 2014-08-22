@@ -22,6 +22,31 @@
         return request;
     };
 
+    var PrivateMessageRequest = function (user, message, callback) {
+        if(typeof user === "object"){
+            user = user.username
+        }
+        // var privateMessage = new protobufs.ChatPrivateMessage(user, message);
+        var privateMessage = new protobufs.ChatMessage("", user, message);
+
+        var request = new starbow.ErosRequests.Request("UPM", privateMessage.toBase64(), function (command, payload) {
+            if (command === "UPM") {
+                request.result = true;
+                request.complete = true;
+
+                if (typeof (callback) === "function") {
+                    callback(request);
+                }
+
+                return true;
+            }
+
+            return false;
+        });
+
+        return request;
+    };
+
     var ChatJoinRequest = function (room, password, callback) {
         var chatMessage = new protobufs.ChatRoomRequest(room.key, password);
 
@@ -76,6 +101,7 @@
     }
 
     global["starbow"]["ErosRequests"]["ChatMessageRequest"] = ChatMessageRequest;
+    global["starbow"]["ErosRequests"]["PrivateMessageRequest"] = PrivateMessageRequest;
     global["starbow"]["ErosRequests"]["ChatJoinRequest"] = ChatJoinRequest;
     global["starbow"]["ErosRequests"]["ChatLeaveRequest"] = ChatLeaveRequest;
 })(this);

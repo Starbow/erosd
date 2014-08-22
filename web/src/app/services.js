@@ -21,7 +21,7 @@ angular.module('erosApp.services', [])
 		broadcastMsg(msg, status);
 	}
 	var broadcastMsg = function(msg, status){
-		$rootScope.$broadcast("connGrowl", msg, status);
+		$rootScope.$emit("connGrowl", msg, status);
 	}
 
 	return {

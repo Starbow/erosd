@@ -94,7 +94,7 @@
     z-index: 3; }
     [eros-chat] #chat-left-nav.expand {
       width: 150px; }
-    [eros-chat] #chat-left-nav #chat-channels a {
+    [eros-chat] #chat-left-nav .chat-channels a {
       height: 39px;
       line-height: 39px;
       padding-left: 20px;
@@ -102,13 +102,19 @@
       text-decoration: none;
       font-weight: lighter;
       display: block; }
-      [eros-chat] #chat-left-nav #chat-channels a:hover {
+      [eros-chat] #chat-left-nav .chat-channels a:hover {
         background-color: #393939;
         color: #e9e9e9; }
-      [eros-chat] #chat-left-nav #chat-channels a.selected {
+      [eros-chat] #chat-left-nav .chat-channels a.selected {
         border-right: 4px solid #ab3e3e;
         color: #ab3e3e;
         background-color: #393939; }
+    [eros-chat] #chat-left-nav hr {
+      border: none;
+      margin: 0px;
+      color: #666;
+      background-color: #666;
+      height: 1px; }
     [eros-chat] #chat-left-nav #chat-hide a {
       height: 30px;
       line-height: 30px;
@@ -179,7 +185,8 @@
       color: #fff;
       background-color: rgba(0, 0, 0, 0.6);
       padding: 0 2px;
-      border-radius: 1px; }
+      padding-right: 3px;
+      border-radius: 2px; }
 
 /*
  * Growls

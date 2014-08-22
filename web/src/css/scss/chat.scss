@@ -36,7 +36,7 @@ $chat-input-height:27px;
 			width: $chat-nav-width-max;
 		} 
 
-		#chat-channels a {
+		.chat-channels a {
 			height: 39px;
 			line-height: 39px;
 			padding-left: 20px;
@@ -56,6 +56,14 @@ $chat-input-height:27px;
     			color: $lightRedColor;
     			background-color: $lightGrey;
     		}
+		}
+
+		hr {
+			border:none;
+			margin:0px;
+			color:#666;
+			background-color:#666;
+			height:1px;
 		}
 
 		#chat-hide a{

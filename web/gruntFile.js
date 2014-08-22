@@ -32,7 +32,7 @@ module.exports = function (grunt) {
         'src/bootstrap/css/bootstrap.css', // min.css is throwing exception
         'src/bootstrap/css/bootstrap-theme.min.css'
       ], 
-      cssWatch: ['src/css/*.css'],
+      cssWatch: ['src/css/scss/*.scss'],
       // locales: {
       //   es: ['src/**/locale-es.json' ],
       //   en: ['src/**/locale-en.json' ],
@@ -46,6 +46,9 @@ module.exports = function (grunt) {
       },
       boilerplate: {
         files: [{ dest: '<%= distdir %>/html5-boilerplate', src : ['normalize.css', 'main.css'], expand: true, cwd: 'components/html5-boilerplate/css' }]
+      },
+      route: {
+        files: [{dest: '<%= distdir %>', src: ['angular-route.js'], expand: true, cwd: 'components/angular-route'}]
       },
       glyphicons: {
         files: [{ dest: '<%= distdir %>/fonts', src : '**', expand: true, cwd: 'src/bootstrap/fonts'}]
@@ -179,7 +182,7 @@ module.exports = function (grunt) {
     watch: {
       css: {
         files:['<%= src.cssWatch %>'],
-        tasks: ['recess:build', 'timestamp']
+        tasks: ['sass:dev', 'recess:build', 'copy:cssMap', 'timestamp']
       }
       ,assets: {
         files:['<%= copy.assets.files[0].cwd %>/<%= copy.assets.files[0].src %>'],
