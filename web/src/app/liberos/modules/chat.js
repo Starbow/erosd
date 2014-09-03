@@ -261,6 +261,9 @@
         };
 
         this.joinRoom = function(room, password) {
+            if(typeof "room" == "string"){
+                room = this.room(room)
+            }
             sendRequest(new starbow.ErosRequests.ChatJoinRequest(room, password));
         };
 
@@ -336,7 +339,7 @@
 
                 // Display message
                 if (typeof (options.privmessage) === "function") {
-                    options.privmessage(eros, priv, senderUser, message);
+                    options.privmessage(eros, priv, eros.localUser, message);
                 } 
 
             }

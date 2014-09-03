@@ -203,7 +203,7 @@
     right: 2px;
     bottom: 31px;
     width: 130px;
-    padding-left: 2px;
+    padding: 2px;
     background-color: #efefef;
     border-left: 1px solid #e2e2e2;
     color: #666;
@@ -227,7 +227,7 @@
       overflow: hidden;
       width: 92px; }
     [eros-chat] [eros-user]:hover {
-      background-color: #fafafa; }
+      background-color: #e3e3e3; }
 
 /*
  * Growls

@@ -173,14 +173,24 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScop
 				// });
 			},
 			privmessage: function(eros, room, user, message) {
-				// $scope.$apply(function() {
+				if(!$scope.$$phase){
+						$scope.$apply(function() {
+						$scope.privs[room.key].messages.push({
+							sender: user,
+							message: message,
+							event: false,
+							date: new Date()
+						});
+					});
+				}else{
 					$scope.privs[room.key].messages.push({
 						sender: user,
 						message: message,
 						event: false,
 						date: new Date()
 					});
-				// });
+				}
+				
 			},
 		}
 	});

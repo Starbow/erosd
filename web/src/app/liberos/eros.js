@@ -1,7 +1,6 @@
 (function (global) {
     "use strict";
     var mock = {
-        divisions: ["A", "B", "D", "C", "D", "E", "F"],
 
         getRandom: function(value_array){
             if(value_array.length == 0){
@@ -11,7 +10,7 @@
             rand = rand * value_array.length;
             rand = Math.floor(rand);
 
-            return value_array[rand];
+            return value_array;
         },
 
         getRandomInt: function(min, max){
@@ -41,11 +40,15 @@
         stats.walkovers = 0;
 
         function update(u) {
-            stats.division = getDivision(u.division.low);
-            stats.divisionRank = u.division_rank.low;
-
-            // stats.division = mock.getRandom(mock.divisions);
-            // stats.divisionRank = mock.getRandomInt(1,30);
+            var mocker = true
+            if(mocker == true){
+                stats.division = getDivision(mock.getRandomInt(0,6));
+                stats.divisionRank = getRank(mock.getRandomInt(0,30));
+            }else{
+                stats.division = getDivision(u.division.low);
+                stats.divisionRank = getRank(u.division_rank.low);
+            }
+            
             stats.forfeits = u.forfeits.low;
             stats.losses = u.losses.low;
             stats.mmr = u.mmr;
@@ -59,6 +62,10 @@
             var divisions = ["P", "E", "D", "C", "B", "A"];
 
             return divisions[division]
+        }
+
+        function getRank(rank){
+            return rank+1;
         }
 
         this.update = update;

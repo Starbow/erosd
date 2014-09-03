@@ -58,7 +58,7 @@ angular.module('erosApp.chat', [])
 	return{
 		restrict: 'A',
 		template: 	'<div class="room-users"><div ng-repeat="user in roomusers" class="animate-fade">' +
-					'	<div eros-user="{{user.username}}" class="room-user"></div>' +
+					'	<div eros-user="{{user.username}}" class="room-user" ng-click="addUserMsg(user.username)"></div>' +
 					'</div></div>',
 		controller: ['$scope', function($scope){
 			// $scope.room = ''
@@ -83,8 +83,7 @@ angular.module('erosApp.chat', [])
 	return {
 		restrict: 'A',
 		template: '<div class="user-rank-block"><span ng-bind="user.stats.division" class="user-division"></span>' +
-						'<span ng-show="user.stats.divisionRank>0" ng-bind="user.stats.divisionRank" class="user-rank"></span>' +
-						'<span ng-show="user.stats.divisionRank==0" class="user-rank"></span></div>' +
+						'<span ng-hide="user.stats.division == \'P\'" ng-bind="user.stats.divisionRank" class="user-rank"></span>' +
 					'</div>'+
 					'<span ng-bind="user.username" class="user-username"></span>',
 		link: function($scope, $elem, $attrs, $controller){
