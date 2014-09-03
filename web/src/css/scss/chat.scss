@@ -3,6 +3,9 @@ $chat-height:450px;
 $chat-nav-width-min:50px;
 $chat-nav-width-max:150px;
 $chat-input-height:27px;
+$chat-title-height: 39px; // Same as channel buttons
+
+$chat-users-width: 130px;
 
 [eros-chat] {
 	background-color:#fff;
@@ -89,18 +92,33 @@ $chat-input-height:27px;
 
 		#chat-channel-name{
 			position:absolute;
-			top:0;
+			top:2px;
 			left: $chat-nav-width-min + 4;
+			right:$chat-users-width+4;
 			margin: 0px;
+
+			height: $chat-title-height;
+			line-height: $chat-title-height;
+			padding-left: 10px;
+
+			color: $lightRedColor;
+			font-size: 16px;
+			// background-color: #efefef;
 		}
 
 		#chat-text {
 			overflow-y: auto;
 			height: $chat-height - $chat-input-height - 4;
-			padding-top: 35px;
 			position: absolute;
 			left:$chat-nav-width-min+4;
-			top: 0;
+			right: $chat-users-width+4;
+			top: $chat-title-height + 2;
+
+			font-size: 13px;
+
+			.chat-event{
+				color: #aaa;
+			}
 		}
 
 		#chat-input {
@@ -171,6 +189,53 @@ $chat-input-height:27px;
 			padding: 0 2px;
 			padding-right: 3px;
 			border-radius:2px;
+		}
+	}
+
+	#chat-right-nav{
+		position: absolute;
+		overflow-y: scroll;
+		top: 2px;
+		right: 2px;
+		bottom: 31px;
+		width: $chat-users-width;
+		padding-left: 2px;
+
+		background-color: #efefef;
+		border-left: 1px solid #e2e2e2;
+		
+		color: #666;
+		font-size: 12px;
+	}
+
+	[eros-user] {
+		$chat-users-rank-width: 32px;
+		// height: 18px;
+		width: auto;
+		cursor:pointer;
+		padding:1px 2px;
+
+		.user-rank-block{
+			font-family: $techFont;
+			display: inline-block;
+			width: $chat-users-rank-width;
+		
+			.user-division{
+				color: $lightRedColor;
+				font-size: 10px;
+			}
+			.user-rank{
+				font-family: $techFont;
+				font-size: 8px;
+			}
+		}
+		.user-username{
+			position:absolute;
+			overflow: hidden;
+			width: $chat-users-width - $chat-users-rank-width - 6px;//60px;
+		}
+		&:hover{
+			background-color:#fafafa;
 		}
 	}
 }

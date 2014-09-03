@@ -311,13 +311,16 @@
             }
         };
 
-        this.sendToPriv = function(user, message){
+        this.sendToPriv = function(user, message, ensure_response){
             message = message.trim();
             if (message == '') {
                 return;
             }
+            if (user == eros.localUser.username){
+                return;
+            }
 
-            sendRequest(new starbow.ErosRequests.PrivateMessageRequest(user, message, function(asd){
+            var writeToChannel = function(){
                 // Only if request is successful
                 var priv_return = chat.priv(user)
                 var priv = priv_return[0]
@@ -334,8 +337,21 @@
                 // Display message
                 if (typeof (options.privmessage) === "function") {
                     options.privmessage(eros, priv, senderUser, message);
-                }  
-            }));
+                } 
+
+            }
+
+            sendRequest(new starbow.ErosRequests.PrivateMessageRequest(user, message, function(result){
+                if(ensure_response){
+                    writeToChannel()
+                }
+            }))
+
+            if(!ensure_response && eros.users()[user]){
+                writeToChannel()
+            }
+
+
         }
     };
 

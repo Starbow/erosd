@@ -1,8 +1,8 @@
 <div id="chat-content" ng-hide="hide-chat">
-	<h2 id="chat-channel-name">{{selectedRoom.room.name}}{{selectedRoom.priv.name}}</h2>
+	<h2 id="chat-channel-name">{{selectedRoom.room.name.toUpperCase()}}{{selectedRoom.priv.name}}</h2>
 	<div id="chat-text" scroll-glue>
 		<div ng-repeat="message in selectedRoom.messages">
-			<span ng-if="message.event"><span class="message-date">[{{message.date.toLocaleTimeString()}}]</span> <strong>{{message.sender.username}} {{message.message}}</strong></span>
+			<span ng-if="message.event"><span class="message-date">[{{message.date.toLocaleTimeString()}}]</span> <span class="chat-event">{{message.sender.username}} {{message.message}}</span></span>
 			<span ng-if="!message.event"><span class="message-date">[{{message.date.toLocaleTimeString()}}]</span> <a href='#' class="message-sender" user="{{message.sender.username}}" ng-bind="message.sender.username" ng-click="addUserMsg(message.sender.username)"></a>: <span chat-message></span></span>
 		</div>
 	</div>
@@ -33,9 +33,4 @@
 		</a>
 	</li>
 </div>
-<style>
-	#chat-right-nav{
-		float: right;
-	}
-</style>
 <div id="chat-right-nav" room-users></div>

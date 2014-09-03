@@ -18,9 +18,9 @@ angular.module('erosApp.chat', [])
 			$scope.sendChatMessage = function(target, message) {
 				if(message[0] === "@"){
 					target = message.split(" ",1)[0].split("@")[1]
-					eros.chat.sendToPriv(target, message.split(" ").slice(1).join(" "))
+					eros.chat.sendToPriv(target, message.split(" ").slice(1).join(" "), false)
 				}else if(typeof ($scope.selectedRoom.priv) == 'object'){
-					eros.chat.sendToPriv($scope.selectedRoom.priv.name, message)
+					eros.chat.sendToPriv($scope.selectedRoom.priv.name, message, false)
 				}else{
 					eros.chat.sendToRoom(target, message);
 				}
@@ -35,7 +35,7 @@ angular.module('erosApp.chat', [])
 
 			$scope.addUserMsg = function(user){
 				var newmessage;
-				if($scope.chatMessage.length == 0){
+				if(typeof $scope.chatMessage == "undefined" || $scope.chatMessage.length == 0){
 					newmessage = "@" + user + " "
 				}else{
 					newmessage = $scope.chatMessage + " @" + user + " "
@@ -58,7 +58,7 @@ angular.module('erosApp.chat', [])
 	return{
 		restrict: 'A',
 		template: 	'<div class="room-users"><div ng-repeat="user in roomusers" class="animate-fade">' +
-					'	<div ng-bind="user.username" class="room-user"></div>' +
+					'	<div eros-user="{{user.username}}" class="room-user"></div>' +
 					'</div></div>',
 		controller: ['$scope', function($scope){
 			// $scope.room = ''
@@ -79,6 +79,19 @@ angular.module('erosApp.chat', [])
 
 	}
 }])
+.directive('erosUser', function(){
+	return {
+		restrict: 'A',
+		template: '<div class="user-rank-block"><span ng-bind="user.stats.division" class="user-division"></span>' +
+					'<span ng-bind="user.stats.divisionRank" class="user-rank"></span></div>' +
+					'<span ng-bind="user.username" class="user-username"></span>',
+		link: function($scope, $elem, $attrs, $controller){
+			// if(typeof $scope.user != "object"){
+			// 	$scope.user=eros.room.user($attrs.erosUser)
+			// }
+		}
+	}
+})
 .directive('username', function(){
 	return {
 		restrict: 'A',

@@ -1,5 +1,31 @@
 (function (global) {
     "use strict";
+    var mock = {
+        divisions: ["A", "B", "D", "C", "D", "E", "F"],
+
+        getRandom: function(value_array){
+            if(value_array.length == 0){
+                return 
+            }
+            var rand = Math.random();
+            rand = rand * value_array.length;
+            rand = Math.floor(rand);
+
+            return value_array[rand];
+        },
+
+        getRandomInt: function(min, max){
+            if(min >= max){
+                return
+            }
+            var rand = Math.random();
+            rand = Math.floor(rand*(max-min))
+
+            return min+rand
+        }
+
+    }
+
 
     var ErosUserStats = function(u) {
         var stats = this;
@@ -15,8 +41,11 @@
         stats.walkovers = 0;
 
         function update(u) {
-            stats.division = u.division.low;
-            stats.divisionRank = u.division_rank.low;
+            // stats.division = u.division.low;
+            // stats.divisionRank = u.division_rank.low;
+
+            stats.division = mock.getRandom(mock.divisions);
+            stats.divisionRank = mock.getRandomInt(1,30);
             stats.forfeits = u.forfeits.low;
             stats.losses = u.losses.low;
             stats.mmr = u.mmr;
