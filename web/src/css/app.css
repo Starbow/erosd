@@ -140,11 +140,11 @@
       font-size: 16px; }
     [eros-chat] #chat-content #chat-text {
       overflow-y: auto;
-      height: 419px;
       position: absolute;
       left: 54px;
       right: 134px;
       top: 41px;
+      bottom: 31px;
       font-size: 13px; }
       [eros-chat] #chat-content #chat-text .chat-event {
         color: #aaa; }

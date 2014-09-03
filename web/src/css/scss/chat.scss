@@ -108,11 +108,12 @@ $chat-users-width: 130px;
 
 		#chat-text {
 			overflow-y: auto;
-			height: $chat-height - $chat-input-height - 4;
+			// height: $chat-height - $chat-input-height - 4;
 			position: absolute;
 			left:$chat-nav-width-min+4;
 			right: $chat-users-width+4;
 			top: $chat-title-height + 2;
+			bottom: $chat-input-height + 4;
 
 			font-size: 13px;
 
