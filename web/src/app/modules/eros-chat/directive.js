@@ -83,7 +83,9 @@ angular.module('erosApp.chat', [])
 	return {
 		restrict: 'A',
 		template: '<div class="user-rank-block"><span ng-bind="user.stats.division" class="user-division"></span>' +
-					'<span ng-bind="user.stats.divisionRank" class="user-rank"></span></div>' +
+						'<span ng-show="user.stats.divisionRank>0" ng-bind="user.stats.divisionRank" class="user-rank"></span>' +
+						'<span ng-show="user.stats.divisionRank==0" class="user-rank"></span></div>' +
+					'</div>'+
 					'<span ng-bind="user.username" class="user-username"></span>',
 		link: function($scope, $elem, $attrs, $controller){
 			// if(typeof $scope.user != "object"){

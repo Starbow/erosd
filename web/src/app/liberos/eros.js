@@ -41,7 +41,7 @@
         stats.walkovers = 0;
 
         function update(u) {
-            stats.division = u.division.low;
+            stats.division = getDivision(u.division.low);
             stats.divisionRank = u.division_rank.low;
 
             // stats.division = mock.getRandom(mock.divisions);
@@ -53,6 +53,12 @@
             stats.points = u.points.low;
             stats.wins = u.wins.low;
             stats.walkovers = u.walkovers.low;
+        }
+
+        function getDivision(division){
+            var divisions = ["P", "E", "D", "C", "B", "A"];
+
+            return divisions[division]
         }
 
         this.update = update;
