@@ -41,11 +41,11 @@
         stats.walkovers = 0;
 
         function update(u) {
-            // stats.division = u.division.low;
-            // stats.divisionRank = u.division_rank.low;
+            stats.division = u.division.low;
+            stats.divisionRank = u.division_rank.low;
 
-            stats.division = mock.getRandom(mock.divisions);
-            stats.divisionRank = mock.getRandomInt(1,30);
+            // stats.division = mock.getRandom(mock.divisions);
+            // stats.divisionRank = mock.getRandomInt(1,30);
             stats.forfeits = u.forfeits.low;
             stats.losses = u.losses.low;
             stats.mmr = u.mmr;
