@@ -1,7 +1,7 @@
 {
   "name": "erosjs",
   "private": true,
-  "version": "0.0.3",
+  "version": "0.0.4",
   "author": "Starbow Dev team",
   "description": "Starbow's matchmaking web client.",
   "repository": {

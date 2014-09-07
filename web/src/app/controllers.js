@@ -117,13 +117,22 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScop
 			},
 			left: function(eros, room) {
 				$scope.$apply(function() {
-					$scope.rooms[room.key].active = false;
-					$scope.rooms[room.key].messages.push({
-						sender: eros.localUser,
-						message: 'left the channel.',
-						event: true,
-						date: new Date()
-					});
+					// $scope.rooms[room.key].active = false;
+					// $scope.rooms[room.key].messages.push({
+					// 	sender: eros.localUser,
+					// 	message: 'left the channel.',
+					// 	event: true,
+					// 	date: new Date()
+					// });
+					delete $scope.rooms[room.key]
+
+					// window.event.cancelBubble = true
+
+					if($scope.selectedRoom.chat == chat){
+						$scope.selectedRoom = $scope.rooms[Object.keys($scope.rooms)[0]];
+					}
+
+
 				});
 			},
 			userJoined: function(eros, room, user) {
@@ -161,16 +170,27 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScop
 				});
 			},
 			privjoined: function(eros, room){
-				// $scope.$apply(function() {
-					if (!(room.key in $scope.privs)) {
-						$scope.privs[room.key] = {
-							priv: room,
-							messages: []
-						}
+				if (!(room.key in $scope.privs)) {
+					$scope.privs[room.key] = {
+						priv: room,
+						messages: []
 					}
-					$scope.privs[room.key].active = true;
-					$scope.selectedRoom = $scope.privs[room.key]
-				// });
+				}
+				$scope.privs[room.key].active = true;
+				$scope.selectedRoom = $scope.privs[room.key]
+			},
+			privleave: function(eros, priv){
+				// $scope.$apply(function() {
+					delete $scope.privs[priv.key]
+
+				// window.event.cancelBubble = true
+
+				if($scope.selectedRoom.priv == priv){
+					$scope.selectedRoom = $scope.rooms[Object.keys($scope.rooms)[0]];
+				}
+
+				
+				// })
 			},
 			privmessage: function(eros, room, user, message) {
 				if(!$scope.$$phase){

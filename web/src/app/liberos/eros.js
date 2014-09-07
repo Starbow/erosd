@@ -40,7 +40,7 @@
         stats.walkovers = 0;
 
         function update(u) {
-            var mocker = false
+            var mocker = true
             if(mocker == true){
                 stats.division = getDivision(mock.getRandomInt(0,6));
                 stats.divisionRank = getRank(mock.getRandomInt(0,30));
@@ -65,7 +65,7 @@
         }
 
         function getRank(rank){
-            return rank+1;
+            return rank;
         }
 
         this.update = update;

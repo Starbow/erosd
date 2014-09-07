@@ -1,5 +1,7 @@
 'use strict';
 
+/* Chat directives */
+
 angular.module('erosApp.chat', [])
 .directive('erosChat', ['$rootScope', function($rootScope){
 	return {
@@ -30,6 +32,7 @@ angular.module('erosApp.chat', [])
 			$scope.setDefaultRoom = function(room){
 				if(typeof $scope.$parent.selectedRoom == 'undefined'){
 					$scope.selectRoom(room)
+					$scope.defaultRoom = room
 				}
 			}
 
@@ -56,10 +59,7 @@ angular.module('erosApp.chat', [])
 }])
 .directive('roomUsers', ['$rootScope', '$animate', function($rootScope, $animate){
 	return{
-		restrict: 'A',
-		template: 	'<div class="room-users"><div ng-repeat="user in roomusers" class="animate-fade">' +
-					'	<div eros-user="{{user.username}}" class="room-user" ng-click="addUserMsg(user.username)"></div>' +
-					'</div></div>',
+		restrict: 'AC',
 		controller: ['$scope', function($scope){
 			// $scope.room = ''
 			$scope.users;
@@ -79,20 +79,6 @@ angular.module('erosApp.chat', [])
 
 	}
 }])
-.directive('erosUser', function(){
-	return {
-		restrict: 'A',
-		template: '<div class="user-rank-block"><span ng-bind="user.stats.division" class="user-division"></span>' +
-						'<span ng-hide="user.stats.division == \'P\'" ng-bind="user.stats.divisionRank" class="user-rank"></span>' +
-					'</div>'+
-					'<span ng-bind="user.username" class="user-username"></span>',
-		link: function($scope, $elem, $attrs, $controller){
-			// if(typeof $scope.user != "object"){
-			// 	$scope.user=eros.room.user($attrs.erosUser)
-			// }
-		}
-	}
-})
 .directive('username', function(){
 	return {
 		restrict: 'A',
@@ -107,6 +93,18 @@ angular.module('erosApp.chat', [])
 		restrict: 'A',
 		link: function($scope, $elem, $attrs, $controller){
 			$elem.html($scope.message.message.replace(/@\w+/g, '<span username>'+'$&'+'</span>'))
+		}
+	}
+})
+.directive('erosUser', function(){
+	return {
+		restrict: 'A',
+		link: function($scope, $elem, $attrs){
+			$attrs.$observe('erosUser', function(value){
+				if(value != ""){
+					$scope.user = eros.user(value)
+				}
+			})
 		}
 	}
 })

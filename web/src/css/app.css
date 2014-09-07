@@ -23,6 +23,7 @@
   font-weight: normal;
   font-style: normal; }
 
+/* $techFont: 'Technonomicon'; */
 /*
  * Navigation
  */
@@ -33,7 +34,7 @@
   width: 270px;
   background-color: #2e2e2e;
   color: #acacac;
-  font-family: 'noto_sansregular'; }
+  font-family: 'goboldregular'; }
   #left-nav #brand {
     font-family: "Technonomicon";
     margin-top: 40px;
@@ -89,26 +90,47 @@
     text-align: left;
     background-color: #2e2e2e;
     font-family: 'noto_sansregular';
-    font-size: 14px;
+    font-size: 13px;
     padding-top: 0px;
-    z-index: 3; }
+    z-index: 3;
+    cursor: pointer; }
     [eros-chat] #chat-left-nav.expand {
       width: 150px; }
-    [eros-chat] #chat-left-nav .chat-channels a {
+    [eros-chat] #chat-left-nav .chat-channels .channel {
       height: 39px;
       line-height: 39px;
-      padding-left: 20px;
-      color: #acacac;
-      text-decoration: none;
-      font-weight: lighter;
       display: block; }
-      [eros-chat] #chat-left-nav .chat-channels a:hover {
+      [eros-chat] #chat-left-nav .chat-channels .channel .select-channel {
+        color: #acacac;
+        text-decoration: none;
+        font-weight: lighter;
+        display: inline-block;
+        left: 20px;
+        margin-left: 2px; }
+        [eros-chat] #chat-left-nav .chat-channels .channel .select-channel .short {
+          margin-left: 18px; }
+      [eros-chat] #chat-left-nav .chat-channels .channel:hover {
         background-color: #393939;
         color: #e9e9e9; }
-      [eros-chat] #chat-left-nav .chat-channels a.selected {
+      [eros-chat] #chat-left-nav .chat-channels .channel.selected {
         border-right: 4px solid #ab3e3e;
         color: #ab3e3e;
         background-color: #393939; }
+        [eros-chat] #chat-left-nav .chat-channels .channel.selected .select-channel {
+          color: #ab3e3e; }
+      [eros-chat] #chat-left-nav .chat-channels .channel .close-channel {
+        font-size: 11px;
+        font-weight: normal;
+        opacity: 0.5;
+        line-height: 39px;
+        display: inline-block;
+        width: 15px;
+        text-align: center;
+        cursor: pointer; }
+        [eros-chat] #chat-left-nav .chat-channels .channel .close-channel:hover {
+          opacity: 1;
+          color: #ab3e3e;
+          background-color: #333; }
     [eros-chat] #chat-left-nav hr {
       border: none;
       margin: 0px;
@@ -126,12 +148,13 @@
       [eros-chat] #chat-left-nav #chat-hide a:hover {
         color: #e9e9e9; }
   [eros-chat] #chat-content {
-    z-index: 2; }
+    z-index: 2;
+    font-size: 14px; }
     [eros-chat] #chat-content #chat-channel-name {
       position: absolute;
       top: 2px;
       left: 54px;
-      right: 134px;
+      right: 154px;
       margin: 0px;
       height: 39px;
       line-height: 39px;
@@ -142,7 +165,7 @@
       overflow-y: auto;
       position: absolute;
       left: 54px;
-      right: 134px;
+      right: 154px;
       top: 41px;
       bottom: 31px;
       font-size: 13px; }
@@ -182,8 +205,6 @@
         [eros-chat] #chat-content #chat-input button:hover {
           background-color: #ab3e3e;
           color: #efefef; }
-  [eros-chat] #chat-content {
-    font-size: 14px; }
     [eros-chat] #chat-content .message-date {
       color: #999;
       font-size: 85%; }
@@ -198,35 +219,42 @@
       border-radius: 2px; }
   [eros-chat] #chat-right-nav {
     position: absolute;
-    overflow-y: scroll;
+    overflow-y: auto;
+    overflow-x: hidden;
     top: 2px;
     right: 2px;
     bottom: 31px;
-    width: 130px;
+    width: 150px;
     padding: 2px;
     background-color: #efefef;
     border-left: 1px solid #e2e2e2;
     color: #666;
     font-size: 12px; }
-  [eros-chat] [eros-user] {
+    [eros-chat] #chat-right-nav .user-details {
+      text-align: center;
+      padding-top: 30px; }
+      [eros-chat] #chat-right-nav .user-details .user-rank-block {
+        font-family: 'noto_sansregular'; }
+  [eros-chat] .room-user {
     width: auto;
     cursor: pointer;
     padding: 1px 2px; }
-    [eros-chat] [eros-user] .user-rank-block {
-      font-family: 'Technonomicon';
+    [eros-chat] .room-user .user-rank-block {
+      font-family: 'noto_sansregular';
       display: inline-block;
-      width: 32px; }
-      [eros-chat] [eros-user] .user-rank-block .user-division {
+      width: 28px; }
+      [eros-chat] .room-user .user-rank-block .user-division {
         color: #ab3e3e;
+        font-size: 13px;
+        font-weight: bold; }
+      [eros-chat] .room-user .user-rank-block .user-rank {
+        font-family: 'noto_sansregular';
         font-size: 10px; }
-      [eros-chat] [eros-user] .user-rank-block .user-rank {
-        font-family: 'Technonomicon';
-        font-size: 8px; }
-    [eros-chat] [eros-user] .user-username {
+    [eros-chat] .room-user .user-username {
       position: absolute;
       overflow: hidden;
-      width: 92px; }
-    [eros-chat] [eros-user]:hover {
+      width: 116px; }
+    [eros-chat] .room-user:hover {
       background-color: #e3e3e3; }
 
 /*

@@ -106,18 +106,30 @@
 
     };
 
-    var ChatPrivate = function(eros, user){
+    var ChatPrivate = function(eros, user, leaveCallback){
         // var user,
         var priv = this;
 
-        if (typeof(user) === 'string') {
-            this.name = user;
-            this.key = user.toLowerCase().trim();
+        if(typeof(user) === 'object'){
+            var user = user
+        }else if (typeof(user) === 'string') {
+            var user = eros.user(user)
         }
+
+        this.name = user.username;
+        this.key = user.username.toLowerCase().trim();
 
         this.user = function() {
             var copy = user;
-            return user;
+            return copy;
+        }
+
+        this.join = function(password) {
+            joinCallback();
+        }
+
+        this.leave = function() {
+            leaveCallback();
         }
     }
 
@@ -253,7 +265,8 @@
                         chat.joinRoom(this, password);
                     },
                     function() { // room.leave() proxy handler
-                        chat.leaveRoom(this);
+                        // chat.leaveRoom(this);
+                        chat.leaveRoom(room)
                     }
                 );
                 return room;
@@ -271,8 +284,8 @@
             var chat = this;
             sendRequest(new starbow.ErosRequests.ChatLeaveRequest(room, function() {
                 delete rooms[room.key];
-                delete roomJoinedHandlers[room.key];
-                delete roomLeftHandlers[room.key];
+                // delete roomJoinedHandlers[room.key];
+                // delete roomLeftHandlers[room.key];
                 if (typeof (options.left) === "function") {
                     options.left(eros, room);
                 }
@@ -308,9 +321,22 @@
 
                 var priv = new ChatPrivate(
                     eros,
-                    user
+                    user,
+                    function() { // priv.leave() proxy handler
+                        chat.leavePriv(priv)
+                    }
                 );
                 return [priv, false];
+            }
+        };
+
+        this.leavePriv = function(room, password) {
+            var chat = this;
+            delete privs[room.key];
+            // delete roomJoinedHandlers[room.key];
+            // delete roomLeftHandlers[room.key];
+            if (typeof (options.privleave) === "function") {
+                options.privleave(eros, room);
             }
         };
 
