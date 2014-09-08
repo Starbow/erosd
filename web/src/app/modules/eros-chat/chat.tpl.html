@@ -32,11 +32,11 @@
 		</div>
 	</li>
 	<li class="chat-channels">
-		<div class='channel' ng-click="showRooms()">
+		<div class='channel' ng-click="showRooms()" ng-click="eros.chat.joinRoom('test','')">
 			<div ng-show="navhover" class='close-channel'></div>
 			<div class='select-channel'>
 				<span ng-hide="navhover" class='short'>+</span>
-				<span ng-show="navhover" ng-click="eros.chat.joinRoom('test','')" class='long'>+ Join room</span>
+				<span ng-show="navhover" class='long'>+ Join room</span>
 			</div>
 		</div>
 	</li>
