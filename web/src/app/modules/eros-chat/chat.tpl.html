@@ -50,7 +50,7 @@
 		<div ng-repeat="user in roomusers" class="animate-fade">
 			<div class="room-user" ng-click="addUserMsg(user.username)">
 				<div class="user-rank-block">
-					<span ng-bind="user.stats.division" class="user-division"></span><span ng-hide="user.stats.division == \'P\'" ng-bind="user.stats.divisionRank" class="user-rank"></span>
+					<span ng-bind="user.stats.division" class="user-division"></span><span ng-hide="user.stats.division == 'P'" ng-bind="user.stats.divisionRank" class="user-rank"></span>
 				</div>
 				<span ng-bind="user.username" class="user-username"></span>
 			</div>
