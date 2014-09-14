@@ -55,12 +55,9 @@ $chat-users-width: 150px;
 				display: inline-block;
 
 				// position:absolute;
-				left: 20px;
-				margin-left: 2px;
-
-				.short{
-					margin-left: 18px;
-				}
+				// left: 20px;
+				padding-left: 18px;
+				// width: $chat-nav-width-max - $chat-close-width;
 
 			}
 
@@ -80,6 +77,7 @@ $chat-users-width: 150px;
     		}
 
     		.close-channel {
+    			float: right;
     			font-size:11px; 
     			font-weight:normal; 
     			opacity: 0.5;
@@ -284,4 +282,14 @@ $chat-users-width: 150px;
 			background-color:#e3e3e3;
 		}
 	}
+
+	// #join-room-menu {
+	// 	position: absolute;
+	// 	left: $chat-nav-width-max;
+	// 	z-index: 50;
+
+	// 	div:hover {
+	// 		background-color: $lightGrey;
+	// 	}
+	// }
 }

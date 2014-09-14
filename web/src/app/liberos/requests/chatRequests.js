@@ -66,6 +66,11 @@
             }
 
             return false;
+        }, function(command){
+            if(command == 505){
+                console.log("Received 505: Can't join any more channels.")
+                return {error: 505, message: "Can't join any more channels."}
+            }
         });
 
         return request;
@@ -92,6 +97,25 @@
         return request;
     };
 
+    var ChatIndexRequest = function(callback){
+        var request = new starbow.ErosRequests.Request("UCI", '', function(command, payload){
+            if (command === "UCI"){
+                request.result = protobufs.ChatRoomIndex.decode64(payload);
+                request.complete = true;
+
+                if (typeof (callback) === "function") {
+                    callback(request);
+                }
+
+                return true;
+            }
+
+            return false
+        })
+
+        return request;
+    }
+
     if (!global["starbow"]) {
         global["starbow"] = {};
     }
@@ -104,4 +128,5 @@
     global["starbow"]["ErosRequests"]["PrivateMessageRequest"] = PrivateMessageRequest;
     global["starbow"]["ErosRequests"]["ChatJoinRequest"] = ChatJoinRequest;
     global["starbow"]["ErosRequests"]["ChatLeaveRequest"] = ChatLeaveRequest;
+    global["starbow"]["ErosRequests"]["ChatIndexRequest"] = ChatIndexRequest;
 })(this);

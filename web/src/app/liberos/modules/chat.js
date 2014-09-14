@@ -50,7 +50,7 @@
             	// Add users we don't have
             	for (var i = 0; i < r.participant.length; i++) {
             		var key = r.participant[i].username.toLowerCase();
-            		var user = eros.user(key);
+            		var user = eros.user(r.participant[i].username);
             		user.update(r.participant[i]);
 
             		if (!(key in users)) {
@@ -140,6 +140,7 @@
 
     	var chat = this,
     	rooms = {},
+        roomsIndex = {},
         roomJoinedHandlers = {},
         roomLeftHandlers = {},
         selected = "",
@@ -224,6 +225,8 @@
                 if (typeof (options.privmessage) === "function") {
                     options.privmessage(eros, priv, senderUser, message.message);
                 }
+
+                return true;
             } else{
     			return false;
     		}
@@ -235,6 +238,8 @@
     		"CHM": processServerMessage, // Incoming chat room messae
     		"CHP": processServerMessage  // Incoming private message
     	}
+
+        // Chat
 
         this.rooms = function () {
             var copy = {}
@@ -301,6 +306,38 @@
         	sendRequest(new starbow.ErosRequests.ChatMessageRequest(room, message));
         };
 
+        this.fetchRoomsIndex = function(){
+            sendRequest(new starbow.ErosRequests.ChatIndexRequest(function(request){
+                for (var i in request.result.room){
+
+                    var room = chat.room(request.result.room[i].name)
+                    room.update(request.result.room[i]);
+
+                    if (!(room.key in roomsIndex)) {
+                        roomsIndex[room.key] = room;
+                    }
+                }
+            }));
+        };
+
+        this.roomsIndex = function(){
+            var copy = {}
+            for (var x in roomsIndex) {
+                copy[x] = roomsIndex[x]
+            }
+            return copy;
+        };
+
+        this.roomsPartialIndex = function(){
+            var copy = {}
+            for (var x in roomsIndex) {
+                if(!(x in rooms)){
+                    copy[x] = roomsIndex[x]
+                }
+            }
+            return copy;
+        }
+
         // Private messages
 
         this.privs = function(){
@@ -340,12 +377,14 @@
             }
         };
 
-        this.sendToPriv = function(user, message, ensure_response){
+        this.sendToPriv = function(user, message, force){
+            user = user.toLowerCase().trim()
+
             message = message.trim();
             if (message == '') {
                 return;
             }
-            if (user == eros.localUser.username){
+            if (user == eros.localUser.key){
                 return;
             }
 
@@ -371,16 +410,14 @@
             }
 
             sendRequest(new starbow.ErosRequests.PrivateMessageRequest(user, message, function(result){
-                if(ensure_response){
+                if(!force){
                     writeToChannel()
                 }
             }))
 
-            if(!ensure_response && eros.users()[user]){
+            if(force){
                 writeToChannel()
             }
-
-
         }
     };
 

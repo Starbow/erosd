@@ -22,7 +22,7 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScop
 		url:'http://127.0.0.1:12345/user/api/info'
 	}).success(function(data, status, headers, config) {
 		if (data.success) {
-			$scope.connect(data.username,  data.token)
+			// $scope.connect(data.username,  data.token)
 			$scope.login.username = data.username;
 			$scope.login.password = data.token;
 		} else {
@@ -107,12 +107,12 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScop
 						}
 					}
 					$scope.rooms[room.key].active = true;
-					$scope.rooms[room.key].messages.push({
-						sender: eros.localUser,
-						message: 'joined the channel.',
-						event: true,
-						date: new Date()
-					});
+					// $scope.rooms[room.key].messages.push({
+					// 	sender: eros.localUser,
+					// 	message: 'joined the channel.',
+					// 	event: true,
+					// 	date: new Date()
+					// });
 				});
 			},
 			left: function(eros, room) {
@@ -126,13 +126,7 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScop
 					// });
 					delete $scope.rooms[room.key]
 
-					// window.event.cancelBubble = true
-
-					if($scope.selectedRoom.chat == chat){
-						$scope.selectedRoom = $scope.rooms[Object.keys($scope.rooms)[0]];
-					}
-
-
+					window.event.cancelBubble = true
 				});
 			},
 			userJoined: function(eros, room, user) {
@@ -212,7 +206,8 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScop
 				}
 				
 			},
-		}
+		},
+
 	});
 
 	// Horrible uglyness. Remove in production.

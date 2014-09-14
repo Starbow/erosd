@@ -1,8 +1,18 @@
 # Change Log
 
-## 0.0.5
 ### Unresolved
 - Make config for local development (mocking, etc.)
+- Join private Room (just UI)
+- Create Room (just UI)
+
+## 0.0.5
+### Added 
+- Join public Room
+
+### Changed
+- Moved close channel to the right
+- Fixed private messages sometimes not showing 
+- Fixed issue where some users would have the name as their key
 
 ## 0.0.4 - 2014-09-07
 ### Added

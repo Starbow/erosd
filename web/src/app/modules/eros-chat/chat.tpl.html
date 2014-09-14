@@ -8,39 +8,65 @@
 	</div>
 	<form id="chat-input"><input type="text" ng-model="$parent.chatMessage" placeholder="Message"> <button type="submit" ng-click="sendChatMessage(selectedRoom.room, $parent.chatMessage); $parent.chatMessage = ''" ng-disabled="!$parent.chatMessage"><span class="glyphicon glyphicon-chevron-right"></span></button></form>
 </div>
-<div id="chat-left-nav" ng-mouseenter="navhover = true" ng-mouseleave="navhover = false" ng-class="{'expand': navhover}">
-	<!-- <div id="chat-hide"><a href="#" class="glyphicon glyphicon-minus"></a></div> -->
-	<li class="chat-channels" ng-repeat="room in rooms" ng-init="setDefaultRoom(room)">
-		<div ng-class="{'selected': selectedRoom==room}" class='channel' ng-click="selectRoom(room)">
-			<div ng-show="navhover" class='close-channel' ng-click='room.room.leave(); $event.stopPropagation();'>x</div>
-			<div class='select-channel' href="#">
+
+<!-- Left Navigation: Chat channels, Private channels, Join Rooms -->
+<div id="chat-left-nav" ng-mouseenter="navhover = true" ng-mouseleave="navhover = false" ng-class="{'expand': navhover || showIndex}" ng-init='eros.chat.fetchRoomsIndex()'>
+	<li class="chat-channels" ng-repeat="room in rooms" ng-init="setDefaultRoom(room)" ng-hide="showIndex" >
+		<div ng-class="{'selected': selectedRoom==room}" class='channel' ng-click="selectRoom(room)" >
+			<div class='select-channel'>
 				<span ng-hide="navhover" class='short'>{{room.room.name.slice(0,1).toUpperCase()}}</span>
 				<span ng-show="navhover" ng-if="room.room.name.length > 18" class='long'>{{room.room.name.slice(0,15)}}...</span>
 				<span ng-show="navhover" ng-if="room.room.name.length < 19" class='long'>{{room.room.name}}</span>
-			</a>
+			</div>
+			<div ng-show="navhover" class='close-channel' ng-click='room.room.leave(); $event.stopPropagation();'>x</div>
 		</div>
 	</li>
-	<hr>
-	<li class="chat-channels" ng-repeat="priv in privs">
+	<hr ng-hide="showIndex">
+	<li class="chat-channels" ng-repeat="priv in privs" ng-hide="showIndex">
 		<div ng-class="{'selected': selectedRoom==priv}" class='channel' ng-click="selectRoom(priv)">
-			<div ng-show="navhover" class='close-channel' ng-click='priv.priv.leave(); $event.stopPropagation();'>x</div>
-			<div class='select-channel' href="#">
+			<div class='select-channel'>
 				<span ng-hide="navhover" class='short'>{{priv.priv.name.slice(0,1).toUpperCase()}}</span>
 				<span ng-show="navhover" ng-if="priv.priv.name.length > 18" class='long'>{{priv.priv.name.slice(0,15)}}...</span>
 				<span ng-show="navhover" ng-if="priv.priv.name.length < 19" class='long'>{{priv.priv.name}}</span>
-			</a>
+			</div>
+			<div ng-show="navhover" class='close-channel' ng-click='priv.priv.leave(); $event.stopPropagation();'>x</div>
 		</div>
 	</li>
-	<li class="chat-channels">
-		<div class='channel' ng-click="showRooms()" ng-click="eros.chat.joinRoom('test','')">
-			<div ng-show="navhover" class='close-channel'></div>
+
+	<!-- Join Room -->
+	<li class="chat-channels" ng-hide="showIndex">
+		<div class='channel' ng-click="showIndex=true" >
 			<div class='select-channel'>
 				<span ng-hide="navhover" class='short'>+</span>
 				<span ng-show="navhover" class='long'>+ Join room</span>
 			</div>
 		</div>
 	</li>
+
+	<!-- Index -->
+	<li class="chat-channels" ng-show="showIndex">
+		<div class='channel' ng-click="showIndex=false;">
+			<div class='select-channel'>
+				<span class='long'>Back</span>
+			</div>
+		</div>
+	</li>
+	<hr ng-show="showIndex">
+	<li class="chat-channels" ng-repeat="room in eros.chat.roomsPartialIndex()"  ng-show="showIndex">
+		<div class='channel' ng-click="$parent.showIndex=false; eros.chat.joinRoom(room.key,'')">
+			<div class='select-channel'>
+				<span ng-if="room.name.length > 18" class='long'>{{room.name.slice(0,15)}}...</span>
+				<span ng-if="room.name.length < 19" class='long'>{{room.name}}</span>
+			</div>
+		</div>
+	</li>
+	<!-- <hr ng-show="showIndex">
+	<div ng-show="showIndex">
+		<input ng-model='joinName' />
+		<input ng-model='joinPass' />
+	</div> -->
 </div>
+
 
 <!-- Right block -->
 <div id="chat-right-nav"  class="animate-fade">

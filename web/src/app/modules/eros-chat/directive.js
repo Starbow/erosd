@@ -9,10 +9,11 @@ angular.module('erosApp.chat', [])
 		templateUrl: 'modules/eros-chat/chat.tpl.html',
 		controller: ['$scope',  function($scope){
 			$scope.selectRoom = function(room){
-				if(typeof room == "object"){
+				if(typeof room == "object" && room.room.key in $scope.rooms){
 					$scope.$parent.selectedRoom = room
 				}else{
 					$scope.$parent.selectedRoom = $scope.rooms[Object.keys($scope.rooms)[0]]
+					$scope.defaultRoom = $scope.$parent.selectedRoom
 				}
 				$rootScope.$emit("chat_room","selectedRoom")
 			}
@@ -20,9 +21,9 @@ angular.module('erosApp.chat', [])
 			$scope.sendChatMessage = function(target, message) {
 				if(message[0] === "@"){
 					target = message.split(" ",1)[0].split("@")[1]
-					eros.chat.sendToPriv(target, message.split(" ").slice(1).join(" "), false)
+					eros.chat.sendToPriv(target, message.split(" ").slice(1).join(" "))
 				}else if(typeof ($scope.selectedRoom.priv) == 'object'){
-					eros.chat.sendToPriv($scope.selectedRoom.priv.name, message, false)
+					eros.chat.sendToPriv($scope.selectedRoom.priv.name, message)
 				}else{
 					eros.chat.sendToRoom(target, message);
 				}

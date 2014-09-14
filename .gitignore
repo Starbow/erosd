@@ -37,7 +37,7 @@ mpyq.py
 
 #logs
 logs/*
-log
+*.log
 nohup.out
 
 #Web stuff
@@ -55,3 +55,4 @@ npm-debug.log
 .DS_Store
 pid
 erosd
+*.sublime*

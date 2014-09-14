@@ -1,7 +1,6 @@
 <div ng-if="message">
 	<p>{{message}}</p>
 </div>
-
 <div ng-if="!connected">
 	<p>Set <em>testmode=true</em> in your config to dynamically create users.</p>
 	<input type="text" placeholder="username" ng-model="login.username" />
@@ -44,7 +43,6 @@
 		<p ng-repeat="(name, region) in regions" ng-if="region.active">{{name}} is active with {{region.users.searching}} users currently searching.</p>
 	</div>
 
-	<div eros-chat>
-	</div>
+	<div eros-chat />
 
 </div>
