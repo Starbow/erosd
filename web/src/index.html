@@ -74,7 +74,7 @@
     <div id="main-content" class="" ng-controller="ErosTestCtrl">
         <div class="page container-fluid">
             <div>
-                <div ng-if="!connected" ng-init='connect(login.username, login.password)'>
+                <div ng-if="!connected" ng-show='showLogin'>
                     <p>Set <em>testmode=true</em> in your config to dynamically create users.</p>
                     <input type="text" placeholder="username" ng-model="login.username" />
                     <input type="text" placeholder="password" ng-model="login.password" />
@@ -88,6 +88,7 @@
                     </div>
 
                     <div eros-chat />
+                    <!-- <div eros-mm /> -->
 
                 </div>
             </div>

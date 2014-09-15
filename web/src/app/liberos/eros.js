@@ -1,7 +1,7 @@
 (function (global) {
     "use strict";
-    var mock = {
 
+    var mock = {
         getRandom: function(value_array){
             if(value_array.length == 0){
                 return 
@@ -40,7 +40,7 @@
         stats.walkovers = 0;
 
         function update(u) {
-            var mocker = false
+            var mocker = eros.isTest()
             if(mocker == true){
                 stats.division = getDivision(mock.getRandomInt(0,6));
                 stats.divisionRank = getRank(mock.getRandomInt(0,30));
@@ -129,6 +129,10 @@
             //Distinction: modules is our internal, last-loaded list of modules
             //this.modules is the public facing list that we load.
             modules = {};
+
+        this.isTest=function(){
+            return window.document.baseURI == 'http://localhost:9090/'
+        }
 
         
         function reset() {

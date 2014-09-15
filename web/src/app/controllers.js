@@ -26,11 +26,13 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScop
 			$scope.login.username = data.username;
 			$scope.login.password = data.token;
 		} else {
+			$scope.showLogin = true
 			$scope.message = 'Please log in to starbowmod.com to auto-fill your login details.';
 			connGrowl.sendMsg('Please log in to starbowmod.com to auto-fill your login details.')
 		}
     }).
     error(function(data, status, headers, config) {
+    	$scope.showLogin = true
     	$scope.message = 'Unable to autograb login info. ' + status;
     	connGrowl.sendMsg('Unable to autograb login info.')
     });
@@ -207,7 +209,16 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScop
 				
 			},
 		},
+		matchmaking: {
+			queued: function(value){
+				if(typeof value === "boolean"){
+					$scope.timeElapsed;
+					$scope.queued = value;
+					$scope.matched = false;
+				}
+			},
 
+		}
 	});
 
 	// Horrible uglyness. Remove in production.

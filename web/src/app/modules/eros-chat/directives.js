@@ -9,7 +9,7 @@ angular.module('erosApp.chat', [])
 		templateUrl: 'modules/eros-chat/chat.tpl.html',
 		controller: ['$scope',  function($scope){
 			$scope.selectRoom = function(room){
-				if(typeof room == "object" && room.room.key in $scope.rooms){
+				if(typeof room == "object"){
 					$scope.$parent.selectedRoom = room
 				}else{
 					$scope.$parent.selectedRoom = $scope.rooms[Object.keys($scope.rooms)[0]]
