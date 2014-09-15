@@ -5,7 +5,7 @@
 - Join private Room (just UI)
 - Create Room (just UI)
 
-## 0.0.5
+## 0.0.5 - 2014-09-15
 ### Added 
 - Join public Room
 
