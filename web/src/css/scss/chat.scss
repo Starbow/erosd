@@ -93,6 +93,23 @@ $chat-users-width: 150px;
     				background-color: #333;	
     			}
     		}
+
+    		.room-new-messages{
+				font-size: 7px;
+				background-color: $lightRedColor;
+				display: inline-block;
+				line-height: 11px;
+				text-align: center;
+				color: #fff;
+				// width: 8px;
+				padding: 0 2px;
+				height: 11px;
+				border-radius: 2px;
+
+				position: absolute;
+				left: 8px;
+				margin-top: 20px;
+			}
 		}
 
 		hr {
@@ -282,6 +299,7 @@ $chat-users-width: 150px;
 			background-color:#e3e3e3;
 		}
 	}
+	
 
 	// #join-room-menu {
 	// 	position: absolute;

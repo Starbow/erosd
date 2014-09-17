@@ -2,7 +2,7 @@
 
 /* Chat directives */
 
-angular.module('erosApp.chat', [])
+angular.module('erosApp.chat', ['ngAudio'])
 .directive('erosChat', ['$rootScope', function($rootScope){
 	return {
 		restrict: 'A',

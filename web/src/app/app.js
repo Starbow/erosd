@@ -11,7 +11,8 @@ var erosApp = angular.module('erosApp', [
   'erosApp.directives',
   'erosApp.controllers',
   'erosApp.chat',
-  'templates.app'
+  'erosApp.mm',
+  'templates.app',
 ]);
 
 erosApp.config(['$routeProvider', '$locationProvider', '$httpProvider', function($routeProvider, $locationProvider, $httpProvider) {

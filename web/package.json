@@ -28,7 +28,11 @@
     "protobufjs": "~3.0.0",
     "protractor": "~0.20.1",
     "shelljs": "^0.2.6",
-    "time-grunt": "latest"
+    "time-grunt": "latest",
+    "karma-jasmine": "~0.1.5",
+    "karma-ie-launcher": "~0.1.5",
+    "karma-safari-launcher": "~0.1.1",
+    "karma-spec-reporter": "0.0.13"
   },
   "scripts": {
     "postinstall": "bower install",

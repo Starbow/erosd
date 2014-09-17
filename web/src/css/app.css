@@ -129,6 +129,19 @@
           opacity: 1;
           color: #ab3e3e;
           background-color: #333; }
+      [eros-chat] #chat-left-nav .chat-channels .channel .room-new-messages {
+        font-size: 7px;
+        background-color: #ab3e3e;
+        display: inline-block;
+        line-height: 11px;
+        text-align: center;
+        color: #fff;
+        padding: 0 2px;
+        height: 11px;
+        border-radius: 2px;
+        position: absolute;
+        left: 8px;
+        margin-top: 20px; }
     [eros-chat] #chat-left-nav hr {
       border: none;
       margin: 0px;

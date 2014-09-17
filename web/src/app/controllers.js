@@ -2,9 +2,9 @@
 
 /* Controllers */
 
-var controllers = angular.module('erosApp.controllers', []);
+var controllers = angular.module('erosApp.controllers', ['ngAudio']);
 
-controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScope', function($scope, $http, connGrowl, $rootScope) {
+controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScope','ngAudio', function($scope, $http, connGrowl, $rootScope, ngAudio) {
 
 	var server = window.location.host;
 
@@ -15,6 +15,8 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScop
 	$scope.rooms = {};
 	$scope.privs = {};
 	$scope.login = {};
+	$scope.notifySound =  ngAudio.load("/static/sounds/Transmission.wav");
+	$scope.soundStatus = 'up';
 
 	$http({
 		method: 'GET',
@@ -22,9 +24,9 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScop
 		url:'http://127.0.0.1:12345/user/api/info'
 	}).success(function(data, status, headers, config) {
 		if (data.success) {
-			// $scope.connect(data.username,  data.token)
 			$scope.login.username = data.username;
 			$scope.login.password = data.token;
+			$scope.connect(data.username,  data.token)
 		} else {
 			$scope.showLogin = true
 			$scope.message = 'Please log in to starbowmod.com to auto-fill your login details.';
@@ -105,7 +107,12 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScop
 					if (!(room.key in $scope.rooms)) {
 						$scope.rooms[room.key] = {
 							room: room,
-							messages: []
+							messages: [],
+							new_messages: [],
+							visit: function(){
+								this.messages = this.messages.concat(this.new_messages)
+								this.new_messages = []
+							}
 						}
 					}
 					$scope.rooms[room.key].active = true;
@@ -155,25 +162,43 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScop
 					$rootScope.$emit("chat_room","left")
 				});
 			},
-			message: function(eros, room, user, message) {
+			message: function(eros, room, user, content) {
 				$scope.$apply(function() {
-					$scope.rooms[room.key].messages.push({
+
+					var message = {
 						sender: user,
-						message: message,
+						message: content,
 						event: false,
 						date: new Date()
-					});
+					}
+
+					if($scope.selectedRoom.room && room.key == $scope.selectedRoom.room.key){
+						$scope.rooms[room.key].messages.push(message);
+					}else{
+						$scope.rooms[room.key].new_messages.push(message);
+					}
+					
 				});
 			},
 			privjoined: function(eros, room){
 				if (!(room.key in $scope.privs)) {
 					$scope.privs[room.key] = {
 						priv: room,
-						messages: []
+						messages: [],
+						new_messages: [],
+						visit: function(){
+							this.messages = this.messages.concat(this.new_messages)
+							this.new_messages = []
+						},
+						notify: function(){
+							$scope.notifySound.volume = $scope.notifyVolume
+							$scope.notifySound.play()
+							
+						}
 					}
 				}
 				$scope.privs[room.key].active = true;
-				$scope.selectedRoom = $scope.privs[room.key]
+				// $scope.selectedRoom = $scope.privs[room.key]
 			},
 			privleave: function(eros, priv){
 				// $scope.$apply(function() {
@@ -189,22 +214,29 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScop
 				// })
 			},
 			privmessage: function(eros, room, user, message) {
+				var message = {
+					sender: user,
+					message: message,
+					event: false,
+					date: new Date()
+				}
+
+				if($scope.selectedRoom.priv && room.key == $scope.selectedRoom.priv.key){
+					var message_array = $scope.privs[room.key].messages
+				}else{
+					var message_array = $scope.privs[room.key].new_messages
+				}
+
 				if(!$scope.$$phase){
-						$scope.$apply(function() {
-						$scope.privs[room.key].messages.push({
-							sender: user,
-							message: message,
-							event: false,
-							date: new Date()
-						});
+					$scope.$apply(function() {
+						message_array.push(message);
 					});
 				}else{
-					$scope.privs[room.key].messages.push({
-						sender: user,
-						message: message,
-						event: false,
-						date: new Date()
-					});
+					message_array.push(message);
+				}
+
+				if(document.hidden){
+					$scope.privs[room.key].notify()
 				}
 				
 			},

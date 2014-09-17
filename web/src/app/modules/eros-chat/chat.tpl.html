@@ -1,7 +1,11 @@
-<div id="chat-content" ng-hide="hide-chat">
+<div id="chat-content">
 	<h2 id="chat-channel-name">{{selectedRoom.room.name.toUpperCase()}}{{selectedRoom.priv.name}}</h2>
 	<div id="chat-text" scroll-glue>
 		<div ng-repeat="message in selectedRoom.messages">
+			<span ng-if="message.event"><span class="message-date">[{{message.date.toLocaleTimeString()}}]</span> <span class="chat-event">{{message.sender.username}} {{message.message}}</span></span>
+			<span ng-if="!message.event"><span class="message-date">[{{message.date.toLocaleTimeString()}}]</span> <a href='#' class="message-sender" user="{{message.sender.username}}" ng-bind="message.sender.username" ng-click="addUserMsg(message.sender.username)"></a>: <span chat-message></span></span>
+		</div>
+		<div ng-repeat="message in selectedRoom.new_messages">
 			<span ng-if="message.event"><span class="message-date">[{{message.date.toLocaleTimeString()}}]</span> <span class="chat-event">{{message.sender.username}} {{message.message}}</span></span>
 			<span ng-if="!message.event"><span class="message-date">[{{message.date.toLocaleTimeString()}}]</span> <a href='#' class="message-sender" user="{{message.sender.username}}" ng-bind="message.sender.username" ng-click="addUserMsg(message.sender.username)"></a>: <span chat-message></span></span>
 		</div>
@@ -12,23 +16,25 @@
 <!-- Left Navigation: Chat channels, Private channels, Join Rooms -->
 <div id="chat-left-nav" ng-mouseenter="navhover = true" ng-mouseleave="navhover = false" ng-class="{'expand': navhover || showIndex}" ng-init='eros.chat.fetchRoomsIndex()'>
 	<li class="chat-channels" ng-repeat="room in rooms" ng-init="setDefaultRoom(room)" ng-hide="showIndex" >
-		<div ng-class="{'selected': selectedRoom==room}" class='channel' ng-click="selectRoom(room)" >
+		<div ng-class="{'selected': selectedRoom==room}" class='channel' ng-click="selectRoom(room); room.visit()" >
 			<div class='select-channel'>
 				<span ng-hide="navhover" class='short'>{{room.room.name.slice(0,1).toUpperCase()}}</span>
 				<span ng-show="navhover" ng-if="room.room.name.length > 18" class='long'>{{room.room.name.slice(0,15)}}...</span>
 				<span ng-show="navhover" ng-if="room.room.name.length < 19" class='long'>{{room.room.name}}</span>
 			</div>
+			<span class='room-new-messages' ng-if="room.new_messages.length > 0">{{room.new_messages.length}}</span>
 			<div ng-show="navhover" class='close-channel' ng-click='room.room.leave(); $event.stopPropagation();'>x</div>
 		</div>
 	</li>
 	<hr ng-hide="showIndex">
 	<li class="chat-channels" ng-repeat="priv in privs" ng-hide="showIndex">
-		<div ng-class="{'selected': selectedRoom==priv}" class='channel' ng-click="selectRoom(priv)">
+		<div ng-class="{'selected': selectedRoom==priv}" class='channel' ng-click="selectRoom(priv); priv.visit()">
 			<div class='select-channel'>
 				<span ng-hide="navhover" class='short'>{{priv.priv.name.slice(0,1).toUpperCase()}}</span>
 				<span ng-show="navhover" ng-if="priv.priv.name.length > 18" class='long'>{{priv.priv.name.slice(0,15)}}...</span>
 				<span ng-show="navhover" ng-if="priv.priv.name.length < 19" class='long'>{{priv.priv.name}}</span>
 			</div>
+			<span class='room-new-messages' ng-if="priv.new_messages.length > 0">{{priv.new_messages.length}}</span>
 			<div ng-show="navhover" class='close-channel' ng-click='priv.priv.leave(); $event.stopPropagation();'>x</div>
 		</div>
 	</li>

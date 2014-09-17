@@ -1,0 +1,95 @@
+<div id='eros-mm' class='container-fluid'>
+	<style>
+		#eros-mm > div {
+			border: 1px solid #999;
+		}
+
+		.region {
+			width: 90px;
+			height: 200px;
+			display: inline-block;
+
+			background-color: red;
+			opacity: 0.3;
+			cursor: pointer;
+			padding: 0;
+		}
+
+		.region:hover{
+			opacity: 1;
+		}
+
+		.region[disabled]{
+			width: 15px;
+
+			opacity: 0.3;
+			cursor: default;
+		}
+	</style>
+
+	<!-- Left -->
+	<div id="mm-left" class="col-md-4" >
+		Left
+		<div ng-bind='localUser.stats.division'></div>
+		<div ng-bind='localUser.stats.divisionRank'></div>
+		<div ng-bind='localUser.stats.points'></div>
+		<div ng-bind='localUser.stats.mmr'></div>
+	</div>
+
+	<!-- Center -->
+	<div id="mm-center" class="col-md-4">
+		Center
+		<div class='pre'>
+			<div class='matchtypes'>
+				<button id='1v1'>1v1</button>
+				<button id='2v2'>2v2</button>
+				<button id='bgh'>BGH</button>
+			</div>
+			<div class='ranked'>
+				<button id='ranked'>RANKED</button>
+			</div>
+			<div class='queue'>
+				<button id='queue'>Queue</button>
+			</div>
+		</div>
+		<div class='queing'>
+			<div class='matchtypes'>
+				<div ng-repeat='type in selected-matchtypes' ng-bind='type'/>
+			</div>
+			<div class='ranked'>
+				<div id='ranked'>RANKED</div>
+			</div>
+			<div class='timer'>{{timeElapsed}}</div>
+
+			<div class='abort'>
+				<button id='abort'>Abort</button>
+			</div>
+		</div>
+
+		<div class='matched'>
+			<button id='gotomap'>Go to map</button>
+			<button id='copychat'>Copy chat name</button>
+			<button id='uploadreplay'>Upload Replay</button>
+
+		</div>
+	</div>
+
+	<!-- Right -->
+	<div id="mm-right" class="col-md-4">
+		Right
+
+		<div class='pre'>
+			<div class="region eu" value='EU' />
+			<div class="region na" value='NA' />
+			<div class="region kr" value='KR' disabled/>
+		</div>
+
+		<div class='queing'>
+			<div ng-repeat='region in selected-regions' class='region' />
+		</div>
+
+		<div class='matched'>
+			
+		</div>
+	</div>
+</div>

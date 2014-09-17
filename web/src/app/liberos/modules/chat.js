@@ -108,7 +108,7 @@
 
     var ChatPrivate = function(eros, user, leaveCallback){
         // var user,
-        var priv = this;
+        var chat = this;
 
         if(typeof(user) === 'object'){
             var user = user
@@ -378,6 +378,10 @@
         };
 
         this.sendToPriv = function(user, message, force){
+            if(user == eros.localUser.username){
+                return false
+            }
+
             user = user.toLowerCase().trim()
 
             message = message.trim();

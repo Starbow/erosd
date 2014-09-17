@@ -147,7 +147,9 @@ module.exports = function (grunt) {
           'components/web-socket-js/swfobject.js',
           'components/web-socket-js/web_socket.js',
           'components/angular-animate/angular-animate.min.js',
-          'components/angular-route/angular-route.min.js'
+          'components/angular-route/angular-route.min.js',
+
+          'components/angular-audio/angular.audio.js'
         ],
         dest: '<%= distdir %>/components.js'
       }
@@ -228,16 +230,22 @@ module.exports = function (grunt) {
         "-W033": true, // Missing semi colon
         globals:{}
       }
-    }
+    },
+    karma: {
+      unit: { configFile: '<%= src.specsConfig %>' },
+      watch: { configFile: '<%= src.specsConfig %>', singleRun:false, autoWatch: true}
+    },
   });
 
   // The build
   grunt.registerTask('build', ['clean', 'html2js', 'concat', 'sass:dev', 'recess:build', 'copy']);
-  grunt.registerTask('live', ['clean', 'html2js', 'concat', 'sass:dist', 'recess:build', 'copy'])
+  grunt.registerTask('live', ['clean', 'html2js', 'concat', 'sass:dist', 'recess:build', 'copy']);
+
+  grunt.registerTask('test', ['karma:unit'])
 
   // Default task.
   // grunt.registerTask('default', ['jshint', 'config:dev', 'sbuild']);
-  grunt.registerTask('default', ['sass', 'watch']);
+  grunt.registerTask('default', ['clean', 'html2js', 'concat', 'sass:dev', 'recess:build', 'copy', 'watch']);
 
   // Print a timestamp (useful for when watching)
   grunt.registerTask('timestamp', function() {
