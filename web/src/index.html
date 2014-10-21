@@ -74,7 +74,7 @@
     <div id="main-content" class="" ng-controller="ErosTestCtrl">
         <div class="page container-fluid">
             <div>
-                <div ng-if="!connected" ng-show='showLogin'>
+                <div ng-if="!connected">
                     <p>Set <em>testmode=true</em> in your config to dynamically create users.</p>
                     <input type="text" placeholder="username" ng-model="login.username" />
                     <input type="text" placeholder="password" ng-model="login.password" />
@@ -87,9 +87,9 @@
                         <p ng-repeat="(name, region) in regions" ng-if="region.active">{{name}} is active with {{region.users.searching}} users currently searching.</p>
                     </div>
                     <div id="notification-status">
-                        <button ng-click="$parent.notifySound.setMuting(true)"><span class="glyphicon glyphicon glyphicon-volume-off" ></span></button>
+                        <button ng-click="notifier.setMuting(true)"><span class="glyphicon glyphicon glyphicon-volume-off" ></span></button>
                         <!-- <button ng-click="$parent.notifySound.setMuting(false); $parent.notifySound.setVolume(0.1)"><span class="glyphicon glyphicon glyphicon-volume-down"></span></button> -->
-                        <button ng-click="$parent.notifySound.setMuting(false); $parent.notifySound.setVolume(1)"><span class="glyphicon glyphicon glyphicon-volume-up" ></span></button>
+                        <button ng-click="notifier.setMuting(false); notifier.setVolume(1)"><span class="glyphicon glyphicon glyphicon-volume-up" ></span></button>
                     </div>
 
                     <div eros-chat />

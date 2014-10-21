@@ -381,7 +381,8 @@
         };
 
         this.connect = function (username, password) {
-            var server = window.location.host;
+            // var server = window.location.host;
+            var server = 'eros.starbowmod.com';
 
             if (typeof (options.server) === 'string') {
                 server = options.server;

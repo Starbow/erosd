@@ -4,7 +4,7 @@
 
 var controllers = angular.module('erosApp.controllers', ['ngAudio']);
 
-controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScope','ngAudio', function($scope, $http, connGrowl, $rootScope, ngAudio) {
+controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScope','ngAudio','notifier', function($scope, $http, connGrowl, $rootScope, ngAudio, notifier) {
 
 	var server = window.location.host;
 
@@ -15,13 +15,12 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScop
 	$scope.rooms = {};
 	$scope.privs = {};
 	$scope.login = {};
-	$scope.notifySound =  ngAudio.load("/static/sounds/Transmission.wav");
-	$scope.soundStatus = 'up';
+	$scope.notifier =  notifier;
 
 	$http({
 		method: 'GET',
-		// url:'http://starbowmod.com/user/api/info'
-		url:'http://127.0.0.1:12345/user/api/info'
+		url:'http://starbowmod.com/user/api/info'
+		// url:'http://127.0.0.1:12345/user/api/info'
 	}).success(function(data, status, headers, config) {
 		if (data.success) {
 			$scope.login.username = data.username;
@@ -189,13 +188,9 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScop
 						visit: function(){
 							this.messages = this.messages.concat(this.new_messages)
 							this.new_messages = []
-						},
-						notify: function(){
-							$scope.notifySound.volume = $scope.notifyVolume
-							$scope.notifySound.play()
-							
 						}
 					}
+					notifier.sound($scope.notifyVolume)
 				}
 				$scope.privs[room.key].active = true;
 				// $scope.selectedRoom = $scope.privs[room.key]
@@ -236,7 +231,7 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScop
 				}
 
 				if(document.hidden){
-					$scope.privs[room.key].notify()
+					notifier.sound()
 				}
 				
 			},

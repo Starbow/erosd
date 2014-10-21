@@ -5,6 +5,11 @@
 - Join private Room (just UI)
 - Create Room (just UI)
 
+## 0.0.6 - 2014-09-17
+### Added
+- Sound noitifications
+- [T] Initial matchmaking communications
+
 ## 0.0.5 - 2014-09-15
 ### Added 
 - Join public Room
@@ -24,10 +29,3 @@
 - Change header font, as it won't work due to lack of all font files.
 - Adapt rank to body font
 - Improved channel closing functionality
-
-
-
-
-
-
-

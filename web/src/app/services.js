@@ -5,7 +5,7 @@
 
 // Demonstrate how to register services
 // In this case it is a simple value service.
-angular.module('erosApp.services', [])
+angular.module('erosApp.services', ['ngAudio'])
   .value('version', '0.1')
 
 
@@ -27,4 +27,24 @@ angular.module('erosApp.services', [])
 	return {
 		sendMsg: sendMsg
 	}
+}])
+
+.factory('notifier', ['ngAudio', function(ngAudio){
+	var _audioNotif = ngAudio.load("/static/sounds/Transmission.wav");
+
+	return {
+		// Volume: optional
+		sound: function(volume){
+			if(typeof(volume) === 'number' && volume > 0 && volume <= 1){
+				_audioNotif.volume = volume
+			}
+			_audioNotif.play()
+		},
+
+		// proxy
+		setMuting: function(value){
+			_audioNotif.setMuting(value)
+		}
+		
+	};
 }])
