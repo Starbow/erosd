@@ -31,6 +31,8 @@ func GetRealUser(username, authtoken string) *RealUser {
 	}
 	var user RealUser
 	err := dbMap.SelectOne(&user, "SELECT id, username, authtoken FROM user_user WHERE username=?", username)
+	log.Println("Fetched user ", username, user.Id)
+
 	if testMode {
 		// Test mode creates the user if it doesn't exist.
 		if err != nil || user.Id == 0 {

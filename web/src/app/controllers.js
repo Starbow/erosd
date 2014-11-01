@@ -17,6 +17,8 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScop
 	$scope.login = {};
 	$scope.notifier =  notifier;
 
+	$scope.matchmaking = {}
+
 	$http({
 		method: 'GET',
 		url:'http://starbowmod.com/user/api/info'
@@ -237,20 +239,32 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScop
 			},
 		},
 		matchmaking: {
-			queued: function(value){
-				if(typeof value === "boolean"){
-					$scope.timeElapsed;
-					$scope.queued = value;
-					$scope.matched = false;
-				}
+			update_status: function(value){
+				$scope.$apply(function(){
+					if(value == eros.enums.MatchmakingState.Queued){
+						$scope.matchmaking.status = "QUEUED"
+						$scope.timeElapsed;
+					} else if (value == eros.enums.MatchmakingState.Idle){
+						$scope.matchmaking.status = "IDLE"
+					} else if (value == eros.enums.MatchmakingState.Matched){
+						$scope.matchmaking.status = "MATCHED"
+					}
+				})
+				
 			},
+			update_match: function(match){
+				$scope.$apply(function(){
+					$scope.match = match;
+				})
+			}
 
 		}
 	});
 
 	// Horrible uglyness. Remove in production.
 	window.eros = eros;
-	$scope.eros = eros;
+	// $scope.eros = eros;
+	$rootScope.eros = eros;
 
 	$scope.$on('$destroy', function(){
 		// Disconnect when changing controller.

@@ -22,23 +22,24 @@
     	var match = this;
     }
 
-    var MatchmakingModule = function(eros, options){
-    	var queued = false,
-    		matched = false,
-    		match
+    var MatchmakingModule = function(eros, sendRequest, options){
+    	var status;
+        var matchmaking = this;
 
     	function processServerMessage(command, payload) {
     		if (command == "MMQ" || command == "MMD"){
-    			matched = false;
+    			this.status = command == "MMQ" ? eros.enums.MatchmakingState.Queued : eros.enums.MatchmakingState.Idle;
     			match = undefined;
-    			queued = command == "MMQ" ? true : false;
-    			options.queued(queued)
+
+    			options.update_status(this.status)
 
     			return true;
     		}else if(command == "MMR"){
-    			queued = false
-    			matched = true
-    			match = protobufs.MatchmakingResult.decode64(payload)
+                console.log("Matched!")
+    			this.match = protobufs.MatchmakingResult.decode64(payload)
+
+                options.update_status(eros.enums.MatchmakingState.Matched)
+                options.update_match(match)
 
     			return true;
     		}else if(command == "MMF"){
@@ -59,8 +60,40 @@
     	}
 
     	this.queue = function(regions, search_range){
-    		sendRequest(new starbow.ErosRequests.MatchmakingQueueRequest)
+            if(typeof regions != 'object'){
+                console.error('[MatchmakingModule.queue] Region must be an object.')
+                return
+            }
+            var request = new starbow.ErosRequests.MatchmakingQueueRequest(regions, search_range, function(success, command, request){
+                if(success){
+                    if(command == "MMQ"){
+                        options.update_status(eros.enums.MatchmakingState.Queued)
+                    }else if(command == "MMR"){
+                        options.update_status(eros.enums.MatchmakingState.Matched)
+                        options.update_match(match)
+
+                        matchmaking.match = protobufs.MatchmakingResult.decode64(payload)
+                    }
+                }else{
+                    // Need error handler
+                    console.warn("Error "+command+": "+eros.locale.Error[command])
+                }
+            })
+            console.log("Requesting queue.")
+    		sendRequest(request)
     	}
+
+        this.dequeue = function(){
+            var request = new starbow.ErosRequests.MatchmakingDequeueRequest(function(success, command){
+                if(success){
+                    options.update_status(eros.enums.MatchmakingState.Idle)
+                }else{
+                    // Need error handler
+                    console.warn("Error "+command+": "+eros.locale.Error[command])
+                }
+            })
+            sendRequest(request)
+        }
     }
 
     global.starbow.Eros.prototype.modules.matchmaking = MatchmakingModule;

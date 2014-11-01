@@ -133,6 +133,7 @@
         }
     }
 
+    // Loaded with Eros.loadModules()
     var ChatModule = function (eros, sendRequest, options) {
     	if (typeof (options) !== "object") {
     		options = {};

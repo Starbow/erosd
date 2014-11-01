@@ -1214,6 +1214,7 @@ func (conn *ClientConnection) OnQueueMatchmaking(txid int, data []byte) {
 
 		for _, region := range queue.GetRegion() {
 			if !conn.client.HasRegion(BattleNetRegion(region)) {
+				log.Println("Here")
 				conn.SendResponseMessage("401", txid, []byte{})
 				return
 			}
@@ -1221,6 +1222,7 @@ func (conn *ClientConnection) OnQueueMatchmaking(txid int, data []byte) {
 		}
 
 		if len(conn.client.LadderSearchRegions) == 0 {
+			log.Println("There")
 			conn.SendResponseMessage("401", txid, []byte{})
 			return
 		}

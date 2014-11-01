@@ -218,6 +218,11 @@ func main() {
 	if err != nil {
 		log.Panicln("Error while loading config", err)
 	}
+	if testMode {
+		log.Println("Running in TEST mode")
+	} else {
+		log.Println("Running in normal mode")
+	}
 
 	err = initDb()
 	if err != nil {

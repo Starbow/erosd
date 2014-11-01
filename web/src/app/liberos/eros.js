@@ -41,7 +41,7 @@
 
         function update(u) {
             var mocker = eros.isTest()
-            if(mocker == true){
+            if(mocker == true && u.mmr == 0){
                 stats.division = getDivision(mock.getRandomInt(0,6));
                 stats.divisionRank = getRank(mock.getRandomInt(0,30));
             }else{
@@ -56,6 +56,7 @@
             stats.points = u.points.low;
             stats.wins = u.wins.low;
             stats.walkovers = u.walkovers.low;
+            stats.search_radius = u.search_radius ? u.search_radius.low : stats.search_radius;
         }
 
         function getDivision(division){
@@ -164,6 +165,8 @@
             var tx = ++txBase;
 
             requests[String(tx)] = request;
+
+            // var payload_length = 
 
             socket.send(request.command + ' ' + tx + ' ' + request.payload.length + '\n' + request.payload);
 
@@ -303,7 +306,7 @@
 
         function handshakeRequestComplete(request) {
         	var callback = undefined
-        	console.log(request);
+        	console.debug(request);
         	if ((request.status === 0) && (request.result.status === 1)) {
         		callback = options.loggedIn;
         		authenticated = true;
@@ -382,7 +385,7 @@
 
         this.connect = function (username, password) {
             // var server = window.location.host;
-            var server = 'eros.starbowmod.com';
+            var server = eros.isTest() ? 'localhost:9090' : 'eros.starbowmod.com';
 
             if (typeof (options.server) === 'string') {
                 server = options.server;

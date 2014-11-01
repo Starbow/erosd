@@ -6,6 +6,7 @@ import (
 	"github.com/Starbow/erosd/buffers"
 	"github.com/coopernurse/gorp"
 	"log"
+	"math/rand"
 	"sync"
 	"time"
 )
@@ -113,6 +114,11 @@ type Client struct {
 }
 
 func (this *Client) UpdateDivisionRank(ex gorp.SqlExecutor) error {
+	if testMode {
+		this.DivisionRank = rand.Int63n(99) + 1
+
+		return nil
+	}
 	this.DivisionRank = 0
 
 	if this.DivisionId != nil {
@@ -150,6 +156,7 @@ func (this *Client) PostUpdate(ex gorp.SqlExecutor) error {
 }
 
 func (this *Client) PostGet(ex gorp.SqlExecutor) error {
+
 	if this.DivisionId != nil {
 		for _, division := range divisions {
 			if division.Id == *this.DivisionId {
@@ -157,26 +164,36 @@ func (this *Client) PostGet(ex gorp.SqlExecutor) error {
 				break
 			}
 		}
+	} else if testMode {
+		mockDivision, _ := divisions.GetDivision(rand.Float64() * 4000)
+		this.DivisionId = &mockDivision.Id
+		log.Println("Creating mock division:", this.DivisionId)
 	}
 	this.LadderSearchRegions = make([]BattleNetRegion, 0, 5)
-	if (this.LadderSearchRegion & 1 << uint(BATTLENET_REGION_NA)) == (1 << uint(BATTLENET_REGION_NA)) {
+
+	if testMode {
 		this.LadderSearchRegions = append(this.LadderSearchRegions, BATTLENET_REGION_NA)
-	}
-
-	if (this.LadderSearchRegion & 1 << uint(BATTLENET_REGION_EU)) == (1 << uint(BATTLENET_REGION_EU)) {
 		this.LadderSearchRegions = append(this.LadderSearchRegions, BATTLENET_REGION_EU)
-	}
+	} else {
+		if (this.LadderSearchRegion & 1 << uint(BATTLENET_REGION_NA)) == (1 << uint(BATTLENET_REGION_NA)) {
+			this.LadderSearchRegions = append(this.LadderSearchRegions, BATTLENET_REGION_NA)
+		}
 
-	if (this.LadderSearchRegion & 1 << uint(BATTLENET_REGION_KR)) == (1 << uint(BATTLENET_REGION_KR)) {
-		this.LadderSearchRegions = append(this.LadderSearchRegions, BATTLENET_REGION_KR)
-	}
+		if (this.LadderSearchRegion & 1 << uint(BATTLENET_REGION_EU)) == (1 << uint(BATTLENET_REGION_EU)) {
+			this.LadderSearchRegions = append(this.LadderSearchRegions, BATTLENET_REGION_EU)
+		}
 
-	if (this.LadderSearchRegion & 1 << uint(BATTLENET_REGION_CN)) == (1 << uint(BATTLENET_REGION_CN)) {
-		this.LadderSearchRegions = append(this.LadderSearchRegions, BATTLENET_REGION_CN)
-	}
+		if (this.LadderSearchRegion & 1 << uint(BATTLENET_REGION_KR)) == (1 << uint(BATTLENET_REGION_KR)) {
+			this.LadderSearchRegions = append(this.LadderSearchRegions, BATTLENET_REGION_KR)
+		}
 
-	if (this.LadderSearchRegion & 1 << uint(BATTLENET_REGION_SEA)) == (1 << uint(BATTLENET_REGION_SEA)) {
-		this.LadderSearchRegions = append(this.LadderSearchRegions, BATTLENET_REGION_SEA)
+		if (this.LadderSearchRegion & 1 << uint(BATTLENET_REGION_CN)) == (1 << uint(BATTLENET_REGION_CN)) {
+			this.LadderSearchRegions = append(this.LadderSearchRegions, BATTLENET_REGION_CN)
+		}
+
+		if (this.LadderSearchRegion & 1 << uint(BATTLENET_REGION_SEA)) == (1 << uint(BATTLENET_REGION_SEA)) {
+			this.LadderSearchRegions = append(this.LadderSearchRegions, BATTLENET_REGION_SEA)
+		}
 	}
 
 	err := this.UpdateDivisionRank(ex)
@@ -554,6 +571,8 @@ func (c *Client) BroadcastMatchmakingIdle() {
 // Check if the client can queue in this region.
 func (c *Client) HasRegion(region BattleNetRegion) bool {
 	count, _ := dbMap.SelectInt("SELECT COUNT(*) FROM battle_net_characters WHERE ClientId=? and Region=? and IsVerified=?", c.Id, region, true)
+
+	log.Println(c.Id, region)
 
 	return count > 0
 }

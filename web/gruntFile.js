@@ -149,7 +149,8 @@ module.exports = function (grunt) {
           'components/angular-animate/angular-animate.min.js',
           'components/angular-route/angular-route.min.js',
 
-          'components/angular-audio/angular.audio.js'
+          'components/angular-audio/angular.audio.js',
+          'components/underscore/underscore-min.js'
         ],
         dest: '<%= distdir %>/components.js'
       }

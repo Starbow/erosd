@@ -481,7 +481,7 @@ var protobufs = dcodeIO.ProtoBuf.newBuilder().import({
                     "id": 3
                 },
                 {
-                    "rule": "required",
+                    "rule": "optional",
                     "options": {},
                     "type": "int64",
                     "name": "opponent_latency",
