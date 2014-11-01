@@ -36,10 +36,10 @@
     			return true;
     		}else if(command == "MMR"){
                 console.log("Matched!")
-    			this.match = protobufs.MatchmakingResult.decode64(payload)
+    			matchmaking.match = protobufs.MatchmakingResult.decode64(payload)
 
                 options.update_status(eros.enums.MatchmakingState.Matched)
-                options.update_match(match)
+                options.update_match(matchmaking.match)
 
     			return true;
     		}else if(command == "MMF"){
@@ -72,7 +72,7 @@
                         options.update_status(eros.enums.MatchmakingState.Matched)
                         options.update_match(match)
 
-                        matchmaking.match = protobufs.MatchmakingResult.decode64(payload)
+                        matchmaking.match = protobufs.MatchmakingResult.decode64(request.payload)
                     }
                 }else{
                     // Need error handler
