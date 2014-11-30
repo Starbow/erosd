@@ -1,4 +1,21 @@
 
 .no-gutter {
-	margin:0px;
+	margin:0px !important;
+}
+
+.no-padding{
+	padding-left: 0px !important;
+	padding-right: 0px !important;
+}
+
+.right{
+	float:right;
+}
+
+.small {
+	font-size: 0.8em;
+}
+
+.align-right{
+	text-align:right;
 }

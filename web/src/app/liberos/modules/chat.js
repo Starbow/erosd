@@ -133,6 +133,7 @@
         }
     }
 
+    // Loaded with Eros.loadModules()
     var ChatModule = function (eros, sendRequest, options) {
     	if (typeof (options) !== "object") {
     		options = {};
@@ -376,6 +377,10 @@
                 options.privleave(eros, room);
             }
         };
+
+        this.joinPriv = function(target){
+            options.privjoined(eros, this.priv(target)[0]);
+        }
 
         this.sendToPriv = function(user, message, force){
             if(user == eros.localUser.username){

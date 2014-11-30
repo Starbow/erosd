@@ -29,8 +29,9 @@ module.exports = function (grunt) {
       },
       css: [
         'src/css/app.css',
-        'src/bootstrap/css/bootstrap.css', // min.css is throwing exception
-        'src/bootstrap/css/bootstrap-theme.min.css'
+        'src/assets/bootstrap/css/bootstrap.css', // min.css is throwing exception
+        'src/assets/bootstrap/css/bootstrap-theme.min.css',
+        'src/assets/starbow-icons/style.css'
       ], 
       cssWatch: ['src/css/scss/*.scss'],
       // locales: {
@@ -51,7 +52,10 @@ module.exports = function (grunt) {
         files: [{dest: '<%= distdir %>', src: ['angular-route.js'], expand: true, cwd: 'components/angular-route'}]
       },
       glyphicons: {
-        files: [{ dest: '<%= distdir %>/fonts', src : '**', expand: true, cwd: 'src/bootstrap/fonts'}]
+        files: [{ dest: '<%= distdir %>/fonts', src : '**', expand: true, cwd: 'src/assets/bootstrap/fonts'}]
+      },
+      starbowicons: {
+        files: [{dest: '<%= distdir %>/fonts', src: '**', expand: true, cwd: 'src/assets/starbow-icons/fonts'}]
       },
       cssMap: {
         files: [{ dest: '<%= distdir %>/css', src: "*.map", expand: true, cwd: 'src/css'}]
@@ -133,7 +137,7 @@ module.exports = function (grunt) {
       dev: {
         src:[
           'components/angularjs-scroll-glue/src/scrollglue.js',
-          'src/bootstrap/js/bootstrap.min.js',
+          'src/assets/bootstrap/js/bootstrap.min.js',
           'components/html5-boilerplate/js/vendor/modernizr-2.6.2.min.js',
 
           // Outdated jquery that may back-support more IE versions. 
@@ -149,7 +153,9 @@ module.exports = function (grunt) {
           'components/angular-animate/angular-animate.min.js',
           'components/angular-route/angular-route.min.js',
 
-          'components/angular-audio/angular.audio.js'
+          'components/angular-audio/app/angular.audio.js',
+          'components/underscore/underscore-min.js',
+          'components/ng-flow/dist/ng-flow-standalone.js'
         ],
         dest: '<%= distdir %>/components.js'
       }

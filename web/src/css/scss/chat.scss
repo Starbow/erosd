@@ -188,7 +188,8 @@ $chat-users-width: 150px;
 
 				width: 100%;
 				height: $chat-input-height;
-				background: #ddd;
+				// background: #ddd;
+				background: #e5e5e5;
 				border: none;
 				padding-left: 10px;
 
@@ -310,4 +311,33 @@ $chat-users-width: 150px;
 	// 		background-color: $lightGrey;
 	// 	}
 	// }
+}
+
+
+#notification-settings{
+	position:absolute;
+	bottom: 0px;
+	left:0;
+    right:0;
+    background-color: #e9e9e9;
+
+    // border-top: 1px #e2e2e2 solid;
+
+    &>div{
+	    margin-left:auto;
+	    margin-right:auto;
+	    width: 80px;
+	    border-radius: 0px;
+
+	    .btn{
+	    	border:none;
+	    	box-shadow: none;
+	    	background: none;
+	    	color: #bbb;
+
+	    	&.active{
+	    		color: #444;
+	    	}
+	    }
+	}
 }

@@ -41,7 +41,7 @@
 
         function update(u) {
             var mocker = eros.isTest()
-            if(mocker == true){
+            if(mocker == true && u.mmr == 0){
                 stats.division = getDivision(mock.getRandomInt(0,6));
                 stats.divisionRank = getRank(mock.getRandomInt(0,30));
             }else{
@@ -56,6 +56,7 @@
             stats.points = u.points.low;
             stats.wins = u.wins.low;
             stats.walkovers = u.walkovers.low;
+            stats.search_radius = u.search_radius ? u.search_radius.low : stats.search_radius;
         }
 
         function getDivision(division){
@@ -125,13 +126,16 @@
             authenticated = false,
             r = starbow.ErosRequests,
             commandHandlers = {},
+            controllers = {},
 
             //Distinction: modules is our internal, last-loaded list of modules
             //this.modules is the public facing list that we load.
             modules = {};
 
+        this.controllers = controllers
+
         this.isTest=function(){
-            return window.document.baseURI == 'http://localhost:9090/'
+            return window.location.hostname == 'localhost'
         }
 
         
@@ -165,7 +169,11 @@
 
             requests[String(tx)] = request;
 
+            // var payload_length = 
+
+            // console.debug("< SEND "+request.command+" "+request.payload.length)
             socket.send(request.command + ' ' + tx + ' ' + request.payload.length + '\n' + request.payload);
+            // console.debug('< '+ request.command + ' ' + tx + ' ' + request.payload.length)
 
             return request
         }
@@ -188,6 +196,8 @@
                     }
                 }
 
+
+
                 console.log(moduleOptions);
                 // Init the module
                 eros[module] = new eros.modules[module](eros, sendRequest, moduleOptions);
@@ -201,12 +211,20 @@
                         eros.commandHandlers[i] = eros[module].commandHandlers[i];
                     }    
                 }
+
+                // Register controller hook
+                if(typeof eros.controllers[module] === "object"){
+                    eros[module].controller = eros.controllers[module]
+                } else {
+                    eros[module].controller = {}
+                }
             }
         }
 
         loadModules();
 
         function processServerMessage(command, payload) {
+            // console.log("> RECV "+command+" "+payload.length)
             if (command == "PNG") {
                 sendRequest(new r.PingRequest(payload, function(pong) {
                     eros.latency = pong.result;
@@ -259,7 +277,10 @@
                 }
             } else if (command == "USU") {
                 processUserStats(protobufs.UserStats.decode64(payload));
-            } else {
+            } else if (command == "ALT") {
+                var alert = protobufs.BroadcastAlert.decode64(payload);
+                console.warn("ALERT: "+alert.message);
+            }else{
                 if (command in eros.commandHandlers) {
                     if(!eros.commandHandlers[command](command, payload)) {
                         console.log(command + ': registered handler returned false.')
@@ -289,7 +310,7 @@
                 users[key].update(stats);
 
                 var callback;
-                if (users[key] === localUser) {
+                if (users[key] === eros.localUser) {
                     callback = options.localUserStatsUpdate;
                 } else {
                     callback = options.userStatsUpdate;
@@ -303,7 +324,6 @@
 
         function handshakeRequestComplete(request) {
         	var callback = undefined
-        	console.log(request);
         	if ((request.status === 0) && (request.result.status === 1)) {
         		callback = options.loggedIn;
         		authenticated = true;
@@ -382,6 +402,7 @@
 
         this.connect = function (username, password) {
             var server = window.location.host;
+            // var server = eros.isTest() ? "localhost:9090" : 'eros.starbowmod.com';
 
             if (typeof (options.server) === 'string') {
                 server = options.server;
@@ -428,6 +449,13 @@
 
         this.isConnected = function() {
         	return connected && authenticated;
+        };
+
+        this.registerController = function(module, options){
+            if(typeof options === "object"){
+                eros.controllers[module] = options
+                eros[module].controller = options
+            }
         }
     };
 

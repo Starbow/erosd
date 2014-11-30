@@ -4,7 +4,7 @@
 
 var controllers = angular.module('erosApp.controllers', ['ngAudio']);
 
-controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScope','ngAudio', function($scope, $http, connGrowl, $rootScope, ngAudio) {
+controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScope','ngAudio','notifier','timer', function($scope, $http, connGrowl, $rootScope, ngAudio, notifier, timer) {
 
 	var server = window.location.host;
 
@@ -15,17 +15,18 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScop
 	$scope.rooms = {};
 	$scope.privs = {};
 	$scope.login = {};
-	$scope.notifySound =  ngAudio.load("/static/sounds/Transmission.wav");
-	$scope.soundStatus = 'up';
+	$scope.notifier =  notifier;
+
+	$scope.matchmaking = {}
 
 	$http({
 		method: 'GET',
-		// url:'http://starbowmod.com/user/api/info'
-		url:'http://127.0.0.1:12345/user/api/info'
+		url:'http://starbowmod.com/user/api/info'
+		// url:'http://127.0.0.1:12345/user/api/info'
 	}).success(function(data, status, headers, config) {
 		if (data.success) {
-			$scope.login.username = data.username;
-			$scope.login.password = data.token;
+			// $scope.login.username = data.username;
+			// $scope.login.password = data.token;
 			$scope.connect(data.username,  data.token)
 		} else {
 			$scope.showLogin = true
@@ -101,7 +102,8 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScop
 			});
 		},
 
-		chat: {
+		// Move to registerController in chat controller
+		chat: { 
 			joined: function(eros, room) {
 				$scope.$apply(function() {
 					if (!(room.key in $scope.rooms)) {
@@ -116,12 +118,12 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScop
 						}
 					}
 					$scope.rooms[room.key].active = true;
-					// $scope.rooms[room.key].messages.push({
-					// 	sender: eros.localUser,
-					// 	message: 'joined the channel.',
-					// 	event: true,
-					// 	date: new Date()
-					// });
+
+					if(typeof $scope.selectedRoom === 'undefined'){
+						$scope.defaultRoom = $scope.rooms[room.key]
+						$scope.selectedRoom = $scope.rooms[room.key]
+						$rootScope.$emit("chat_room","selectedRoom")
+					}
 				});
 			},
 			left: function(eros, room) {
@@ -133,7 +135,16 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScop
 					// 	event: true,
 					// 	date: new Date()
 					// });
-					delete $scope.rooms[room.key]
+					if($scope.selectedRoom.room.key == room.key){
+						delete $scope.rooms[room.key]
+						if(typeof $scope.defaultRoom === 'undefined' || $scope.defaultRoom.room.key === room.key){
+							$scope.defaultRoom = $scope.rooms[Object.keys($scope.rooms)[0]]
+						}
+						$scope.selectedRoom = $scope.defaultRoom
+						$rootScope.$emit("chat_room","selectedRoom")
+					}else{
+						delete $scope.rooms[room.key]
+					}					
 
 					window.event.cancelBubble = true
 				});
@@ -187,28 +198,35 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScop
 						messages: [],
 						new_messages: [],
 						visit: function(){
+							$scope.newMessages = $scope.newMessages - this.new_messages
 							this.messages = this.messages.concat(this.new_messages)
 							this.new_messages = []
-						},
-						notify: function(){
-							$scope.notifySound.volume = $scope.notifyVolume
-							$scope.notifySound.play()
-							
 						}
 					}
+					// notifier.sound($scope.notifyVolume)
 				}
 				$scope.privs[room.key].active = true;
 				// $scope.selectedRoom = $scope.privs[room.key]
 			},
 			privleave: function(eros, priv){
 				// $scope.$apply(function() {
-					delete $scope.privs[priv.key]
+				delete $scope.privs[priv.key]
 
 				// window.event.cancelBubble = true
 
 				if($scope.selectedRoom.priv == priv){
 					$scope.selectedRoom = $scope.rooms[Object.keys($scope.rooms)[0]];
 				}
+				if($scope.selectedRoom.priv.key == priv.key){
+					delete $scope.privs[priv.key]
+					if(typeof $scope.defaultRoom === 'undefined' || $scope.defaultRoom.priv.key === priv.key){
+						$scope.defaultRoom = $scope.rooms[Object.keys($scope.rooms)[0]]
+					}
+					$scope.selectedRoom = $scope.defaultRoom
+					$rootScope.$emit("chat_room","selectedRoom")
+				}else{
+					delete $scope.rooms[room.key]
+				}	
 
 				
 				// })
@@ -223,8 +241,10 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScop
 
 				if($scope.selectedRoom.priv && room.key == $scope.selectedRoom.priv.key){
 					var message_array = $scope.privs[room.key].messages
-				}else{
+					
+				}else {
 					var message_array = $scope.privs[room.key].new_messages
+					$scope.newMessages++
 				}
 
 				if(!$scope.$$phase){
@@ -236,26 +256,16 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScop
 				}
 
 				if(document.hidden){
-					$scope.privs[room.key].notify()
+					notifier.sound($scope.notifyVolume)
 				}
-				
-			},
-		},
-		matchmaking: {
-			queued: function(value){
-				if(typeof value === "boolean"){
-					$scope.timeElapsed;
-					$scope.queued = value;
-					$scope.matched = false;
-				}
-			},
-
+			}
 		}
 	});
 
 	// Horrible uglyness. Remove in production.
 	window.eros = eros;
-	$scope.eros = eros;
+	// $scope.eros = eros;
+	$rootScope.eros = eros;
 
 	$scope.$on('$destroy', function(){
 		// Disconnect when changing controller.
@@ -263,15 +273,18 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScop
 		eros.disconnect();
 	});
 
+	$scope.newMessages = 0
+
+	$scope.$watch('newMessages', function(value){
+		if(typeof value !== "undefined" && value > 0){
+			notifier.title('['+value+']', 'chat', true)
+		}else{
+			notifier.title('','chat', false);
+		}
+	})
+
 
 	$scope.connect = function(username, password) {
-		if (!username) {
-			username = "ngtest";
-		}
-
-		if (!password) {
-			password = "ngtest";
-		}
 		eros.connect(username, password);
 	}
 

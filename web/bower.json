@@ -17,6 +17,8 @@
     "angularjs-scroll-glue": "~0.0.1",
     "angular-animate": "~1.2.21",
     "jquery": "~2.1.1",
-    "bootstrap": "~3.2.0"
+    "bootstrap": "~3.2.0",
+    "angular-audio": "*",
+    "underscore": "~1.7.0"
   }
 }

@@ -28,7 +28,7 @@
  * Navigation
  */
 #left-nav {
-  position: absolute;
+  position: fixed;
   bottom: 0;
   top: 0;
   width: 270px;
@@ -36,7 +36,7 @@
   color: #acacac;
   font-family: 'goboldregular'; }
   #left-nav #brand {
-    font-family: "Technonomicon";
+    font-family: 'goboldregular';
     margin-top: 40px;
     margin-bottom: 120px;
     text-align: center;
@@ -45,10 +45,10 @@
       text-decoration: none; }
     #left-nav #brand .title {
       color: #ab3e3e;
-      font-size: 23px; }
+      font-size: 3em; }
     #left-nav #brand .subtitle {
       color: #fff;
-      font-size: 12px; }
+      font-size: 1.5em; }
   #left-nav .navigation {
     font-size: 15px;
     cursor: pointer; }
@@ -68,7 +68,20 @@
   padding-left: 270px; }
 
 .no-gutter {
-  margin: 0px; }
+  margin: 0px !important; }
+
+.no-padding {
+  padding-left: 0px !important;
+  padding-right: 0px !important; }
+
+.right {
+  float: right; }
+
+.small {
+  font-size: 0.8em; }
+
+.align-right {
+  text-align: right; }
 
 [eros-chat] {
   background-color: #fff;
@@ -194,7 +207,7 @@
         right: 0;
         width: 100%;
         height: 27px;
-        background: #ddd;
+        background: #e5e5e5;
         border: none;
         padding-left: 10px;
         font-size: 12px; }
@@ -268,13 +281,33 @@
     [eros-chat] .room-user:hover {
       background-color: #e3e3e3; }
 
+#notification-settings {
+  position: absolute;
+  bottom: 0px;
+  left: 0;
+  right: 0;
+  background-color: #e9e9e9; }
+  #notification-settings > div {
+    margin-left: auto;
+    margin-right: auto;
+    width: 80px;
+    border-radius: 0px; }
+    #notification-settings > div .btn {
+      border: none;
+      box-shadow: none;
+      background: none;
+      color: #bbb; }
+      #notification-settings > div .btn.active {
+        color: #444; }
+
 /*
  * Growls
  */
 [conn-growl] {
-  position: absolute;
+  position: fixed;
   bottom: 10px;
   right: 10px;
+  z-index: 200;
   color: #333;
   background: rgba(0, 0, 0, 0.2);
   font-size: 12px;
@@ -304,5 +337,158 @@
 
 .animate-fade.ng-enter.ng-enter-active, .animate-fade.ng-leave {
   opacity: 1; }
+
+/*
+ * Matchmaking
+ *
+ */
+#eros-mm {
+  background-color: #ab3e3e;
+  margin-bottom: 15px;
+  margin-top: 15px;
+  height: 218px;
+  text-align: center;
+  color: #efefef;
+  overflow: hidden;
+  /* Left hand side */
+  /* Center */
+  /* Right hand */ }
+  #eros-mm input {
+    border: none;
+    background: #bd5550;
+    text-align: center; }
+  #eros-mm .region {
+    width: 111px;
+    height: 218px;
+    display: inline-block;
+    opacity: 0.3;
+    cursor: pointer;
+    padding: 0;
+    background-repeat: no-repeat;
+    background-position: center;
+    float: right;
+    margin-right: 1px; }
+  #eros-mm .region:hover {
+    opacity: 0.5; }
+  #eros-mm .region[disabled] {
+    width: 15px;
+    opacity: 0.3;
+    cursor: default; }
+  #eros-mm .region.selected {
+    opacity: 1; }
+  #eros-mm .btn:not(.small) {
+    font-size: 90%;
+    color: #ab3e3e;
+    padding: 7px 15px;
+    border: none; }
+  #eros-mm .rounded {
+    border-radius: 3px !important; }
+  #eros-mm .btn.small {
+    font-size: 90%;
+    color: #ab3e3e;
+    background: #fff; }
+  #eros-mm .player #user-username {
+    font-size: 20px;
+    margin-bottom: -15px; }
+  #eros-mm .player #user-division {
+    font-size: 65px; }
+  #eros-mm .player #user-rank {
+    font-size: 30px; }
+  #eros-mm .player #user-points {
+    font-size: 25px;
+    margin-top: -15px; }
+  #eros-mm #mm-left {
+    position: absolute;
+    padding-top: 45px;
+    height: 218px;
+    color: #ab3e3e;
+    display: inline-block;
+    cursor: default;
+    background: #ffffff;
+    /* Old browsers */
+    z-index: 50;
+    left: 15px; }
+    #eros-mm #mm-left.anim {
+      transition: 0.1s ease-in right;
+      right: 83%; }
+    #eros-mm #mm-left.anim.full {
+      right: 15px; }
+    #eros-mm #mm-left.anim > .svg {
+      transition: 0.1s ease-in left;
+      left: 99.5%; }
+    #eros-mm #mm-left.anim.full > .svg {
+      left: 0px; }
+    #eros-mm #mm-left .svg {
+      position: absolute;
+      top: 0px;
+      left: 99.5%;
+      bottom: 0px;
+      fill: #fff;
+      overflow: hidden; }
+  #eros-mm #mm-center {
+    z-index: 45 !important;
+    position: absolute;
+    left: 17%;
+    right: 240px; }
+    #eros-mm #mm-center .queue, #eros-mm #mm-center .dequeue {
+      position: relative;
+      top: 120px; }
+    #eros-mm #mm-center .timer {
+      position: absolute;
+      top: 30px;
+      margin-left: auto;
+      margin-right: auto;
+      left: 0;
+      right: 0;
+      font-size: 3.5em; }
+    #eros-mm #mm-center .search-radius {
+      margin: 5px auto; }
+      #eros-mm #mm-center .search-radius span {
+        width: 20px;
+        display: inline-block; }
+      #eros-mm #mm-center .search-radius input {
+        width: 20px;
+        height: 20px; }
+    #eros-mm #mm-center .matched {
+      height: 218px;
+      padding: 10px 0; }
+      #eros-mm #mm-center .matched > div > div {
+        max-width: 50%; }
+      #eros-mm #mm-center .matched > .top {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        right: 10px;
+        text-align: left; }
+        #eros-mm #mm-center .matched > .top .map {
+          float: right;
+          text-align: right;
+          margin-top: 4px; }
+      #eros-mm #mm-center .matched > .bottom {
+        position: absolute;
+        bottom: 10px;
+        left: 0px;
+        right: 10px;
+        text-align: left; }
+      #eros-mm #mm-center .matched .button > div {
+        padding: 2px 7px;
+        cursor: pointer;
+        display: inline-block;
+        border-radius: 2px; }
+        #eros-mm #mm-center .matched .button > div:hover {
+          background-color: rgba(255, 255, 255, 0.2); }
+    #eros-mm #mm-center .upload-replay > input {
+      display: inline; }
+  #eros-mm #mm-right {
+    z-index: 45 !important;
+    padding-left: -15px !important;
+    float: right; }
+    #eros-mm #mm-right .player {
+      padding: 45px 35px;
+      height: 218px; }
+  #eros-mm #region-eu {
+    background-image: url(../img/mm-eu.png); }
+  #eros-mm #region-na {
+    background-image: url(../img/mm-na.png); }
 
 /*# sourceMappingURL=app.css.map */

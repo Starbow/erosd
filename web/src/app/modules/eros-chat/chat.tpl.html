@@ -14,9 +14,10 @@
 </div>
 
 <!-- Left Navigation: Chat channels, Private channels, Join Rooms -->
-<div id="chat-left-nav" ng-mouseenter="navhover = true" ng-mouseleave="navhover = false" ng-class="{'expand': navhover || showIndex}" ng-init='eros.chat.fetchRoomsIndex()'>
-	<li class="chat-channels" ng-repeat="room in rooms" ng-init="setDefaultRoom(room)" ng-hide="showIndex" >
-		<div ng-class="{'selected': selectedRoom==room}" class='channel' ng-click="selectRoom(room); room.visit()" >
+
+<div id="chat-left-nav" ng-mouseenter="navhover = true" ng-mouseleave="navhover = false" ng-class="{'expand': navhover || showIndex}" ng-init='eros.chat.fetchRoomsIndex();'> <!--setDefaultRoom(rooms[Object.keys(rooms)[0]])-->
+	<li class="chat-channels" ng-repeat="room in rooms" ng-hide="showIndex" >
+		<div ng-class="{'selected': selectedRoom.room.key==room.room.key}" class='channel' ng-click="selectRoom(room); room.visit()" >
 			<div class='select-channel'>
 				<span ng-hide="navhover" class='short'>{{room.room.name.slice(0,1).toUpperCase()}}</span>
 				<span ng-show="navhover" ng-if="room.room.name.length > 18" class='long'>{{room.room.name.slice(0,15)}}...</span>
@@ -80,7 +81,7 @@
 	<!-- Public chat -->
 	<div class="room-users" ng-show="selectedRoom.room">
 		<div ng-repeat="user in roomusers" class="animate-fade">
-			<div class="room-user" ng-click="addUserMsg(user.username)">
+			<div class="room-user" ng-dblclick="openPrivUser(user.username)"> <!-- ng-click="addUserMsg(user.username)" -->
 				<div class="user-rank-block">
 					<span ng-bind="user.stats.division" class="user-division"></span><span ng-hide="user.stats.division == 'P'" ng-bind="user.stats.divisionRank" class="user-rank"></span>
 				</div>
@@ -97,4 +98,11 @@
 			<span ng-hide="user.stats.division == 'P'" class="user-rank">{{user.stats.divisionRank}}</span>
 		</div>
 	</div>
+
+	<div id="notification-settings" class='btn-group'>
+		<div>
+        	<button class='btn btn-default' ng-class='{active: muting}' ng-click="notifier.setMuting(true); muting = true;"><span class="glyphicon glyphicon glyphicon-volume-off" ></span></button>
+        	<button class='btn btn-default' ng-class='{active: !muting}' ng-click="notifier.setMuting(false); notifier.setVolume(1); muting=false"><span class="glyphicon glyphicon glyphicon-volume-up" ></span></button>
+    	</div>
+    </div>
 </div>

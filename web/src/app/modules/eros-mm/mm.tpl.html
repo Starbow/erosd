@@ -1,95 +1,118 @@
-<div id='eros-mm' class='container-fluid'>
-	<style>
-		#eros-mm > div {
-			border: 1px solid #999;
-		}
-
-		.region {
-			width: 90px;
-			height: 200px;
-			display: inline-block;
-
-			background-color: red;
-			opacity: 0.3;
-			cursor: pointer;
-			padding: 0;
-		}
-
-		.region:hover{
-			opacity: 1;
-		}
-
-		.region[disabled]{
-			width: 15px;
-
-			opacity: 0.3;
-			cursor: default;
-		}
-	</style>
+<div id='eros-mm' class='container-fluid no-padding'>
 
 	<!-- Left -->
-	<div id="mm-left" class="col-md-4" >
-		Left
-		<div ng-bind='localUser.stats.division'></div>
-		<div ng-bind='localUser.stats.divisionRank'></div>
-		<div ng-bind='localUser.stats.points'></div>
-		<div ng-bind='localUser.stats.mmr'></div>
+	<!-- <div id="mm-left" class="no-padding" ng-class='hover ? "col-md-2" : "col-md-12"'> -->
+	<div id="mm-left" class="no-padding anim" ng-class='{"full": !hover}'>
+		<div class='svg'>
+			<svg height='218' width='30'>
+  				<path d="M0 0 L0 218 L30 0 Z" />
+			</svg> 
+		</div>
+		<div class='player'>
+			<div id='user-username' ng-bind='localUser.username'></div>
+			<span id='user-division' ng-bind='localUser.stats.division'></span>
+			<span id='user-rank' ng-bind='localUser.stats.divisionRank'></span>
+			<div id='user-points' ng-bind='localUser.stats.points'></div>
+			<!-- <div id='user-mmr' ng-bind='localUser.stats.mmr'></div> -->
+		</div>
+		
 	</div>
 
 	<!-- Center -->
-	<div id="mm-center" class="col-md-4">
-		Center
-		<div class='pre'>
-			<div class='matchtypes'>
-				<button id='1v1'>1v1</button>
-				<button id='2v2'>2v2</button>
-				<button id='bgh'>BGH</button>
+	<div id="mm-center" class="anim" ng-class='hover ? "min" : "full"'>
+		<div class='pre' ng-show='matchmaking.status == "IDLE"'>
+			<div class='matchtypes' style='display:none'>
+				<button id='1v1' type='button' class='btn' ng-class="matchtypes.one ? 'btn-primary' : 'btn-default'" ng-click="matchtypes.one = !matchtypes.one">1v1</button>
+				<button id='2v2' type='button' class='btn' ng-class="matchtypes.two ? 'btn-primary' : 'btn-default'" ng-click="matchtypes.two = !matchtypes.two">2v2</button>
+				<button id='bgh' type='button' class='btn' ng-class="matchtypes.bgh ? 'btn-primary' : 'btn-default'" ng-click="matchtypes.bgh = !matchtypes.bgh">BGH</button>
+				<select ng-model='search_radius' ng-options='radius for radius in radius_options' />
 			</div>
-			<div class='ranked'>
-				<button id='ranked'>RANKED</button>
+			<div class='ranked' style='display:none'>
+				<button id='ranked' type='button' class='btn' ng-class="ranked ? 'btn-primary' : 'btn-default'" ng-click="ranked = !ranked" >RANKED</button>
 			</div>
 			<div class='queue'>
-				<button id='queue'>Queue</button>
+				<div class='search-radius' style=''>Search Radius: <input ng-model="search_radius" /></div>
+				<button id='queue' type='button' class='btn btn-default rounded' ng-click="queue()">
+					Queue <span class="icon-bowstarbow" display="font-size:120%"></span>
+				</button>
 			</div>
 		</div>
-		<div class='queing'>
-			<div class='matchtypes'>
+		<div class='queing' ng-show='matchmaking.status == "QUEUED"'>
+			<!-- <div class='matchtypes'>
 				<div ng-repeat='type in selected-matchtypes' ng-bind='type'/>
-			</div>
-			<div class='ranked'>
+			</div> -->
+			<div class='ranked' style='display:none'>
 				<div id='ranked'>RANKED</div>
 			</div>
-			<div class='timer'>{{timeElapsed}}</div>
+			<div class='timer'>{{timeElapsed|timer}}</div>
 
-			<div class='abort'>
-				<button id='abort'>Abort</button>
+			<div class='dequeue'>
+				<div class='search-radius' style=''>Search Radius: <span ng-bind='search_radius'></span></div>
+				<button id='dequeue' type='button' class='btn btn-warning rounded' ng-click="dequeue()">Cancel</button>
 			</div>
 		</div>
 
-		<div class='matched'>
-			<button id='gotomap'>Go to map</button>
-			<button id='copychat'>Copy chat name</button>
-			<button id='uploadreplay'>Upload Replay</button>
+		<div class='matched' ng-show='matchmaking.status == "MATCHED"'>
+			<div class='top'>
+				<div class='map'>
+					<div><b>{{matchmaking.match.map.battle_net_name}}</b></div>
+					<div>{{matchmaking.match.map.region | region}}</div>
+				</div>
+				<div id='gotomap' class='button' ng-click="goToMap()" style='margin-left: 22px'><div><span class="glyphicon glyphicon-link" aria-hidden="true"></span> Go to map</div></div>
+				<div id='copychat' class='button' ng-click='copyChat()' style='margin-left: 18px'><div><span class=" glyphicon glyphicon-comment" aria-hidden="true"></span> Copy chat name</div></div>
+			</div>
 
+			<div class='bottom'>
+				<div class='right'>
+					<div ng-show='noshow_reponse'>
+						No-show reported:<br />
+						<button id='noshow-response' type="button" class="btn btn-default right" ng-click="respondNoShow()">I'm here! [{{noShowResponseTimer | timer}}]</button>
+					</div>
+				</div>
+				<div id='forfeit' class='button' ng-click="forfeit()" style='margin-left: 19px'><div><span class="glyphicon glyphicon-flag" aria-hidden="true"></span> Forfeit</div></div>
+				<div id='request-draw' class='' ng-click="requestDraw()" style='margin-left: 15px; padding: 2px 7px; opacity:0.3; cursor: default'><div><span class="glyphicon glyphicon-tower" aria-hidden="true"></span> Request draw</div></div>
+				<div id='noshow' class='button' ng-click="reportNoShow()" ng-if="!noshow_requested" style='margin-left: 12px'><div><span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span> Report no-show</div></div>
+				<div id='noshow-countdown' class='button' ng-if="noshow_requested" style='margin-left: 12px'><div><span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span> No-show reported [{{noShowTimer | timer}}]</div></div>
+
+				<div id='upload-replay' class='button' ng-click='uploadreplay=!uploadreplay' style='margin-left: 8px; display: inline' ng-init='uploadreplay=false'><div><span class="glyphicon glyphicon-upload" aria-hidden="true"></span> Upload Replay</div></div>
+				<span ng-show='uploadreplay' class='upload-replay right'>
+					<input type="file" id="file" onchange="angular.element(this).scope().upload_replay()" ng-model="replay"/>
+				</span>
+			</div>
+			
+			</br></br>
+			
 		</div>
 	</div>
 
 	<!-- Right -->
-	<div id="mm-right" class="col-md-4">
-		Right
+	<div id="mm-right" class="anim no-padding" ng-class='{"full": !hover}'>
 
-		<div class='pre'>
-			<div class="region eu" value='EU' />
-			<div class="region na" value='NA' />
-			<div class="region kr" value='KR' disabled/>
+		<div class='pre' ng-show='matchmaking.status == "IDLE"'>
+			<div class="region" id='region-na' ng-class='{selected: regions.NA}' value='NA' ng-click='toggle_region("NA")'></div>
+			<div class="region" id='region-eu' ng-class='{selected: regions.EU}' value='EU' ng-click='toggle_region("EU")'></div>
+			<!-- <div class="region kr" value='KR' disabled/> -->
 		</div>
 
-		<div class='queing'>
-			<div ng-repeat='region in selected-regions' class='region' />
+		<div class='queing' ng-show='matchmaking.status == "QUEUED"'>
+			<div class="region selected" id='region-na' ng-show='regions.NA' value='NA'></div>
+			<div class="region selected" id='region-eu' ng-show='regions.EU' value='EU'></div>
+			<!-- <div ng-repeat='region in selected-regions' class='region' /> -->
 		</div>
 
-		<div class='matched'>
-			
-		</div>
+		<div class='matched' ng-show='matchmaking.status == "MATCHED"'>
+			<div style="float:right"> 
+				<div class="region selected" id='region-na' ng-show='regions.NA' value='NA'></div>
+				<div class="region selected" id='region-eu' ng-show='regions.EU' value='EU'></div>
+			<!-- <div ng-repeat='region in selected-regions' class='region' /> -->
+			</div>
+			<div class='player' style="float:right">
+				<div id='user-username' ng-bind='matchmaking.match.opponent.username'></div>
+				<span id='user-division' ng-bind='matchmaking.match.opponent.stats.division'></span>
+				<span id='user-rank' ng-bind='matchmaking.match.opponent.stats.divisionRank'></span>
+				<div id='user-points' ng-bind='matchmaking.match.opponent.stats.points'></div>
+				<!-- <div ng-bind='matchmaking.match.opponent.stats.mmr'></div> -->
+			</div>
+			</div>
 	</div>
 </div>
