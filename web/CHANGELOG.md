@@ -7,6 +7,7 @@
 - Draw
 - Matched notification volume
 - Lots of error server error catching
+- Focus input when opening channel/private message
 
 ## 0.1.0 - 2014-11-30
 ### Added 

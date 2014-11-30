@@ -203,7 +203,7 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScop
 							this.new_messages = []
 						}
 					}
-					// notifier.sound($scope.notifyVolume)
+					// notifier.message($scope.notifyVolume)
 				}
 				$scope.privs[room.key].active = true;
 				// $scope.selectedRoom = $scope.privs[room.key]
@@ -256,7 +256,7 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScop
 				}
 
 				if(document.hidden){
-					notifier.sound($scope.notifyVolume)
+					notifier.message($scope.notifyVolume)
 				}
 			}
 		}
