@@ -32,28 +32,30 @@ angular.module('erosApp.services', ['ngAudio'])
 .factory('notifier', ['ngAudio', function(ngAudio){
 	var _audioNotif = ngAudio.load("/static/sounds/Transmission.wav");
 	var _matchNotif = ngAudio.load("/static/sounds/notification.wav");
+	var _volume = 1;
 	var _baseTitle = document.title
 	var _title_messages = {}
 
 	return {
 		// Volume: optional
-		message: function(volume){
-			if(typeof(volume) === 'number' && volume > 0 && volume <= 1){
-				_audioNotif.volume = volume
-			}
+		message: function(){
 			_audioNotif.play()
 		},
 
-		matched: function(volume){
-			// if(typeof(volume) === 'number' && volume > 0 && volume <= 1){
-			// 	_audioNotif.volume = volume
-			// }
+		matched: function(){
 			_matchNotif.play()
 		},
 
 		// proxy
 		setMuting: function(value){
 			_audioNotif.setMuting(value)
+		},
+
+		setVolume: function(value){
+			if(typeof(value) === 'number' && value > 0 && value <= 1){
+				_audioNotif.setMuting(false)
+				_volume = value
+			}
 		},
 
 		title: function(pre, container, blinking){
