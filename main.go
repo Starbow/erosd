@@ -81,9 +81,8 @@ func loadConfig() error {
 		config.AddOption("ladder", "losepointsbase", "50")
 		config.AddOption("ladder", "losepointsincrement", "12.5")
 		config.AddOption("ladder", "maxvetos", "3")
-		config.AddOption("ladder", "matchtimeout", "7200")
-		config.AddOption("ladder", "matchmakingradiusmultiplier", "5.00")
-		config.AddOption("ladder", "matchmakingratingscalepersecond", "0.08")
+		config.AddOption("ladder", "ratingscale", "0.12")
+		config.AddOption("ladder", "radiusmultiplier", "8.00")
 
 		config.AddSection("database")
 		config.AddOption("database", "type", "sqlite3")
@@ -98,6 +97,8 @@ func loadConfig() error {
 		config.AddOption("chat", "maxmessagelength", "256")
 		config.AddSection("python")
 		config.AddOption("python", "port", ":54321")
+
+		
 
 		err = config.WriteConfigFile("erosd.cfg", 0644, "Erosd Config")
 		if err != nil {
@@ -140,8 +141,9 @@ func loadConfig() error {
 	matchmakingMatchTimeout, _ = config.GetInt64("ladder", "matchtimeout")
 	matchmakingLongProcessUnlockTime, _ = config.GetInt64("ladder", "longprocessunlocktime")
 	matchmakingLongProcessResponseTime, _ = config.GetInt64("ladder", "longprocessresponsetime")
-	matchmakingRadiusMultiplier, _ = config.GetFloat("ladder", "matchmakingradiusmultiplier")
-	matchmakingRatingScalePerSecond, _ = config.GetFloat("ladder", "matchmakingratingscalepersecond")
+
+	matchmakingRadiusMultiplier, _ = config.GetFloat("ladder", "radiusmultiplier")
+	matchmakingRatingScalePerSecond, _ = config.GetFloat("ladder", "ratingscale")
 
 	ladderStartingPoints, _ = config.GetInt64("ladder", "startingpoints")
 	ladderWinPointsBase, _ = config.GetInt64("ladder", "winpointsbase")
