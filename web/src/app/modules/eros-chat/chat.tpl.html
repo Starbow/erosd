@@ -99,10 +99,10 @@
 		</div>
 	</div>
 
-	<div id="notification-settings" class='btn-group'>
+	<div id="notification-settings" class='btn-group' ng-init="notifier.setVolume(1); muting=true;">
 		<div>
-        	<button class='btn btn-default' ng-class='{active: muting}' ng-click="notifier.setMuting(true);"><span class="glyphicon glyphicon glyphicon-volume-off" ></span></button>
-        	<button class='btn btn-default' ng-class='{active: !muting}' ng-click="notifier.setVolume(1)"><span class="glyphicon glyphicon glyphicon-volume-up" ></span></button>
+        	<button class='btn btn-default' ng-class='{active: muting}' ng-click="notifier.setMuting(true); muting=true"><span class="glyphicon glyphicon glyphicon-volume-off" ></span></button>
+        	<button class='btn btn-default' ng-class='{active: !muting}' ng-click="notifier.setVolume(1); muting=false"><span class="glyphicon glyphicon glyphicon-volume-up" ></span></button>
     	</div>
     </div>
 </div>
