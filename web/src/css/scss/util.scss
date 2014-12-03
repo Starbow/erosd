@@ -19,3 +19,20 @@
 .align-right{
 	text-align:right;
 }
+
+.fixed-top{
+    position: fixed;
+    top: 0px;
+}
+
+.absolute-top{
+    position: absolute;
+    top: 0px;
+}
+
+.center-absolute{
+	margin-left: auto;
+	margin-right: auto;
+	left: 0;
+	right: 0;
+}

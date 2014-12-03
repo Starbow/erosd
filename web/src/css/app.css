@@ -68,7 +68,25 @@
   /*padding-left: $navWidth;*/
   max-width: 1020px;
   margin: 0px auto;
-  background: #efefef; }
+  margin-top: 45px;
+  background: #efefef;
+  padding-bottom: 20px;
+  border-bottom: #fafafa 1px solid; }
+
+#navbar {
+  height: 45px;
+  background-color: #2e2e2e;
+  width: 1020px;
+  font-size: 20px;
+  line-height: 45px;
+  font-family: 'goboldregular';
+  color: #fff;
+  border-bottom: 2px solid #ab3e3e;
+  padding: 0 20px; }
+  #navbar div {
+    display: inline-block; }
+  #navbar .erosjs {
+    color: #ab3e3e; }
 
 .no-gutter {
   margin: 0px !important; }
@@ -85,6 +103,20 @@
 
 .align-right {
   text-align: right; }
+
+.fixed-top {
+  position: fixed;
+  top: 0px; }
+
+.absolute-top {
+  position: absolute;
+  top: 0px; }
+
+.center-absolute {
+  margin-left: auto;
+  margin-right: auto;
+  left: 0;
+  right: 0; }
 
 [eros-chat] {
   background-color: #fff;

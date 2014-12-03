@@ -56,3 +56,22 @@ return function(scope, elm, attrs) {
 	}
 }])
 
+.directive('browserid', ['browserid', function(eros_browserid){
+	return {
+		restrict: 'A',
+		link: function($scope, $elem, $attr, $conn){
+			eros_browserid.registerWatchHandlers().then(function() {
+				$elem.on('click', function(e){
+					e.preventDefault();
+		            var $link = $(this);
+		            eros_browserid.login().then(function(verifyResult) {
+		            	console.log("Logged in, verifyResult:")
+		            	console.log(verifyResult)
+		                // window.location = $link.data('next') || verifyResult.redirect;
+		            });
+				})
+			})
+		}
+	}
+}])
+

@@ -90,9 +90,9 @@
 	<div id="mm-right" class="anim no-padding" ng-class='{"full": !hover}'>
 
 		<div class='pre' ng-show='matchmaking.status == "IDLE"'>
-			<div class="region" id='region-na' ng-class='{selected: regions.NA}' value='NA' ng-click='toggle_region("NA")'></div>
-			<div class="region" id='region-eu' ng-class='{selected: regions.EU}' value='EU' ng-click='toggle_region("EU")'></div>
 			<!-- <div class="region kr" value='KR' disabled/> -->
+			<div class="region" id='region-eu' ng-class='{selected: regions.EU}' value='EU' ng-click='toggle_region("EU")'></div>
+			<div class="region" id='region-na' ng-class='{selected: regions.NA}' value='NA' ng-click='toggle_region("NA")'></div>
 		</div>
 
 		<div class='queing' ng-show='matchmaking.status == "QUEUED"'>
@@ -103,9 +103,9 @@
 
 		<div class='matched' ng-show='matchmaking.status == "MATCHED"'>
 			<div style="float:right"> 
-				<div class="region selected" id='region-na' ng-show='regions.NA' value='NA'></div>
+				<!-- <div ng-repeat='region in selected-regions' class='region' /> -->
 				<div class="region selected" id='region-eu' ng-show='regions.EU' value='EU'></div>
-			<!-- <div ng-repeat='region in selected-regions' class='region' /> -->
+				<div class="region selected" id='region-na' ng-show='regions.NA' value='NA'></div>
 			</div>
 			<div class='player' style="float:right">
 				<div id='user-username' ng-bind='matchmaking.match.opponent.username'></div>

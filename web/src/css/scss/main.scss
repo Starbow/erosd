@@ -8,6 +8,7 @@ $lightGrey: #393939;
 $navGrey: #2e2e2e;
 $navButtonColor: #acacac;
 $navButtonColorHover: #e9e9e9;
+$navHeight: 45px;
 
 #left-nav {
     position: fixed;
@@ -72,5 +73,33 @@ $navButtonColorHover: #e9e9e9;
 	/*padding-left: $navWidth;*/
     max-width: $contentWidth;
     margin: 0px auto;
+    margin-top: $navHeight;
     background: #efefef;
+    padding-bottom:20px;
+    border-bottom: #fafafa 1px solid;
+}
+
+#navbar {
+    height: $navHeight;
+    background-color: $navGrey;
+    // background-color: $redColor;
+    // background-image: url('/static/img/navbar.png');
+    width:$contentWidth;
+
+    font-size: 20px;
+    line-height: $navHeight;
+    font-family: $headerFont;
+    color: #fff;
+
+    border-bottom: 2px solid $lightRedColor;
+
+    padding: 0 20px;
+
+    div{
+        display: inline-block;
+    }
+
+    .erosjs{
+        color: $lightRedColor;
+    }
 }
