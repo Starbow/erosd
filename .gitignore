@@ -9,6 +9,7 @@ erosd
 # Folders
 _obj
 _test
+replays
 
 # Architecture specific extensions/prefixes
 *.[568vq]
