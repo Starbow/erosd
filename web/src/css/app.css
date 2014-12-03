@@ -65,7 +65,10 @@
         background-color: #393939; }
 
 #main-content {
-  padding-left: 270px; }
+  /*padding-left: $navWidth;*/
+  max-width: 1020px;
+  margin: 0px auto;
+  background: #efefef; }
 
 .no-gutter {
   margin: 0px !important; }
@@ -397,6 +400,9 @@
   #eros-mm .player #user-points {
     font-size: 25px;
     margin-top: -15px; }
+  #eros-mm .player #user-placement {
+    margin-top: -15px;
+    font-size: 1.1em; }
   #eros-mm #mm-left {
     position: absolute;
     padding-top: 45px;

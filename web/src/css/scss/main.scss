@@ -3,6 +3,7 @@
  */
 
 $navWidth: 270px;
+$contentWidth: 1020px;
 $lightGrey: #393939;
 $navGrey: #2e2e2e;
 $navButtonColor: #acacac;
@@ -68,5 +69,8 @@ $navButtonColorHover: #e9e9e9;
 }
 
 #main-content {
-	padding-left: $navWidth;
+	/*padding-left: $navWidth;*/
+    max-width: $contentWidth;
+    margin: 0px auto;
+    background: #efefef;
 }
