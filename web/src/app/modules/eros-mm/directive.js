@@ -66,6 +66,10 @@ angular.module('erosApp.mm')
 				$scope.matchmaking.match = match;
 				$scope.regions.NA = match.map.region == 1 
 				$scope.regions.EU = match.map.region == 2
+
+				if (eros.chat.rooms[match.match_room]){
+					eros.chat.rooms()[match.match_room].name = "MATCH " + eros.chat.rooms()[match.match_room].name
+				}
 			})
 		},
 

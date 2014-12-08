@@ -87,6 +87,8 @@
     display: inline-block; }
   #navbar .erosjs {
     color: #ab3e3e; }
+  #navbar #navbar-account {
+    font-size: 18px; }
 
 .no-gutter {
   margin: 0px !important; }

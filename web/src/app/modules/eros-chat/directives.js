@@ -48,6 +48,7 @@ angular.module('erosApp.chat', ['ngAudio'])
 					}
 
 					$scope.selectRoom($scope.privs[username.toLowerCase()])
+					$('#chat-input > input').focus()
 				}
 			}
 

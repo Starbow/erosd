@@ -4,10 +4,19 @@
 - Make config for local development (mocking, etc.)
 - Join private Room (just UI)
 - Create Room (just UI)
-- Draw
+- Request Draw
 - Matched notification volume
 - Lots of error server error catching
+- Select match channel when matched
+
+## 0.1.1
+### Added
 - Focus input when opening channel/private message
+
+### Changed
+- Look and feel
+- Sound activated by default
+- Swapped EU and NA position (matchmaking)
 
 ## 0.1.0 - 2014-11-30
 ### Added 

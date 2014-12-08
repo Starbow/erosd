@@ -66,10 +66,6 @@
         </div>
     </div> -->
 
-    <div id="navbar" class='absolute-top center-absolute'>
-       <div>starbow</div> <div class='erosjs'>erosjs</div>
-       <div class="float-right" browserid>Login</div>
-    </div>
 
 
 
@@ -78,6 +74,14 @@
     <![endif]-->
 
     <div id="main-content" class="" ng-controller="ErosTestCtrl">
+        <div id="navbar" class='absolute-top center-absolute'>
+           <div>starbow</div> <div class='erosjs'>erosjs</div>
+           <div class="right" id="navbar-account">
+                <!-- <div browserid ng-if='!connected'>Login</div> -->
+                <div ng-if="connected">{{eros.localUser.username}}</div>
+            </div>
+        </div>
+
         <div class="page container-fluid">
             <div>
                 <div ng-if="!connected">
