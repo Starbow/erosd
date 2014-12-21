@@ -364,6 +364,8 @@ func (conn *ClientConnection) read() {
 				go conn.OnForfeitMatchmaking(txid, data)
 			case "BNA":
 				go conn.OnAddCharacter(txid, data)
+			case "BNN":
+				go conn.OnAuthCharacter(txid, data) // New method for OAuth2 request
 			case "BNU":
 				go conn.OnUpdateCharacter(txid, data)
 			case "BNR":
@@ -1014,6 +1016,26 @@ func (conn *ClientConnection) OnAddCharacter(txid int, data []byte) {
 	data, _ = Marshal(payload)
 	conn.SendResponseMessage("BNA", txid, data)
 }
+
+func (conn *ClientConnection) OnAuthCharacter(txid int, data []byte) {
+	defer conn.panicRecovery(txid)
+
+	if len(data) == 0 {
+		conn.SendResponseMessage("201", txid, []byte{})
+		return
+	}
+
+	var request protobufs.OAuthRequest
+	err := Unmarshal(data, &request)
+
+	if err != nil {
+		conn.SendResponseMessage("201", txid, []byte{})
+		return
+	}
+
+	fmt.Println("Asked from region", request.GetRegion())
+}
+
 func (conn *ClientConnection) OnUpdateCharacter(txid int, data []byte) {
 	defer conn.panicRecovery(txid)
 

@@ -29,13 +29,15 @@ It has these top-level messages:
 	MatchmakingStats
 	ServerStats
 	Character
+	OAuthRequest
+	OAuthUrl
 	MatchParticipant
 	MatchResult
 	BroadcastAlert
 */
 package protobufs
 
-import proto "code.google.com/p/goprotobuf/proto"
+import proto "github.com/golang/protobuf/proto"
 import math "math"
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -282,7 +284,7 @@ type UserRegionStats struct {
 	Mmr                 *float64 `protobuf:"fixed64,7,req,name=mmr" json:"mmr,omitempty"`
 	PlacementsRemaining *int64   `protobuf:"varint,8,req,name=placements_remaining" json:"placements_remaining,omitempty"`
 	Division            *int64   `protobuf:"varint,9,req,name=division" json:"division,omitempty"`
-	DivisionRank        *int64   `protobuf:"varint,10,req,name=division_rank" json:"division_rank,omitempty"`
+	DivisionRank        *int64   `protobuf:"varint,10,opt,name=division_rank" json:"division_rank,omitempty"`
 	XXX_unrecognized    []byte   `json:"-"`
 }
 
@@ -1046,6 +1048,38 @@ func (m *Character) GetVerificationPortrait() int32 {
 		return *m.VerificationPortrait
 	}
 	return 0
+}
+
+type OAuthRequest struct {
+	Region           *Region `protobuf:"varint,1,req,name=region,enum=protobufs.Region" json:"region,omitempty"`
+	XXX_unrecognized []byte  `json:"-"`
+}
+
+func (m *OAuthRequest) Reset()         { *m = OAuthRequest{} }
+func (m *OAuthRequest) String() string { return proto.CompactTextString(m) }
+func (*OAuthRequest) ProtoMessage()    {}
+
+func (m *OAuthRequest) GetRegion() Region {
+	if m != nil && m.Region != nil {
+		return *m.Region
+	}
+	return Region_NA
+}
+
+type OAuthUrl struct {
+	Url              *string `protobuf:"bytes,1,req,name=url" json:"url,omitempty"`
+	XXX_unrecognized []byte  `json:"-"`
+}
+
+func (m *OAuthUrl) Reset()         { *m = OAuthUrl{} }
+func (m *OAuthUrl) String() string { return proto.CompactTextString(m) }
+func (*OAuthUrl) ProtoMessage()    {}
+
+func (m *OAuthUrl) GetUrl() string {
+	if m != nil && m.Url != nil {
+		return *m.Url
+	}
+	return ""
 }
 
 type MatchParticipant struct {

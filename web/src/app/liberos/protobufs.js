@@ -853,6 +853,38 @@ var protobufs = dcodeIO.ProtoBuf.newBuilder().import({
             "options": {}
         },
         {
+            "name": "OAuthRequest",
+            "fields": [
+                {
+                    "rule": "required",
+                    "options": {},
+                    "type": "Region",
+                    "name": "region",
+                    "id": 1
+                }
+            ],
+            "enums": [],
+            "messages": [],
+            "options": {},
+            "oneofs": {}
+        },
+        {
+            "name": "OAuthUrl",
+            "fields": [
+                {
+                    "rule": "required",
+                    "options": {},
+                    "type": "string",
+                    "name": "url",
+                    "id": 1
+                }
+            ],
+            "enums": [],
+            "messages": [],
+            "options": {},
+            "oneofs": {}
+        },
+        {
             "name": "MatchParticipant",
             "fields": [
                 {

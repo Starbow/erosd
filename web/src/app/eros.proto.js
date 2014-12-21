@@ -21,7 +21,8 @@
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "Division",
@@ -71,7 +72,8 @@
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "HandshakeResponse",
@@ -154,7 +156,8 @@
                 }
             ],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "UserRegionStats",
@@ -221,11 +224,19 @@
                     "type": "int64",
                     "name": "division",
                     "id": 9
+                },
+                {
+                    "rule": "optional",
+                    "options": {},
+                    "type": "int64",
+                    "name": "division_rank",
+                    "id": 10
                 }
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "UserStats",
@@ -320,11 +331,19 @@
                     "type": "int64",
                     "name": "division",
                     "id": 13
+                },
+                {
+                    "rule": "required",
+                    "options": {},
+                    "type": "int64",
+                    "name": "division_rank",
+                    "id": 14
                 }
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "MapPool",
@@ -339,7 +358,8 @@
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "Map",
@@ -389,7 +409,8 @@
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "SimulationResult",
@@ -418,7 +439,8 @@
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "MatchmakingQueue",
@@ -440,7 +462,8 @@
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "MatchmakingResult",
@@ -467,7 +490,7 @@
                     "id": 3
                 },
                 {
-                    "rule": "optional",
+                    "rule": "required",
                     "options": {},
                     "type": "int64",
                     "name": "opponent_latency",
@@ -511,7 +534,8 @@
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "ChatRoomInfo",
@@ -575,7 +599,8 @@
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "ChatRoomIndex",
@@ -590,7 +615,8 @@
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "ChatMessage",
@@ -619,7 +645,8 @@
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "ChatRoomMessage",
@@ -648,7 +675,8 @@
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "ChatPrivateMessage",
@@ -670,7 +698,8 @@
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "ChatRoomUser",
@@ -692,7 +721,8 @@
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "ChatRoomRequest",
@@ -714,7 +744,8 @@
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "MatchmakingStats",
@@ -736,7 +767,8 @@
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "ServerStats",
@@ -765,7 +797,8 @@
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "Character",
@@ -836,7 +869,40 @@
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
+        },
+        {
+            "name": "OAuthRequest",
+            "fields": [
+                {
+                    "rule": "required",
+                    "options": {},
+                    "type": "Region",
+                    "name": "region",
+                    "id": 1
+                }
+            ],
+            "enums": [],
+            "messages": [],
+            "options": {},
+            "oneofs": {}
+        },
+        {
+            "name": "OAuthUrl",
+            "fields": [
+                {
+                    "rule": "required",
+                    "options": {},
+                    "type": "string",
+                    "name": "url",
+                    "id": 1
+                }
+            ],
+            "enums": [],
+            "messages": [],
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "MatchParticipant",
@@ -893,7 +959,8 @@
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "MatchResult",
@@ -922,7 +989,8 @@
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "BroadcastAlert",
@@ -944,7 +1012,8 @@
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         }
     ],
     "enums": [

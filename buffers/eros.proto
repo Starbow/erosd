@@ -172,6 +172,14 @@ message Character {
 	optional int32 verification_portrait = 9;
 }
 
+message OAuthRequest {
+	required Region region = 1;
+}
+
+message OAuthUrl{
+	required string url = 1;
+}
+
 message MatchParticipant {
 	optional UserStats user = 1;
 	optional Character character = 2;

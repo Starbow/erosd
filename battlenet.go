@@ -151,6 +151,24 @@ func (region BattleNetRegion) Domain() string {
 	return ""
 }
 
+func (region BattleNetRegion) ApiDomain() string {
+
+	switch region {
+	case BATTLENET_REGION_NA:
+		return "api.us.battle.net"
+	case BATTLENET_REGION_EU:
+		return "api.eu.battle.net"
+	case BATTLENET_REGION_KR:
+		return "api.kr.battle.net"
+	case BATTLENET_REGION_SEA:
+		return "api.sea.battle.net"
+	case BATTLENET_REGION_CN:
+		return "api.battlenet.com.cn"
+	}
+
+	return ""
+}
+
 type BattleNetAPIProfile struct {
 	Code     int64 `json:"code"`
 	Portrait struct {

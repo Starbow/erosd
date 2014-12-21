@@ -6,9 +6,9 @@
 angular.module('erosApp.directives', []).
 
 directive('appVersion', ['version', function(version) {
-return function(scope, elm, attrs) {
-  elm.text(version);
-};
+	return function(scope, elm, attrs) {
+	  elm.text(version);
+	};
 }])
 	
 // TODO: add unique
@@ -23,12 +23,12 @@ return function(scope, elm, attrs) {
 			$scope.connStatus = "";
 
 			var addMessage = function(message){
-				$scope.messages.push(message)
+				$scope.messages.push(message);
 
 				$timeout(function () {
 					$scope.deleteMessage(message);
 				}, 2000);
-			}
+			};
 
 			$scope.deleteMessage = function (message) {
 				var index = $scope.messages.indexOf(message);
@@ -53,25 +53,25 @@ return function(scope, elm, attrs) {
 				}
 			});
 		}]
-	}
-}])
+	};
+}]);
 
-.directive('browserid', ['browserid', function(eros_browserid){
-	return {
-		restrict: 'A',
-		link: function($scope, $elem, $attr, $conn){
-			eros_browserid.registerWatchHandlers().then(function() {
-				$elem.on('click', function(e){
-					e.preventDefault();
-		            var $link = $(this);
-		            eros_browserid.login().then(function(verifyResult) {
-		            	console.log("Logged in, verifyResult:")
-		            	console.log(verifyResult)
-		                // window.location = $link.data('next') || verifyResult.redirect;
-		            });
-				})
-			})
-		}
-	}
-}])
+// .directive('browserid', ['browserid', function(eros_browserid){
+// 	return {
+// 		restrict: 'A',
+// 		link: function($scope, $elem, $attr, $conn){
+// 			eros_browserid.registerWatchHandlers().then(function() {
+// 				$elem.on('click', function(e){
+// 					e.preventDefault();
+// 		            var $link = $(this);
+// 		            eros_browserid.login().then(function(verifyResult) {
+// 		            	console.log("Logged in, verifyResult:");
+// 		            	console.log(verifyResult);
+// 		                // window.location = $link.data('next') || verifyResult.redirect;
+// 		            });
+// 				});
+// 			});
+// 		}
+// 	};
+// }]);
 
