@@ -169,11 +169,8 @@
 
             requests[String(tx)] = request;
 
-            // var payload_length = 
-
             // console.debug("< SEND "+request.command+" "+request.payload.length)
             socket.send(request.command + ' ' + tx + ' ' + request.payload.length + '\n' + request.payload);
-            // console.debug('< '+ request.command + ' ' + tx + ' ' + request.payload.length)
 
             return request
         }
@@ -196,9 +193,7 @@
                     }
                 }
 
-
-
-                console.log(moduleOptions);
+                console.debug(moduleOptions);
                 // Init the module
                 eros[module] = new eros.modules[module](eros, sendRequest, moduleOptions);
 
@@ -411,7 +406,8 @@
             eros.disconnect();
 
             txBase = 0;
-            socket = new WebSocket('ws://' + server + '/ws');
+            var protocol = location.protocol == "https:" ? "wss:" : "ws:"
+            socket = new WebSocket(protocol + '//' + server + '/ws');
 
             socket.onopen = function () {
                 loadModules();

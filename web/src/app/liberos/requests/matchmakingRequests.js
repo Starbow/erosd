@@ -16,12 +16,11 @@
 
     	var queue_options = new protobufs.MatchmakingQueue(regions, search_range);
     	var request = new starbow.ErosRequests.Request(commands.queue, queue_options.toBase64(), function(command, payload){
-            console.log("[Q] Request returned.");
     		if(command === commands.queue){
                 request.result = true;
                 request.complete = true;
 
-                console.log("[Q] Queued.");
+                console.log("Queued.");
 
                 if (typeof (callback) === "function") {
                     callback(true, command);
@@ -202,7 +201,9 @@
     };
 
     var OAuthVerificationRequest = function(region, callback){
-        var request = new starbow.ErosRequests.Request(commands.auth_request, region, function(command, payload){
+        var oauth_options = new protobufs.OAuthRequest(region);
+
+        var request = new starbow.ErosRequests.Request(commands.auth_request, oauth_options.toBase64(), function(command, payload){
             if(command === commands["auth_request"]){
                 request.result = true;
                 request.complete = true;
@@ -212,8 +213,8 @@
                 }
                 return true;
             }
-        }, function(command){
-            console.warn("OAuth Request Error: "+command);
+        }, function(command, payload){
+            console.warn("OAuth Request Error "+command+": "+window.atob(payload));
             callback(false, command);
 
             if (typeof (callback) === "function") {

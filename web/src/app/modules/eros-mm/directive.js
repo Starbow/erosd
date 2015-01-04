@@ -29,8 +29,14 @@ angular.module('erosApp.mm')
 		replace: true,
 		controller: 'MmCtrl',
 		link: function($scope, $elem, $attrs, $controller){
-			$scope.RequestVerification = function(){
-				eros.matchmaking.request_verification(1)
+			var _original_text = $($elem[0]).find('a').html()
+			$scope.regions = ["NA", "EU", "KR"];
+
+			$scope.RequestVerification = function(region){
+				if(typeof region == "string"){
+					region = protobufs.Region[region]
+				}
+				eros.matchmaking.request_verification(region)
 			}
 		}
 	};

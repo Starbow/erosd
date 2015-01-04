@@ -17,6 +17,7 @@ var (
 	listenAddresses      []string
 	adminListenAddresses []string
 	httpListenAddresses  []string
+	httpsListenAddresses []string
 	simulator            bool
 	allowsimulations     bool
 	matchmaker           *Matchmaker
@@ -66,6 +67,11 @@ func loadConfig() error {
 		config.AddOption("erosd", "logpath", "logs")
 		config.AddOption("erosd", "replaypath", "replays")
 
+		// HTTPS
+		config.AddOption("erosd", "httpslisten", ":9091")
+		config.AddOption("erosd", "tlscertpath", "server.crt")
+		config.AddOption("erosd", "tlskeypath", "server.key")
+
 		config.AddSection("ladderdivisions")
 		config.AddOption("ladderdivisions", "divisions", "4")
 		config.AddOption("ladderdivisions", "divisionincrements", "5")
@@ -98,7 +104,11 @@ func loadConfig() error {
 		config.AddSection("python")
 		config.AddOption("python", "port", ":54321")
 
-		
+		config.AddSection("oauth2")
+		config.AddOption("oauth2", "clientid", "")
+		config.AddOption("oauth2", "clientsecret", "")
+		config.AddOption("oauth2", "codetimeoutminutes", "10")
+		config.AddOption("oauth2", "redirecturi", "https://eros.starbowmod.com/login/battlenet")
 
 		err = config.WriteConfigFile("erosd.cfg", 0644, "Erosd Config")
 		if err != nil {
@@ -118,6 +128,9 @@ func loadConfig() error {
 	if err == nil {
 		httpListenAddresses = strings.Split(listen, ";")
 	}
+	if err == nil {
+		httpsListenAddresses = strings.Split(listen, ";")
+	}
 	simulator, _ = config.GetBool("erosd", "simulator")
 	pythonPort, _ = config.GetString("python", "port")
 	testMode, _ = config.GetBool("erosd", "testmode")
@@ -125,6 +138,8 @@ func loadConfig() error {
 	logPath, _ = config.GetString("erosd", "logpath")
 	replayPath, _ = config.GetString("erosd", "replaypath")
 	webRoot, _ = config.GetString("erosd", "webroot")
+	tlsCertPath, _ = config.GetString("erosd", "tlscertpath")
+	tlsKeyPath, _ = config.GetString("erosd", "tlskeypath")
 
 	if webRoot == "" {
 		webRoot = "web/"
@@ -181,6 +196,13 @@ func loadConfig() error {
 	chatMaxThrottleTime = time.Duration(mtt) * time.Second
 	delay, _ := config.GetInt64("chat", "delay")
 	chatDelay = time.Duration(delay) * time.Millisecond
+
+	// OAuth
+	oauthClientId, _ = config.GetString("oauth2", "clientid")
+	oauthClientSecret, _ = config.GetString("oauth2", "clientsecret")
+	oauthCodeTimeout, _ = config.GetInt64("oauth2", "codetimeoutminutes")
+	oauthRedirectUri, _ = config.GetString("oauth2", "redirecturi")
+
 	return nil
 }
 
@@ -258,6 +280,10 @@ func main() {
 
 	for _, listen := range httpListenAddresses {
 		go listenAndServeHTTP(listen)
+	}
+
+	for _, listen := range httpsListenAddresses {
+		go listenAndServeHTTPS(listen)
 	}
 
 	log.Println("Initialization complete")

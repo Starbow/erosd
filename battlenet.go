@@ -155,15 +155,15 @@ func (region BattleNetRegion) ApiDomain() string {
 
 	switch region {
 	case BATTLENET_REGION_NA:
-		return "api.us.battle.net"
+		return "us.api.battle.net"
 	case BATTLENET_REGION_EU:
-		return "api.eu.battle.net"
+		return "eu.api.battle.net"
 	case BATTLENET_REGION_KR:
-		return "api.kr.battle.net"
+		return "kr.api.battle.net"
 	case BATTLENET_REGION_SEA:
-		return "api.sea.battle.net"
+		return "sea.api.battle.net"
 	case BATTLENET_REGION_CN:
-		return "api.battlenet.com.cn"
+		return "www.battlenet.com.cn"
 	}
 
 	return ""

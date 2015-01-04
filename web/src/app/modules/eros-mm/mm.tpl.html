@@ -26,13 +26,14 @@
 				<button id='1v1' type='button' class='btn' ng-class="matchtypes.one ? 'btn-primary' : 'btn-default'" ng-click="matchtypes.one = !matchtypes.one">1v1</button>
 				<button id='2v2' type='button' class='btn' ng-class="matchtypes.two ? 'btn-primary' : 'btn-default'" ng-click="matchtypes.two = !matchtypes.two">2v2</button>
 				<button id='bgh' type='button' class='btn' ng-class="matchtypes.bgh ? 'btn-primary' : 'btn-default'" ng-click="matchtypes.bgh = !matchtypes.bgh">BGH</button>
-				<select ng-model='search_radius' ng-options='radius for radius in radius_options' />
+				<select ng-model='search_radius' ng-options='radius for radius in radius_options' ng-change='updateSearchRadius'/>
 			</div>
 			<div class='ranked' style='display:none'>
 				<button id='ranked' type='button' class='btn' ng-class="ranked ? 'btn-primary' : 'btn-default'" ng-click="ranked = !ranked" >RANKED</button>
 			</div>
 			<div class='queue'>
-				<div class='search-radius' style=''>Search Radius: <input ng-model="search_radius" /></div>
+				<div class='search-radius' style=''>Search Radius: <select style='color:black' ng-model='search_radius' ng-options='radius for radius in radius_options' ng-change='updateSearchRadius'/><!-- <input ng-model="search_radius" ng-change='updateSearchRadius'/> --></div>
+
 				<button id='queue' type='button' class='btn btn-default rounded' ng-click="queue()">
 					Queue <span class="icon-bowstarbow" display="font-size:120%"></span>
 				</button>

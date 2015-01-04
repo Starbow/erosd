@@ -9,6 +9,13 @@
 - Lots of error server error catching
 - Select match channel when matched
 
+## 0.1.2 - 2014-01-04
+### Added
+- Battle.net character verification through OAuth 2.0 Api
+
+### Changed
+- Search radius from input to dropdown (considering adding css)
+
 ## 0.1.1
 ### Added
 - Focus input when opening channel/private message

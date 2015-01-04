@@ -21,7 +21,7 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScop
 
 	$http({
 		method: 'GET',
-		url:'http://starbowmod.com/user/api/info'
+		url:'//starbowmod.com/user/api/info'
 		// url:'http://127.0.0.1:12345/user/api/info'
 	}).success(function(data, status, headers, config) {
 		if (data.success) {
@@ -287,10 +287,7 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScop
 
 
 	$scope.connect = function(username, password) {
-		if(username)
-			eros.connect(username, password);
-		else
-			eros.connect("soah", "2f1a32e990da5fce87f97fb15fd7f4");
+		eros.connect(username, password);
 	};
 
 }]);

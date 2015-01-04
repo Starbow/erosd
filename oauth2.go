@@ -1,21 +1,24 @@
 package main
 
 import (
-	"crypto/rand"
-	"encoding/base64"
+	"encoding/json"
+	"errors"
 	"golang.org/x/oauth2"
+	"io/ioutil"
 	"log"
+	"math/rand"
 	"net/http"
 )
 
 var (
-	client_id     string = "yp3phbkxtf8s49kxdbeqe3d2z6wjhsy6"
-	client_secret string = "8TY7KjStRkXJcvPtSp7CgGn6QSWqSv3C"
+	oauthClientSecret string
+	oauthClientId     string
 
-	scope         string = "sc2.profile"
-	redirect_uri  string = "https://localhost"
-	response_type string = "code"
-	state_length  int    = 32
+	scope            string = "sc2.profile"
+	oauthCodeTimeout int64
+	oauthRedirectUri string
+	response_type    string = "code"
+	state_length     int    = 64
 
 	protocol   string = "https"
 	oauth_host string = "battle.net"
@@ -30,47 +33,80 @@ var (
 	}
 )
 
-func RequestPermission(region BattleNetRegion) (url string, state string) {
-	conf := &oauth2.Config{
-		ClientID:     client_id,
-		ClientSecret: client_secret,
+type OAuthRequest struct {
+	state  string
+	code   string
+	token  *oauth2.Token
+	region BattleNetRegion
+	config *oauth2.Config
+	conn   *ClientConnection
+}
+
+type BnetInfo struct {
+	AccountId  int       `json:"id"`
+	Battletag  string    `json:"battletag"`
+	Characters []Sc2Char `json:"characters"`
+}
+
+type Sc2Char struct {
+	ProfileId   int    `json:"id"`
+	Realm       int    `json:"realm"`
+	DisplayName string `json:"displayname"`
+	ClanTag     string `json:"clantag"`
+	Portrait    struct {
+		// Offset int    `json:"offset"`
+		X   int    `json:"x"`
+		Y   int    `json:"y"`
+		W   int    `json:"w"`
+		H   int    `json:"h"`
+		Url string `json:"url"`
+	} `json:"portrait"`
+	Career struct {
+		PrimaryRace string `json:"primaryrace"`
+	} `json:"career"`
+}
+
+func (oar *OAuthRequest) RequestPermission() (url string, state string) {
+	oar.config = &oauth2.Config{
+		ClientID:     oauthClientId,
+		ClientSecret: oauthClientSecret,
 		Scopes:       []string{"sc2.profile"},
-		RedirectURL:  redirect_uri,
+		RedirectURL:  oauthRedirectUri,
 		Endpoint: oauth2.Endpoint{
-			AuthURL:  EndpointUrl(authorize_uri, region),
-			TokenURL: EndpointUrl(token_uri, region),
+			AuthURL:  EndpointUrl(authorize_uri, oar.region),
+			TokenURL: EndpointUrl(token_uri, oar.region),
 		},
 	}
+	oar.state = RandState(state_length)
+	url = oar.config.AuthCodeURL(oar.state, oauth2.AccessTypeOffline)
 
-	state, _ = RandState(state_length)
-	url = conf.AuthCodeURL(state, oauth2.AccessTypeOffline)
-
-	return url, state
+	return url, oar.state
 }
 
-func RequestToken(conf *oauth2.Config, code string) (token *oauth2.Token, err error) {
-	token, err = conf.AuthenticatedExchange(oauth2.NoContext, code)
+func (oar *OAuthRequest) RequestToken() (token *oauth2.Token, err error) {
+	oar.token, err = oar.config.AuthenticatedExchange(oauth2.NoContext, oar.code)
 
-	return token, err
+	return oar.token, err
 }
 
-func RandState(length int) (state string, err error) {
-	rb := make([]byte, length)
-	_, err = rand.Read(rb)
+func RandState(length int) (state string) {
+	const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890abcdefghijklmnopqrstuvwxyz"
 
-	if err != nil {
-		state = base64.URLEncoding.EncodeToString(rb)
+	buf := make([]byte, length)
+	for j := 0; j < length; j++ {
+		buf[j] = chars[rand.Intn(len(chars))]
 	}
 
-	return state, err
+	return string(buf)
 }
 
-func AuthGet(url string, access_token string) *http.Response {
+func (oar *OAuthRequest) AuthGet(url string, access_token string) *http.Response {
 	client := new(http.Client)
 	r, _ := http.NewRequest("GET", url, nil)
 
 	AuthHeaders(r, access_token)
 	resp, err := client.Do(r)
+
 	// defer resp.Body.Close()
 
 	if err != nil {
@@ -80,14 +116,132 @@ func AuthGet(url string, access_token string) *http.Response {
 	return resp
 }
 
+// Proxu for profile
+func (oar *OAuthRequest) GetProfile() (bnetinfo BnetInfo, err error) {
+	if oar.token == nil {
+		err = errors.New("Don't have a token.")
+	} else {
+		resp := oar.AuthGet(ApiUri(api_uris["profile"], oar.region), oar.token.AccessToken)
+		// io.Copy(os.Stdout, resp.Body)
+		defer resp.Body.Close()
+
+		b, _ := ioutil.ReadAll(resp.Body)
+		err = json.Unmarshal(b, &bnetinfo)
+	}
+
+	return bnetinfo, err
+}
+
+// Proxy for sc2 profile
+func (oar *OAuthRequest) GetSC2Profile() (sc2char Sc2Char, err error) {
+	var bnetinfo BnetInfo
+	if oar.token == nil {
+		err = errors.New("Don't have a token.")
+	} else {
+		resp := oar.AuthGet(ApiUri(api_uris["sc2.profile"], oar.region), oar.token.AccessToken)
+		// io.Copy(os.Stdout, resp.Body)
+		defer resp.Body.Close()
+
+		b, _ := ioutil.ReadAll(resp.Body)
+		err = json.Unmarshal(b, &bnetinfo)
+
+		if err == nil {
+			if len(bnetinfo.Characters) == 0 {
+				err = errors.New("No characters found for this region.")
+			} else {
+				sc2char = bnetinfo.Characters[0]
+			}
+		}
+	}
+
+	return sc2char, err
+}
+
 func AuthHeaders(r *http.Request, access_token string) {
 	r.Header.Add("Authorization", "Bearer "+access_token)
 }
 
 func ApiUri(file string, region BattleNetRegion) string {
-	return protocol + "://" + region.ApiDomain() + "." + api_host + file
+	return protocol + "://" + region.ApiDomain() + file
 }
 
 func EndpointUrl(file string, region BattleNetRegion) string {
 	return protocol + "://" + region.Domain() + file
+}
+
+/*
+ * Eros helper
+ *
+ */
+
+// Requests token and fetches the SC2 profile
+func (oar *OAuthRequest) getCharInfo(code string) (char Sc2Char, err error) {
+	oar.code = code
+
+	oar.conn.logger.Println("Requesting OAuth token.")
+	oar.RequestToken()
+
+	oar.conn.logger.Println("Adding new battlenet character.")
+	char, err = AddOAuthProfile(oar)
+
+	if err != nil {
+		return
+	} else {
+		delete(activeOAuths, oar.state)
+	}
+	return
+}
+
+// Gets the SC2 profile for an authorized request
+func AddOAuthProfile(oar *OAuthRequest) (profile Sc2Char, err error) {
+	profile, err = oar.GetSC2Profile()
+
+	if err != nil {
+		oar.conn.logger.Println(err)
+		return
+	}
+
+	region := oar.region
+	subregion := profile.Realm
+	id := profile.ProfileId
+	name := profile.DisplayName
+
+	count, err := dbMap.SelectInt("SELECT COUNT(*) FROM battle_net_characters WHERE Region=? and SubRegion=? and ProfileId=?", region, subregion, id)
+
+	if err != nil {
+		err = ErosErrors(101)
+		return
+	}
+
+	if count > 0 {
+		err = ErosErrors(202)
+		return
+	}
+
+	character := NewBattleNetCharacter(region, subregion, id, name)
+	character.ClientId = &oar.conn.client.Id
+	character.IsVerified = true
+
+	if err != nil {
+		oar.conn.logger.Println(err)
+		err = ErosErrors(203)
+		return
+	}
+
+	err = dbMap.Insert(character)
+	if err != nil {
+		log.Println("Error inserting character", err)
+		err = ErosErrors(102)
+		return
+	}
+
+	// This should be its own function
+	characterCache.Lock()
+	characterCache.characterIds[character.Id] = character
+	characterCache.profileIds[character.ProfileIdString()] = character
+	characterCache.Unlock()
+
+	delete(clientCharacters, oar.conn.client.Id)
+
+	return
 }

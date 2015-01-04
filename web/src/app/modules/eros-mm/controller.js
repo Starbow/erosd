@@ -129,6 +129,22 @@ angular.module('erosApp.mm', [])
 		$scope.regions[region] = !$scope.regions[region];
 	};
 
+	$scope.updateSearchRadius = function(){
+		if(typeof $scope.search_radius !== 'number'){
+			$scope.search_radius = $scope.eros.localUser.stats.search_radius;
+			return false
+		}
+
+		if($scope.search_radius > 5){
+			$scope.search_radius = 5
+		}else if($scope.search_radius < 1){
+			$scope.search_radius = 1
+		}else{
+			// Update stats (TODO)
+			$scope.eros.localUser.stats.search_radius = $scope.search_radius;
+		}
+	}
+
 
 	$scope.copyChat = function() {
   		window.prompt("Copy to clipboard: Ctrl+C, Enter", $scope.matchmaking.match.channel);
@@ -136,7 +152,7 @@ angular.module('erosApp.mm', [])
 
 	$scope.goToMap = function(){
 		var map = $scope.matchmaking.match.map;
-		console.log('Opening map: starcraft://map/'+map.region+"/"+map.battle_net_id);
+		console.debug('Opening map: starcraft://map/'+map.region+"/"+map.battle_net_id);
 		window.open('starcraft://map/'+map.region+"/"+map.battle_net_id);
 	};
 

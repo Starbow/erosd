@@ -29,6 +29,7 @@ var (
 	activeClients     map[int64]*ClientConnection = make(map[int64]*ClientConnection)
 	usernameValidator *regexp.Regexp              = regexp.MustCompile(`^[a-zA-Z0-9_\-]{3,15}$`)
 	connectionIdBase  int64                       = 0
+	activeOAuths      map[string]OAuthRequest     = make(map[string]OAuthRequest)
 )
 
 type ClientConnectionType int
@@ -1018,10 +1019,15 @@ func (conn *ClientConnection) OnAddCharacter(txid int, data []byte) {
 }
 
 func (conn *ClientConnection) OnAuthCharacter(txid int, data []byte) {
+	var (
+		state string
+		url   string
+	)
+
 	defer conn.panicRecovery(txid)
 
 	if len(data) == 0 {
-		conn.SendResponseMessage("201", txid, []byte{})
+		conn.SendResponseMessage("201", txid, []byte("Payload too short"))
 		return
 	}
 
@@ -1029,11 +1035,36 @@ func (conn *ClientConnection) OnAuthCharacter(txid int, data []byte) {
 	err := Unmarshal(data, &request)
 
 	if err != nil {
-		conn.SendResponseMessage("201", txid, []byte{})
+		conn.SendResponseMessage("201", txid, []byte("Error unmarshalling payload"))
 		return
 	}
 
-	fmt.Println("Asked from region", request.GetRegion())
+	conn.logger.Println("Asked from region", request.GetRegion())
+
+	region := BattleNetRegion(request.GetRegion())
+
+	oauth_request := OAuthRequest{region: region, conn: conn}
+
+	// Make sure the state is unique in the active requests
+
+	for exists := true; exists; _, exists = activeOAuths[state] {
+		fmt.Println(exists)
+		url, state = oauth_request.RequestPermission()
+	}
+
+	activeOAuths[oauth_request.state] = oauth_request
+
+	// Cleanup after a given time
+	timer := time.NewTimer(time.Minute * time.Duration(oauthCodeTimeout))
+	go func() {
+		<-timer.C
+		delete(activeOAuths, oauth_request.state)
+	}()
+
+	var payload protobufs.OAuthUrl
+	payload.Url = &url
+	data, _ = Marshal(&payload)
+	conn.SendResponseMessage("BNN", txid, data)
 }
 
 func (conn *ClientConnection) OnUpdateCharacter(txid int, data []byte) {

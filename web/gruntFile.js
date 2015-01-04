@@ -103,6 +103,13 @@ module.exports = function (grunt) {
           process: true
         }
       },
+      verify_char: {
+        src: ['src/verify_char.html'],
+        dest: '<%= distdir %>/verify_char.html',
+        options: {
+          process: true
+        }
+      },
       404: {
         src: ['src/404.html'],
         dest: '<%= distdir %>/404.html',

@@ -110,7 +110,6 @@
                     console.warn("Error "+command+": "+eros.locale.Error[command]);
                 }
             });
-            console.log("[MM] Requesting queue.");
     		sendRequest(request);
     	};
 
@@ -210,8 +209,9 @@
                     if(typeof callback == 'function'){
                         callback();
                     }
-                    protobufs.OAuthUrl.decode64(payload);
-                    console.info("Go to: "+url);
+                    var response = protobufs.OAuthUrl.decode64(payload);
+                    console.debug("Request url: "+response.url);
+                    window.open(response.url)
                 }else{
                     // Need error handler
                     console.warn("Error "+command);
