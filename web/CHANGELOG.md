@@ -9,7 +9,7 @@
 - Lots of error server error catching
 - Select match channel when matched
 
-## 0.1.2 - 2014-01-04
+## 0.2.0 - 2014-01-04
 ### Added
 - Battle.net character verification through OAuth 2.0 Api
 
