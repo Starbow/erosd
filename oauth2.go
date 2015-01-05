@@ -3,7 +3,8 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"golang.org/x/oauth2"
+	// "golang.org/x/oauth2"
+	"github.com/Sikian/oauth2"
 	"io/ioutil"
 	"log"
 	"math/rand"
