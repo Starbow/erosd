@@ -9,7 +9,6 @@ import (
 	"net/http"
 
 	"errors"
-	"fmt"
 	"os"
 
 	"html/template"
@@ -103,12 +102,6 @@ func listenAndServeHTTP(address string) {
 }
 
 func listenAndServeHTTPS(address string) error {
-	if _, err := os.Stat(tlsCertPath); os.IsNotExist(err) {
-		if _, err := os.Stat(tlsKeyPath); os.IsNotExist(err) {
-			fmt.Println("no certs found, generating new self signed certs.")
-		}
-	}
-
 	if _, err := os.Stat(tlsKeyPath); err == nil {
 		r := mux.NewRouter()
 		setupRouter(r)
@@ -145,7 +138,7 @@ func listenAndServeHTTPS(address string) error {
 
 		log.Println("Listening HTTPS on", address)
 	} else {
-		log.Fatalln("No cert found for https")
+		log.Fatalln("Could not use https certs: ", err)
 	}
 	return nil
 }

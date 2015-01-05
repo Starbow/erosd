@@ -128,6 +128,7 @@ func loadConfig() error {
 	if err == nil {
 		httpListenAddresses = strings.Split(listen, ";")
 	}
+	listen, err = config.GetString("erosd", "httpslisten")
 	if err == nil {
 		httpsListenAddresses = strings.Split(listen, ";")
 	}
