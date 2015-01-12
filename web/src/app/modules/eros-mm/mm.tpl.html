@@ -13,7 +13,8 @@
 			<span id='user-division' ng-bind='localUser.stats.division'></span>
 			<span id='user-rank' ng-bind='localUser.stats.divisionRank' ng-hide="localUser.stats.placementsRemaining > 0"></span>
 			<div id='user-points' ng-bind='localUser.stats.points' ng-hide="localUser.stats.placementsRemaining > 0"></div>
-			<div id='user-placement' ng-show="localUser.stats.placementsRemaining > 0">Placement matches: {{localUser.stats.placementsRemaining}}</div>
+			<div id='user-placement' ng-show="localUser.stats.placementsRemaining > 0 && localUser.characters.length > 0">Placement matches: {{localUser.stats.placementsRemaining}}</div>
+			<div id='user-placement' ng-hide="localUser.characters.length > 0"><span style="color:white; background: #AB3E3E; border-radius: 3px; padding: 1px 5px; margin-right: 5px; cursor: pointer">+ Add profile</span></div>	
 			<!-- <div id='user-mmr' ng-bind='localUser.stats.mmr'></div> -->
 		</div>
 		
@@ -90,10 +91,30 @@
 	<!-- Right -->
 	<div id="mm-right" class="anim no-padding" ng-class='{"full": !hover}'>
 
-		<div class='pre' ng-show='matchmaking.status == "IDLE"'>
+		<div class='pre' ng-show='matchmaking.status == "IDLE"' ng-init="localUser.char_per_region = toRegions(localUser.characters)">
 			<!-- <div class="region kr" value='KR' disabled/> -->
-			<div class="region" id='region-eu' ng-class='{selected: regions.EU}' value='EU' ng-click='toggle_region("EU")'></div>
-			<div class="region" id='region-na' ng-class='{selected: regions.NA}' value='NA' ng-click='toggle_region("NA")'></div>
+			<div ng-switch on="localUser.char_per_region[1].length > 0" style="display: inline-block">
+				<div ng-switch-when="true" class="region unselectable" id='region-na' ng-class='{selected: regions.NA}' value='NA' ng-click='toggle_region("NA")'>
+					<div class="character" ng-repeat="char in localUser.char_per_region[1] track by char.profile_id">
+						<span class="glyphicon glyphicon-user"></span> {{char.character_name}}
+						<span class="small remove-char" ng-click="removeChar(char); event.stopPropagation()">x</span>
+					</div>
+				</div>
+				<div ng-switch-default class="region unselectable " disabled="disabled" id='region-na' value='NA'>
+					<div class="character rotate270" style="width:200px">
+						Add profile
+					</div>
+				</div>
+			</div>
+			<div ng-switch on="localUser.char_per_region[2].length > 0" style="display: inline-block">
+				<div ng-switch-when="true" class="region unselectable" id='region-eu' ng-class='{selected: regions.EU}' value='EU' ng-click='toggle_region("EU")'>
+					<div class="character" ng-repeat="char in localUser.char_per_region[2] track by char.profile_id">
+						<span class="glyphicon glyphicon-user"></span> {{char.character_name}}
+						<span class="small remove-char" ng-click="removeChar(char); event.stopPropagation()">x</span>
+					</div>
+				</div>
+				<div ng-switch-default class="region unselectable" disabled="disabled" id='region-eu' value='EU'></div>
+			</div>
 		</div>
 
 		<div class='queing' ng-show='matchmaking.status == "QUEUED"'>
@@ -116,5 +137,25 @@
 				<!-- <div ng-bind='matchmaking.match.opponent.stats.mmr'></div> -->
 			</div>
 			</div>
+	</div>
+
+	<!-- Modal -->
+	<div class="modal fade" id="confirmRemoveChar" tabindex="-1" role="dialog" aria-labelledby="confirmRemoveChar" aria-hidden="true" style='text-align:left; color: black; margin:0 auto; top:20%;'>
+	  	<div class="modal-dialog modal-sm">
+	    	<div class="modal-content">
+	     		<div class="modal-header" style="border:none; padding:10px; text-align:center;">
+			        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+			        <h4 class="modal-title" id="confirmRemoveCharLabel" ng-hide="char_remove_status">Are you sure you want to delete this profile?</h4>
+			        <h4 class="modal-title" id="confirmRemoveCharLabel" ng-show="char_remove_status">{{char_remove_status}}</h4>
+	      		</div>
+	      		<div class="modal-body" style="text-align:center; padding: 10px;">
+	        		<span class="small-region" style="color:white; background: #AB3E3E; border-radius: 3px; padding: 1px 5px; margin-right: 5px;"> {{char_to_remove.region | region_short}}</span>{{char_to_remove.character_name}}
+			    </div>
+			    <div class="modal-footer" style="border: none; padding:10px; text-align:center">
+			        <button type="button" class="btn round" data-dismiss="modal" ng-hide="char_remove_status">No</button>
+			        <button type="button" class="btn round" ng-click="requestCharRemove()" ng-hide="char_remove_status">Yes</button>
+	      		</div>
+	    	</div>
+	 	</div>
 	</div>
 </div>

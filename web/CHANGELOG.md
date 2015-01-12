@@ -9,6 +9,14 @@
 - Lots of error server error catching
 - Select match channel when matched
 
+## 0.2.1 - 2014-01-12
+### Added
+- Remove characters
+- Update add/remove characters on frontend
+
+### Changed
+- Matchmaking will be locked if there are no characters
+
 ## 0.2.0 - 2014-01-04
 ### Added
 - Battle.net character verification through OAuth 2.0 Api

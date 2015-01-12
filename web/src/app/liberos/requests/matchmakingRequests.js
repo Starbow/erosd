@@ -9,7 +9,8 @@
         upload: "REP",
         lp_request: "RLP",
         lp_response: "LPR",
-        auth_request: "BNN"
+        auth_request: "BNN",
+        remove_char: "BNR"
     };
 
     var MatchmakingQueueRequest = function(regions, search_range, callback){ // MMQ
@@ -227,6 +228,33 @@
         return request;
     };
 
+    var RemoveCharacterRequest = function(character, callback){
+        character = new protobufs.Character(character)
+
+        var request = new starbow.ErosRequests.Request(commands.remove_char, character.toBase64(), function(command, payload){
+            if(command === commands["remove_char"]){
+                request.result = true;
+                request.complete = true;
+
+                if (typeof (callback) === "function") {
+                    callback(true, request, payload);
+                }
+                return true;
+            }
+        }, function(command, payload){
+            console.warn("Character Remove Request Error "+command+": "+window.atob(payload));
+            callback(false, command);
+
+            if (typeof (callback) === "function") {
+                callback(false, command);
+            }
+
+            return true;
+        });
+
+        return request;
+    }
+
     global["starbow"]["ErosRequests"]["MatchmakingQueueRequest"] = MatchmakingQueueRequest;
     global["starbow"]["ErosRequests"]["MatchmakingDequeueRequest"] = MatchmakingDequeueRequest;
     global["starbow"]["ErosRequests"]["MatchmakingForfeitRequest"] = MatchmakingForfeitRequest;
@@ -234,4 +262,5 @@
     global["starbow"]["ErosRequests"]["MatchmakingLongProcessRequest"] = MatchmakingLongProcessRequest;
     global["starbow"]["ErosRequests"]["MatchmakingLongProcessResponse"] = MatchmakingLongProcessResponse;
     global["starbow"]["ErosRequests"]["OAuthVerificationRequest"] = OAuthVerificationRequest;
+    global["starbow"]["ErosRequests"]["RemoveCharacterRequest"] = RemoveCharacterRequest;
 })(this);

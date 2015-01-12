@@ -51,11 +51,17 @@ func httpServeCharVerification(w http.ResponseWriter, r *http.Request) {
 
 	// Get the OAuth for the state requested
 	if oar, ok := activeOAuths[state]; ok {
-		char, err = oar.getCharInfo(r.URL.Query()["code"][0])
+		var proto_char *BattleNetCharacter
+
+		char, proto_char, err = oar.getCharInfo(r.URL.Query()["code"][0])
 
 		if err != nil {
 			oar.conn.logger.Println(err)
 		}
+
+		payload := proto_char.CharacterMessage()
+		data, _ := Marshal(payload)
+		oar.conn.SendResponseMessage("BNN", -1, data)
 	} else {
 		err = errors.New("This is not a valid request, please try again.")
 	}

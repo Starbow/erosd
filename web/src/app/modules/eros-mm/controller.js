@@ -86,6 +86,13 @@ angular.module('erosApp.mm', [])
 					timer.stop('noShowResponseTimer');
 				}
 			});
+		},
+
+		update_characters: function(){
+			$scope.$apply(function(){
+				$scope.localUser.characters = eros.localUser.characters
+				$scope.localUser.char_per_region = $scope.toRegions(eros.localUser.characters)
+			})
 		}
 	});
 
@@ -186,4 +193,38 @@ angular.module('erosApp.mm', [])
 			return "MATCHED";
 		}
 	};
+
+	$scope.toRegions = function(input){
+		if(typeof input === 'object'){
+			var regions = []
+			for(var i = 0; i < input.length; i++){
+				if(typeof regions[input[i].region] === "undefined"){
+					regions[input[i].region] = []
+				}
+				regions[input[i].region].push(input[i])
+			}
+
+			console.log(regions)
+			return regions;
+		}
+
+		return null;		
+	}
+
+	$scope.removeChar = function(character){
+		$scope.char_to_remove = character;
+		$('#confirmRemoveChar').modal('show')
+		delete $scope.char_remove_status
+		delete $scope.char_remove_completed
+	}
+
+	$scope.requestCharRemove = function(){
+		$scope.char_remove_status = "Deleting..."
+		$scope.char_remove_completed = false
+		eros.matchmaking.request_remove_character($scope.char_to_remove,function(){
+			$scope.char_remove_status = "Completed!"
+			$scope.char_remove_completed = true
+			setTimeout(1000, function(){$('#confirmRemoveChar').modal('show')})
+		})
+	}
 }])

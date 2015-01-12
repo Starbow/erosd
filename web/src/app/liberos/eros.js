@@ -106,7 +106,31 @@
             }
         }
 
+        function addCharacter(c){
+            for(var i=0; i < eros.localUser.characters.length; i++){
+                if (eros.localUser.characters[i] == c){
+                    console.warn("Character already added")
+                    return
+                }
+            }
+
+            eros.localUser.characters.push(c)
+        }
+
+        function removeCharacter(c){
+            for(var i=0; i < eros.localUser.characters.length; i++){
+                if (eros.localUser.characters[i] == c){
+                    eros.localUser.characters.splice(i,1)
+                    // delete eros.localUser.characters[i]
+                    // eros.localUser.characters.length--
+                }
+            }
+        }
+
         this.update = update;
+        this.addCharacter = addCharacter;
+        this.removeCharacter = removeCharacter;
+
         if (typeof (u) === 'object') {
             update(u);
         }
@@ -329,6 +353,7 @@
             if (authenticated) {
                 eros.localUser = new ErosUser(eros, request.result.user);
                 eros.localUser.local = true;
+                eros.localUser.characters = request.result.character;
                 users[eros.localUser.username.toLowerCase()] = eros.localUser;
             }
 

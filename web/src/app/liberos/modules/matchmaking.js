@@ -70,6 +70,11 @@
             }else if(command=="LPR"){
                 matchmaking.controller.update_longprocess();
                 return true;
+            }else if(command=="BNN"){
+                var character = protobufs.Character.decode64(payload)
+                eros.localUser.addCharacter(character)
+                matchmaking.controller.update_characters()
+                return true;
             }else{
     			return false;
     		}
@@ -85,7 +90,8 @@
             "RLP": processServerMessage, // LongProcess Request
             "LPR": processServerMessage, // LongProcess Response
             "LPF": processServerMessage, // LongProcess Forfeit
-            "LPD": processServerMessage // LongProcess Draw
+            "LPD": processServerMessage, // LongProcess Draw
+            "BNN": processServerMessage // LongProcess Draw
     	};
 
     	this.queue = function(regions, search_range){
@@ -219,6 +225,32 @@
             });
             sendRequest(request);
         };
+
+        this.request_remove_character = function(character, callback){
+            var regions = ["NA", "EU", "KR"]
+
+            var proto_char = {
+                region: protobufs.Region[regions[character.region-1]],
+                subregion: character.subregion,
+                profile_id: character.profile_id,
+                character_name: character.character_name
+            }
+
+            var request = new starbow.ErosRequests.RemoveCharacterRequest(proto_char, function(success, command, payload){
+                if(success){
+                    eros.localUser.removeCharacter(character)
+                    matchmaking.controller.update_characters()
+
+                    if(typeof callback == 'function'){
+                        callback();
+                    }
+                }else{
+                    // Need error handler
+                    console.warn("Error "+command);
+                }
+            });
+            sendRequest(request);
+        }
     };
 
     global.starbow.Eros.prototype.modules.matchmaking = MatchmakingModule;

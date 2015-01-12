@@ -176,14 +176,14 @@ func EndpointUrl(file string, region BattleNetRegion) string {
  */
 
 // Requests token and fetches the SC2 profile
-func (oar *OAuthRequest) getCharInfo(code string) (char Sc2Char, err error) {
+func (oar *OAuthRequest) getCharInfo(code string) (char Sc2Char, proto_char *BattleNetCharacter, err error) {
 	oar.code = code
 
 	oar.conn.logger.Println("Requesting OAuth token.")
 	oar.RequestToken()
 
 	oar.conn.logger.Println("Adding new battlenet character.")
-	char, err = AddOAuthProfile(oar)
+	char, proto_char, err = AddOAuthProfile(oar)
 
 	if err != nil {
 		return
@@ -194,7 +194,7 @@ func (oar *OAuthRequest) getCharInfo(code string) (char Sc2Char, err error) {
 }
 
 // Gets the SC2 profile for an authorized request
-func AddOAuthProfile(oar *OAuthRequest) (profile Sc2Char, err error) {
+func AddOAuthProfile(oar *OAuthRequest) (profile Sc2Char, character *BattleNetCharacter, err error) {
 	profile, err = oar.GetSC2Profile()
 
 	if err != nil {
@@ -219,7 +219,7 @@ func AddOAuthProfile(oar *OAuthRequest) (profile Sc2Char, err error) {
 		return
 	}
 
-	character := NewBattleNetCharacter(region, subregion, id, name)
+	character = NewBattleNetCharacter(region, subregion, id, name)
 	character.ClientId = &oar.conn.client.Id
 	character.IsVerified = true
 

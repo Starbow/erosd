@@ -1048,7 +1048,6 @@ func (conn *ClientConnection) OnAuthCharacter(txid int, data []byte) {
 	// Make sure the state is unique in the active requests
 
 	for exists := true; exists; _, exists = activeOAuths[state] {
-		fmt.Println(exists)
 		url, state = oauth_request.RequestPermission()
 	}
 

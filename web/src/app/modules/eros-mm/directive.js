@@ -12,11 +12,12 @@ angular.module('erosApp.mm')
 			$scope.hover = $scope.statusToString(eros.matchmaking.status) != "IDLE"; // Full only when matchmaking IDLE
 
 			$elem.mouseenter(function(){
-				$scope.hover = true;
+				$scope.hover = eros.localUser.characters.length > 0;
 			});
 			$elem.mouseleave(function(){
 				if($scope.matchmaking.status == "IDLE"){
 					$scope.hover = false;
+					// $scope.hover=true;
 				}
 			});
 		}
@@ -58,4 +59,12 @@ angular.module('erosApp.mm')
 
 		return regions[input-1];
 	};
-});
+})
+
+.filter('region_short', function(){
+	return function(input){
+		var regions = ["NA", "EU", "KR"];
+
+		return regions[input-1];
+	};
+})
