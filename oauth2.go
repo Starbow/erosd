@@ -198,7 +198,7 @@ func AddOAuthProfile(oar *OAuthRequest) (profile Sc2Char, character *BattleNetCh
 	profile, err = oar.GetSC2Profile()
 
 	if err != nil {
-		oar.conn.logger.Println(err)
+		// oar.conn.logger.Println(err)
 		return
 	}
 
@@ -215,13 +215,26 @@ func AddOAuthProfile(oar *OAuthRequest) (profile Sc2Char, character *BattleNetCh
 	}
 
 	if count > 0 {
-		err = ErosErrors(202)
-		return
+		// Check if there's any profiles which have been disabled for this user
+		count, err = dbMap.SelectInt("SELECT COUNT(*) FROM battle_net_characters WHERE Region=? and SubRegion=? and ProfileId=? and ClientId=? and Enabled=?", region, subregion, id, oar.conn.client.Id, false)
+
+		if err != nil {
+			oar.conn.logger.Println(err)
+			err = ErosErrors(101)
+			return
+		}
+
+		if count == 0 {
+			// Profile exists but is not from that user
+			err = ErosErrors(202)
+			return
+		}
 	}
 
 	character = NewBattleNetCharacter(region, subregion, id, name)
 	character.ClientId = &oar.conn.client.Id
 	character.IsVerified = true
+	character.Enabled = true
 
 	if err != nil {
 		oar.conn.logger.Println(err)
@@ -229,9 +242,19 @@ func AddOAuthProfile(oar *OAuthRequest) (profile Sc2Char, character *BattleNetCh
 		return
 	}
 
-	err = dbMap.Insert(character)
+	if count == 0 {
+		// Insert the character if it's a new one
+		oar.conn.logger.Println("Inserting new character.")
+		err = dbMap.Insert(character)
+	} else {
+		// count, err = dbMap.Update(character)
+		oar.conn.logger.Println("Reenabling character.")
+		_, err = dbMap.Exec("UPDATE battle_net_characters SET Enabled=? WHERE Region=? and SubRegion=? and ProfileId=?", true, region, subregion, id)
+
+	}
+
 	if err != nil {
-		log.Println("Error inserting character", err)
+		oar.conn.logger.Println("Error inserting character", err)
 		err = ErosErrors(102)
 		return
 	}

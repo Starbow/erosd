@@ -553,7 +553,7 @@ func (c *Client) BroadcastMatchmakingIdle() {
 
 // Check if the client can queue in this region.
 func (c *Client) HasRegion(region BattleNetRegion) bool {
-	count, _ := dbMap.SelectInt("SELECT COUNT(*) FROM battle_net_characters WHERE ClientId=? and Region=? and IsVerified=?", c.Id, region, true)
+	count, _ := dbMap.SelectInt("SELECT COUNT(*) FROM battle_net_characters WHERE ClientId=? and Region=? and IsVerified=? and Enabled=?", c.Id, region, true, true)
 
 	return count > 0
 }
@@ -567,7 +567,7 @@ func (c *Client) Characters() (characters []*BattleNetCharacter, err error) {
 		return
 	}
 
-	chars, err := dbMap.Select(&BattleNetCharacter{}, "SELECT * FROM battle_net_characters WHERE ClientId=?", c.Id)
+	chars, err := dbMap.Select(&BattleNetCharacter{}, "SELECT * FROM battle_net_characters WHERE ClientId=? and Enabled=?", c.Id, true)
 	if err != nil {
 		log.Println(err)
 		characters = nil

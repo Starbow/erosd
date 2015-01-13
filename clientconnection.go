@@ -1172,7 +1172,10 @@ func (conn *ClientConnection) OnRemoveCharacter(txid int, data []byte) {
 		return
 	}
 
-	_, err = dbMap.Delete(character)
+	// _, err = dbMap.Delete(character)
+	character.Enabled = false
+	// _, err = dbMap.Update(character)
+	_, err = dbMap.Exec("UPDATE battle_net_characters SET Enabled=? WHERE Region=? and SubRegion=? and ProfileId=?", false, BattleNetRegion(character_message.GetRegion()), int(character_message.GetSubregion()), int(character_message.GetProfileId()))
 	if err != nil {
 		conn.SendResponseMessage("102", txid, []byte{})
 		conn.logger.Println(err)

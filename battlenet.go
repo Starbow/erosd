@@ -84,7 +84,7 @@ func (c *BattleNetCharacterCache) Get(region BattleNetRegion, subregion, profile
 		c.Lock()
 
 		var newChar BattleNetCharacter
-		err := dbMap.SelectOne(&newChar, "SELECT * FROM battle_net_characters WHERE Region=? and SubRegion=? and ProfileId=? and IsVerified=? LIMIT 1", region, subregion, profileId, true)
+		err := dbMap.SelectOne(&newChar, "SELECT * FROM battle_net_characters WHERE Region=? and SubRegion=? and ProfileId=? and IsVerified=? and Enabled=? LIMIT 1", region, subregion, profileId, true)
 		if err != nil || newChar.Id == 0 {
 			c.Unlock()
 			return nil
@@ -189,6 +189,7 @@ type BattleNetCharacter struct {
 	InGameProfileLink             string
 	IsVerified                    bool
 	VerificationRequestedPortrait int
+	Enabled                       bool
 }
 
 func (c *BattleNetCharacter) ApiUrl() string {

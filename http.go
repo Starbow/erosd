@@ -57,11 +57,11 @@ func httpServeCharVerification(w http.ResponseWriter, r *http.Request) {
 
 		if err != nil {
 			oar.conn.logger.Println(err)
+		} else if proto_char != nil {
+			payload := proto_char.CharacterMessage()
+			data, _ := Marshal(payload)
+			oar.conn.SendResponseMessage("BNN", -1, data)
 		}
-
-		payload := proto_char.CharacterMessage()
-		data, _ := Marshal(payload)
-		oar.conn.SendResponseMessage("BNN", -1, data)
 	} else {
 		err = errors.New("This is not a valid request, please try again.")
 	}
