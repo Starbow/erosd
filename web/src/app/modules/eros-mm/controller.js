@@ -28,7 +28,8 @@ angular.module('erosApp.mm', [])
 		EU: true
 	};
 
-	$scope.mapPool = eros.mapPool;
+	$scope.mapPool = eros.ladder.maps;
+	$scope.vetoedMaps = eros.ladder.vetoes;
 
 	$scope.uploadreplay = false;
 
@@ -99,7 +100,8 @@ angular.module('erosApp.mm', [])
 
 		update_maps: function(){
 			$scope.$apply(function(){
-				$scope.mapPool = eros.mapPool;
+				$scope.mapPool = eros.ladder.maps;
+				$scope.vetoedMaps = eros.ladder.vetoes;
 			});
 		}
 	});

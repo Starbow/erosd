@@ -12,6 +12,10 @@
 	float:right;
 }
 
+.left{
+    float: left;
+}
+
 .small {
 	font-size: 0.8em;
 }
@@ -35,6 +39,14 @@
 	margin-right: auto;
 	left: 0;
 	right: 0;
+}
+
+.red-tag {
+    color: white !important; 
+    background: $lightRedColor; 
+    border-radius: 3px; 
+    padding: 1px 5px; 
+    margin: 0 5px;
 }
 
 .unselectable {

@@ -100,6 +100,9 @@
 .right {
   float: right; }
 
+.left {
+  float: left; }
+
 .small {
   font-size: 0.8em; }
 
@@ -119,6 +122,13 @@
   margin-right: auto;
   left: 0;
   right: 0; }
+
+.red-tag {
+  color: white !important;
+  background: #ab3e3e;
+  border-radius: 3px;
+  padding: 1px 5px;
+  margin: 0 5px; }
 
 .unselectable {
   -webkit-touch-callout: none;
@@ -588,8 +598,12 @@
   #vetoesDialog .veto-box .map-img {
     display: block;
     margin: 0 auto;
-    border-radius: 5px;
-    max-width: 180px; }
+    max-width: 180px;
+    width: 180px;
+    height: 180px;
+    background: #eee; }
+    #vetoesDialog .veto-box .map-img > img {
+      border-radius: 5px; }
     #vetoesDialog .veto-box .map-img.vetoed {
       opacity: 0.5; }
   #vetoesDialog .veto-box .veto-icon {

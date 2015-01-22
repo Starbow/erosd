@@ -161,22 +161,28 @@
 	</div>
 	<div class="modal fade" id="vetoesDialog" tabindex="-1" role="dialog" aria-labelledby="vetoesDialog" aria-hidden="true" style='text-align:center; color: black; margin:0 auto;'>
 	  	<div class="modal-dialog modal-lg">
-	    	<div class="modal-content">
+	    	<div class="modal-content" ng-init="veto_region='NA'">
 	     		<div class="modal-header" style="border:none; padding:10px; text-align:center;">
 			        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-			        <h4 class="modal-title" id="vetoesDialogLabel" ng-hide="char_remove_status">
-			        	<span ng-click="veto_region='NA'">NA</span> | <span ng-click="veto_region='EU'">EU</span> | <span ng-click="veto_region='KR'">KR</span></h4>
+			        <div class="modal-title" id="vetoesDialogLabel" ng-hide="char_remove_status">
+			        	<div ng-show="veto_region" class="left" style="line-height:37px; font-size:0.95em; color:#555; width:0px;">
+			        		<div style="width: 100px; text-align: left"><span class="vetoes-left red-tag">{{eros.maxVetoes - vetoedMaps[veto_region].length}}</span>vetoes left</span></div>
+			        	</div>
+			        	<div>
+				        	<span ng-repeat="reg in eros.activeRegions" ng-click="$parent.veto_region=eros.regionFromCode(reg)" ng-class="{'red-tag': eros.regionFromCode(reg) == veto_region}" class="btn">{{eros.regionFromCode(reg)}}</span>
+				        </div>
+			        </div>
 	      		</div>
-	      		<div class="modal-body" style="text-align:center; padding: 10px;">
-	      			
+	      		<div class="modal-body small" style="text-align:center; padding: 10px;">
 	      			<div ng-repeat="(region, maps) in mapPool">
 	      				<div ng-repeat="map in maps | orderBy:'battle_net_name'" ng-show="veto_region == region" class="veto-box" ng-init="hover_map = false">
 	      					<div class="veto-icon" ng-click="toggleVeto(map)"><span class="glyphicon glyphicon-ban-circle" ng-class="{vetoed: map.vetoed}"></span></div>
-	      					<img ng-src="{{map.preview_url}}" class="map-img" ng-class="{vetoed: map.vetoed}" />
+	      					<div class="map-img" ng-class="{vetoed: map.vetoed}">
+	      						<img ng-src="{{map.preview_url}}" alt="{{map.battle_net_name}}" />
+	      					</div>
 	      					{{map.battle_net_name}}
 	      				</div>
 	      			</div>
-	        		<span  style="color:white; background: #AB3E3E; border-radius: 3px; padding: 1px 5px; margin-right: 5px;">3</span>vetoes left
 			    </div>
 			    <div class="modal-footer" style="border: none; padding:10px; text-align:center">
 			        <!-- <button type="button" class="btn round" data-dismiss="modal" ng-hide="char_remove_status">No</button>

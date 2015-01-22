@@ -10,7 +10,10 @@
 - Select match channel when matched
 - User name color in chat
 
-## 0.2.2
+## 0.2.2 - 2014-01-22
+### Added
+- Vetoes dialog
+- Add/Remove vetoes
 
 ### Changed
 - Disabling/enabling a character will update the character's name

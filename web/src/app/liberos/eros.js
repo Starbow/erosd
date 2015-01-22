@@ -89,7 +89,6 @@
 
 
         user.regions = {};
-        user.vetoes = [];
 
         function update(u) {
             user.stats.update(u);
@@ -106,9 +105,9 @@
                 }
             }
 
-            if(user.local == true && typeof u.vetoes !== 'undefined'){
-                user.vetoes = u.vetoes;
-            }
+            // if(user.local == true && typeof u.vetoes !== 'undefined'){
+            //     user.vetoes = u.vetoes;
+            // }
         }
 
         function addCharacter(c){
@@ -172,6 +171,7 @@
             eros.matchmakingState = 'idle';
             eros.activeRegions = [];
             eros.mapPool = {};
+            eros.maxVetoes = 0;
             eros.stats = {
                 users: {
                     active: 0,
@@ -181,9 +181,9 @@
             eros.localUser = {};
             eros.regions = {};
             eros.ladder = {
-                maps: [],
+                maps: {},
                 divisions: [],
-                vetoes: 0,
+                vetoes: {},
             };
             eros.latency = 0;
             users = {};
@@ -367,6 +367,7 @@
         	}
 
         	if (authenticated) {
+                eros.activeRegions = request.result.active_region;
                 for (var i = 0; i < request.result.active_region.length; i++) {
                 	var name = eros.regionFromCode(request.result.active_region[i]);
 
@@ -387,13 +388,16 @@
                     var map = request.result.map_pool.map[i];
                     if(typeof map === "object" && typeof map.region !== "undefined"){
                         var region = eros.regionFromCode(map.region);
-                        if(typeof eros.mapPool[region] === "undefined"){
-                            eros.mapPool[region] = [];
+                        if(typeof eros.ladder.maps[region] === "undefined"){
+                            eros.ladder.maps[region] = [];
                         }
-                        eros.mapPool[region].push(map);
+                        eros.ladder.maps[region].push(map);
                     }
                 }
+
+                // Mark maps as veteod
                 eros.vetoMaps(request.result.user.vetoes);
+                eros.maxVetoes = request.result.max_vetoes.low;
         	}
         };
 
@@ -498,10 +502,22 @@
         };
 
         this.vetoMaps = function(m){
-            for(var region in eros.mapPool){
-                if (eros.mapPool.hasOwnProperty(region)){
-                    for(var j = 0; j < eros.mapPool[region].length; j++){
-                        var local_map = eros.mapPool[region][j];
+            eros.ladder.vetoes = {}
+            for(var i = 0; i < m.length; i++){
+                var map = m[i];
+                if(typeof map === "object" && typeof map.region !== "undefined"){
+                    var region = eros.regionFromCode(map.region);
+                    if(typeof eros.ladder.vetoes[region] === "undefined"){
+                        eros.ladder.vetoes[region] = [];
+                    }
+                    eros.ladder.vetoes[region].push(map);
+                }
+            }
+
+            for(var region in eros.ladder.maps){
+                if (eros.ladder.maps.hasOwnProperty(region)){
+                    for(var j = 0; j < eros.ladder.maps[region].length; j++){
+                        var local_map = eros.ladder.maps[region][j];
                         var updated = false;
                         for(var v = 0; v < m.length && updated == false; v++){
                             if(m[v].battle_net_id == local_map.battle_net_id && eros.regionFromCode(m[v].region) == region){
@@ -514,6 +530,8 @@
                     }
                 }
             }
+
+            eros.matchmaking.controller.update_maps();
         }
     };
 
