@@ -8,10 +8,17 @@
 - Matched notification volume
 - Lots of error server error catching
 - Select match channel when matched
+- User name color in chat
+
+## 0.2.2
+
+### Changed
+- Disabling/enabling a character will update the character's name
+- Control OAuth NOK
 
 ## 0.2.1 - 2014-01-12
 ### Added
-- Remove characters
+- Remove (disable) characters
 - Update add/remove characters on frontend
 
 ### Changed

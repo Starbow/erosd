@@ -43,6 +43,12 @@ type OAuthRequest struct {
 	conn   *ClientConnection
 }
 
+type BnetServerResponse struct {
+	Status  string `json:"status"`
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+}
+
 type BnetInfo struct {
 	AccountId  int       `json:"id"`
 	Battletag  string    `json:"battletag"`
@@ -117,7 +123,7 @@ func (oar *OAuthRequest) AuthGet(url string, access_token string) *http.Response
 	return resp
 }
 
-// Proxu for profile
+// Proxy for profile
 func (oar *OAuthRequest) GetProfile() (bnetinfo BnetInfo, err error) {
 	if oar.token == nil {
 		err = errors.New("Don't have a token.")
@@ -136,6 +142,7 @@ func (oar *OAuthRequest) GetProfile() (bnetinfo BnetInfo, err error) {
 // Proxy for sc2 profile
 func (oar *OAuthRequest) GetSC2Profile() (sc2char Sc2Char, err error) {
 	var bnetinfo BnetInfo
+	var bnetstatus BnetServerResponse
 	if oar.token == nil {
 		err = errors.New("Don't have a token.")
 	} else {
@@ -148,7 +155,18 @@ func (oar *OAuthRequest) GetSC2Profile() (sc2char Sc2Char, err error) {
 
 		if err == nil {
 			if len(bnetinfo.Characters) == 0 {
-				err = errors.New("No characters found for this region.")
+
+				err = json.Unmarshal(b, &bnetstatus)
+				log.Println(bnetstatus.Status)
+
+				if bnetstatus.Status == "nok" {
+					if bnetstatus.Code == 500 {
+						err = errors.New("Battle.net Server Internal Error. Please try again later.")
+					}
+				} else {
+					err = errors.New("No characters found for this region.")
+				}
+
 			} else {
 				sc2char = bnetinfo.Characters[0]
 			}
@@ -249,7 +267,7 @@ func AddOAuthProfile(oar *OAuthRequest) (profile Sc2Char, character *BattleNetCh
 	} else {
 		// count, err = dbMap.Update(character)
 		oar.conn.logger.Println("Reenabling character.")
-		_, err = dbMap.Exec("UPDATE battle_net_characters SET Enabled=? WHERE Region=? and SubRegion=? and ProfileId=?", true, region, subregion, id)
+		_, err = dbMap.Exec("UPDATE battle_net_characters SET Enabled=?, CharacterName=? WHERE Region=? and SubRegion=? and ProfileId=?", true, name, region, subregion, id)
 
 	}
 
