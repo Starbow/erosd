@@ -31,7 +31,7 @@ angular.module('erosApp.mm')
 		controller: 'MmCtrl',
 		link: function($scope, $elem, $attrs, $controller){
 			var _original_text = $($elem[0]).find('a').html()
-			$scope.regions = ["NA", "EU", "KR"];
+			$scope.bnet_regions = ["NA", "EU", "KR"];
 
 			$scope.RequestVerification = function(region){
 				if(typeof region == "string"){

@@ -75,6 +75,11 @@
                 eros.localUser.addCharacter(character)
                 matchmaking.controller.update_characters()
                 return true;
+            }else if(command=="VET"){
+                var vetoed_maps = protobufs.MapPool.decode64(payload).map;
+                eros.vetoMaps(vetoed_maps);
+                matchmaking.controller.update_maps();
+                return true;
             }else{
     			return false;
     		}
@@ -91,7 +96,8 @@
             "LPR": processServerMessage, // LongProcess Response
             "LPF": processServerMessage, // LongProcess Forfeit
             "LPD": processServerMessage, // LongProcess Draw
-            "BNN": processServerMessage // LongProcess Draw
+            "BNN": processServerMessage, // LongProcess Draw
+            "VET": processServerMessage // Map Vetos
     	};
 
     	this.queue = function(regions, search_range){
@@ -249,6 +255,20 @@
                     console.warn("Error "+command);
                 }
             });
+            sendRequest(request);
+        }
+
+        this.toggleVeto = function(map){
+            var request = new starbow.ErosRequests.ToggleVetoRequest(map, function(success, command, payload){
+                if(success){
+                    var vetoed_maps = protobufs.MapPool.decode64(payload).map;
+                    eros.vetoMaps(vetoed_maps);
+                    matchmaking.controller.update_maps();
+                }else{
+                    // Need error handler
+                    console.warn("Error "+command);
+                }
+            })
             sendRequest(request);
         }
     };

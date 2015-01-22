@@ -269,11 +269,17 @@
         background: #e5e5e5;
         border: none;
         padding-left: 10px;
-        font-size: 12px; }
+        font-size: 12px;
+        border: 1px solid #ddd; }
+        [eros-chat] #chat-content #chat-input input:hover {
+          border: 1px solid #bbb; }
+        [eros-chat] #chat-content #chat-input input:focus {
+          border: 1px solid #aaa; }
       [eros-chat] #chat-content #chat-input button {
         position: absolute;
         bottom: 0;
         right: 0;
+        cursor: pointer;
         border: none;
         padding: 0;
         height: 27px;
@@ -480,24 +486,29 @@
     position: absolute;
     padding-top: 45px;
     height: 218px;
-    color: #ab3e3e;
+    /*color: $mmColor;*/
     display: inline-block;
     cursor: default;
-    background: #ffffff;
+    /*background: #ffffff;*/
     /* Old browsers */
+    background: rgba(171, 62, 62, 0);
     z-index: 50;
-    left: 15px; }
+    left: 15px;
+    /*&.anim > .svg {
+			transition: 0.1s ease-in left; 
+			left:99.5%;
+		}*/ }
     #eros-mm #mm-left.anim {
-      transition: 0.1s ease-in right;
-      right: 83%; }
+      transition: 0.12s ease-in right;
+      right: 83%;
+      background: rgba(171, 62, 62, 0); }
     #eros-mm #mm-left.anim.full {
-      right: 15px; }
-    #eros-mm #mm-left.anim > .svg {
-      transition: 0.1s ease-in left;
-      left: 99.5%; }
+      right: 15px;
+      background: #ab3e3e; }
     #eros-mm #mm-left.anim.full > .svg {
       left: 0px; }
     #eros-mm #mm-left .svg {
+      display: none;
       position: absolute;
       top: 0px;
       left: 99.5%;
@@ -511,7 +522,7 @@
     right: 240px; }
     #eros-mm #mm-center .queue, #eros-mm #mm-center .dequeue {
       position: relative;
-      top: 120px; }
+      top: 90px; }
     #eros-mm #mm-center .timer {
       position: absolute;
       top: 30px;
@@ -569,5 +580,33 @@
     background-image: url(../img/mm-eu.png); }
   #eros-mm #region-na {
     background-image: url(../img/mm-na.png); }
+
+#vetoesDialog .veto-box {
+  display: inline-block;
+  width: 200px;
+  margin-bottom: 10px; }
+  #vetoesDialog .veto-box .map-img {
+    display: block;
+    margin: 0 auto;
+    border-radius: 5px;
+    max-width: 180px; }
+    #vetoesDialog .veto-box .map-img.vetoed {
+      opacity: 0.5; }
+  #vetoesDialog .veto-box .veto-icon {
+    height: 0px;
+    overflow: visible; }
+    #vetoesDialog .veto-box .veto-icon > span {
+      font-size: 100px;
+      padding: 40px;
+      /*color: $darkerRedColor;*/
+      color: #ab3e3e;
+      opacity: 0;
+      cursor: pointer;
+      z-index: 10; }
+      #vetoesDialog .veto-box .veto-icon > span.vetoed {
+        color: #ab3e3e;
+        opacity: 1; }
+    #vetoesDialog .veto-box .veto-icon > span:hover {
+      opacity: 1; }
 
 /*# sourceMappingURL=app.css.map */

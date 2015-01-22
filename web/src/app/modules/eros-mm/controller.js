@@ -23,10 +23,12 @@ angular.module('erosApp.mm', [])
 	// $scope.$parent.noShowTimerResponse = {s: 0, m:0}
 	$scope.timerInterval = [];
 
-	$scope.regions = {
+	$scope.selected_regions = {
 		NA: false,
 		EU: true
 	};
+
+	$scope.mapPool = eros.mapPool;
 
 	$scope.uploadreplay = false;
 
@@ -63,8 +65,8 @@ angular.module('erosApp.mm', [])
 		update_match: function(match){
 			$scope.$apply(function(){
 				$scope.matchmaking.match = match;
-				$scope.regions.NA = match.map.region == 1; 
-				$scope.regions.EU = match.map.region == 2;
+				$scope.selected_regions.NA = match.map.region == 1; 
+				$scope.selected_regions.EU = match.map.region == 2;
 
 				if (eros.chat.rooms[match.match_room]){
 					eros.chat.rooms()[match.match_room].name = "MATCH " + eros.chat.rooms()[match.match_room].name;
@@ -93,13 +95,19 @@ angular.module('erosApp.mm', [])
 				$scope.localUser.characters = eros.localUser.characters
 				$scope.localUser.char_per_region = $scope.toRegions(eros.localUser.characters)
 			})
+		},
+
+		update_maps: function(){
+			$scope.$apply(function(){
+				$scope.mapPool = eros.mapPool;
+			});
 		}
 	});
 
 	$scope.queue = function(){
 
 		var regions = [];
-		_.each($scope.regions, function(value, key){
+		_.each($scope.selected_regions, function(value, key){
 			if(value){
 				regions.push(protobufs.Region[key]);
 				// switch(key) {
@@ -133,7 +141,7 @@ angular.module('erosApp.mm', [])
 	};
 
 	$scope.toggle_region = function(region){
-		$scope.regions[region] = !$scope.regions[region];
+		$scope.selected_regions[region] = !$scope.selected_regions[region];
 	};
 
 	$scope.updateSearchRadius = function(){
@@ -226,5 +234,14 @@ angular.module('erosApp.mm', [])
 			$scope.char_remove_completed = true
 			setTimeout(1000, function(){$('#confirmRemoveChar').modal('show')})
 		})
+	}
+
+	$scope.vetoModal = function(){
+		$('#vetoesDialog').modal('show');
+	}
+
+	$scope.toggleVeto = function(map) {
+		// map.vetoed = true;
+		eros.matchmaking.toggleVeto(map)
 	}
 }])

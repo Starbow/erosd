@@ -140,32 +140,32 @@ $mmHeight: 218px;
 		position:absolute;
 		padding-top: 45px;
 		height: $mmHeight;
-		color: $mmColor;
+		/*color: $mmColor;*/
 		display: inline-block;
 
 		cursor: default;
 
-		background: #ffffff; /* Old browsers */
+		/*background: #ffffff;*/ /* Old browsers */
+		background: rgba(171, 62, 62, 0);
 
 		z-index: 50;
 
-		// &.anim { transition: 0.1s ease-in width; width: 16.6666%; margin:0px; left:0px}
-		// &.anim.full { width:100% }
-
 		left: 15px;
-		&.anim { transition: 0.1s ease-in right; right:83%;}
-		&.anim.full { right:15px }
+		&.anim { transition: 0.12s ease-in right; right:83%; background: rgba(171, 62, 62, 0);}
+		&.anim.full { right:15px; background: rgba(171, 62, 62, 1); }
 
-		&.anim > .svg {
+		/*&.anim > .svg {
 			transition: 0.1s ease-in left; 
 			left:99.5%;
-		}
+		}*/
 
 		&.anim.full > .svg  { 
 			left:0px;
 		}
 
 		.svg {
+			display: none;
+
 			position:absolute;
 			top:0px;
 			left:99.5%;
@@ -187,7 +187,7 @@ $mmHeight: 218px;
 
 		.queue, .dequeue{
 			position: relative;
-			top:120px;
+			top:90px;
 		}
 
 		.timer {
@@ -293,5 +293,52 @@ $mmHeight: 218px;
 	#region-na{
 		background-image: url(../img/mm-na.png);
 	}
+
+}
+
+#vetoesDialog {
+	.veto-box{
+		display:inline-block; 
+		width:200px;
+		margin-bottom: 10px;
+
+		.map-img {
+			display:block; 
+			margin: 0 auto; 
+			border-radius: 5px; 
+			max-width: 180px;
+
+			&.vetoed {
+				opacity: 0.5;
+			}
+		}
+
+		.veto-icon{
+			height: 0px;
+			overflow: visible;
+
+			&>span {
+				font-size: 100px;
+				padding: 40px;
+				/*color: $darkerRedColor;*/
+
+				color:$lightRedColor;
+
+				opacity: 0;
+				cursor: pointer;
+				z-index: 10;
+
+				&.vetoed{
+					color:$lightRedColor;
+					opacity: 1;
+				}
+			}
+
+			&>span:hover{
+				opacity: 1;
+			}
+		}
+	}
+
 
 }

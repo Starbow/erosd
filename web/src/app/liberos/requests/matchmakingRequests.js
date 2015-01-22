@@ -10,7 +10,8 @@
         lp_request: "RLP",
         lp_response: "LPR",
         auth_request: "BNN",
-        remove_char: "BNR"
+        remove_char: "BNR",
+        toggle_veto: "VET"
     };
 
     var MatchmakingQueueRequest = function(regions, search_range, callback){ // MMQ
@@ -253,7 +254,44 @@
         });
 
         return request;
+    };
+
+    var ToggleVetoRequest = function(map, callback){
+        try{
+            map = new protobufs.Map(
+                map.region, 
+                map.battle_net_name,
+                map.battle_net_id
+            );
+        }catch(e){
+            console.error(e);
+            return null;
+        }
+
+        var request = new starbow.ErosRequests.Request(commands.toggle_veto, map.toBase64(), function(command, payload){
+            if(command === commands["toggle_veto"]){
+                request.result = true;
+                request.complete = true;
+
+                if (typeof (callback) === "function") {
+                    callback(true, request, payload);
+                }
+                return true;
+            }
+        }, function(command, payload){
+            console.warn("Toggle Veto Request Error "+command+": "+window.atob(payload));
+            callback(false, command);
+
+            if (typeof (callback) === "function") {
+                callback(false, command);
+            }
+
+            return true;
+        });
+
+        return request;
     }
+
 
     global["starbow"]["ErosRequests"]["MatchmakingQueueRequest"] = MatchmakingQueueRequest;
     global["starbow"]["ErosRequests"]["MatchmakingDequeueRequest"] = MatchmakingDequeueRequest;
@@ -263,4 +301,5 @@
     global["starbow"]["ErosRequests"]["MatchmakingLongProcessResponse"] = MatchmakingLongProcessResponse;
     global["starbow"]["ErosRequests"]["OAuthVerificationRequest"] = OAuthVerificationRequest;
     global["starbow"]["ErosRequests"]["RemoveCharacterRequest"] = RemoveCharacterRequest;
+    global["starbow"]["ErosRequests"]["ToggleVetoRequest"] = ToggleVetoRequest;
 })(this);

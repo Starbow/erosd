@@ -13,6 +13,8 @@ angular.module('erosApp.chat', ['ngAudio'])
 				if(typeof room == "object"){
 					$scope.$parent.selectedRoom = room;
 					$rootScope.$emit("chat_room","selectedRoom");
+
+					$('#chat-input > input').focus()
 				}
 			};
 

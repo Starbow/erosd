@@ -88,7 +88,8 @@
         }
 
 
-        this.regions = {};
+        user.regions = {};
+        user.vetoes = [];
 
         function update(u) {
             user.stats.update(u);
@@ -103,6 +104,10 @@
                 } else {
                     user.regions[name].update(region);
                 }
+            }
+
+            if(user.local == true && typeof u.vetoes !== 'undefined'){
+                user.vetoes = u.vetoes;
             }
         }
 
@@ -166,7 +171,7 @@
         function reset() {
             eros.matchmakingState = 'idle';
             eros.activeRegions = [];
-            eros.mapPool = [];
+            eros.mapPool = {};
             eros.stats = {
                 users: {
                     active: 0,
@@ -371,11 +376,24 @@
             				searching: 0
             			}
             		};
-                	
-	                if (typeof (options.regionUpdate) === "function") {
-	                	options.regionUpdate(eros, name);
-	                }
+
+                    if (typeof (options.regionUpdate) === "function") {
+                        options.regionUpdate(eros, name);
+                    }
                 }
+
+                // Maps
+                for(var i = 0; i < request.result.map_pool.map.length; i++){
+                    var map = request.result.map_pool.map[i];
+                    if(typeof map === "object" && typeof map.region !== "undefined"){
+                        var region = eros.regionFromCode(map.region);
+                        if(typeof eros.mapPool[region] === "undefined"){
+                            eros.mapPool[region] = [];
+                        }
+                        eros.mapPool[region].push(map);
+                    }
+                }
+                eros.vetoMaps(request.result.user.vetoes);
         	}
         };
 
@@ -401,9 +419,9 @@
             }
         }
 
-        this.mapPool = function () {
-            return mapPool.slice(0);
-        };
+        // this.mapPool = function () {
+        //     return mapPool.slice(0);
+        // };
 
         this.disconnect = function () {
             if (typeof (socket) === 'undefined') {
@@ -476,6 +494,25 @@
             if(typeof options === "object"){
                 eros.controllers[module] = options
                 eros[module].controller = options
+            }
+        };
+
+        this.vetoMaps = function(m){
+            for(var region in eros.mapPool){
+                if (eros.mapPool.hasOwnProperty(region)){
+                    for(var j = 0; j < eros.mapPool[region].length; j++){
+                        var local_map = eros.mapPool[region][j];
+                        var updated = false;
+                        for(var v = 0; v < m.length && updated == false; v++){
+                            if(m[v].battle_net_id == local_map.battle_net_id && eros.regionFromCode(m[v].region) == region){
+                                local_map.vetoed = true;
+                                updated = true;
+                            }
+                        }
+                        if(!updated)
+                            local_map.vetoed = false;
+                    }
+                }
             }
         }
     };
