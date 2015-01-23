@@ -120,8 +120,8 @@
 
 		<div class='queing' ng-show='matchmaking.status == "QUEUED"'>
 			<!-- <div ng-repeat='region in selected-regions' class='region' /> -->
-			<div class="region selected" id='region-eu' ng-show='regions.EU' value='EU'></div>
-			<div class="region selected" id='region-na' ng-show='regions.NA' value='NA'></div>
+			<div class="region selected" id='region-eu' ng-show='selected_regions.EU' value='EU'></div>
+			<div class="region selected" id='region-na' ng-show='selected_regions.NA' value='NA'></div>
 		</div>
 
 		<div class='matched' ng-show='matchmaking.status == "MATCHED"'>
