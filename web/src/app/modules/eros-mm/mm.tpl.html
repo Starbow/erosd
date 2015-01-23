@@ -127,14 +127,14 @@
 		<div class='matched' ng-show='matchmaking.status == "MATCHED"'>
 			<div style="float:right"> 
 				<!-- <div ng-repeat='region in selected-regions' class='region' /> -->
-				<div class="region selected" id='region-eu' ng-show='regions.EU' value='EU'></div>
-				<div class="region selected" id='region-na' ng-show='regions.NA' value='NA'></div>
+				<div class="region selected" id='region-eu' ng-show='selected_regions.EU' value='EU'></div>
+				<div class="region selected" id='region-na' ng-show='selected_regions.NA' value='NA'></div>
 			</div>
 			<div class='player' style="float:right">
 				<div id='user-username' ng-bind='matchmaking.match.opponent.username'></div>
 				<span id='user-division' ng-bind='matchmaking.match.opponent.stats.division'></span>
-				<span id='user-rank' ng-bind='matchmaking.match.opponent.stats.divisionRank'></span>
-				<div id='user-points' ng-bind='matchmaking.match.opponent.stats.points'></div>
+				<span id='user-rank' ng-bind='matchmaking.match.opponent.stats.divisionRank' ng-hide="matchmaking.match.opponent.stats.placementsRemaining > 0"></span>
+				<div id='user-points' ng-bind='matchmaking.match.opponent.stats.points' ng-hide="matchmaking.match.opponent.stats.placementsRemaining > 0"></div>
 				<!-- <div ng-bind='matchmaking.match.opponent.stats.mmr'></div> -->
 			</div>
 			</div>
