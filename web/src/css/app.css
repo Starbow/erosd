@@ -76,7 +76,9 @@
 #navbar {
   height: 45px;
   background-color: #2e2e2e;
-  width: 1020px;
+  /*background-color: $redColor;*/
+  /*background-image: url('/static/img/navbar.jpg'); */
+  max-width: 1020px;
   font-size: 20px;
   line-height: 45px;
   font-family: 'goboldregular';
@@ -262,6 +264,8 @@
       top: 41px;
       bottom: 31px;
       font-size: 13px; }
+      [eros-chat] #chat-content #chat-text .old-messages {
+        opacity: 0.6; }
       [eros-chat] #chat-content #chat-text .chat-event {
         color: #aaa; }
     [eros-chat] #chat-content #chat-input {

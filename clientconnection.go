@@ -383,6 +383,8 @@ func (conn *ClientConnection) read() {
 				go conn.OnChatMessage(txid, data)
 			case "UPM":
 				go conn.OnPrivateMessage(txid, data)
+			case "UCH":
+				go conn.OnChatHistory(txid, data)
 			case "UCI":
 				go conn.OnChatIndex(txid, data)
 			case "RLP":
@@ -444,6 +446,7 @@ func (conn *ClientConnection) read() {
 // 509 - Can't create room. Name too short.
 // 510 - Can't send message. Rate limit.
 // 511 - Can't send message. Message too long.
+// 512 - Room not found.
 func ErrorCode(err error) string {
 	if err == ErrLadderClientNotInvolved {
 		return "304"
@@ -473,8 +476,7 @@ func ErrorCode(err error) string {
 		return "509"
 	} else if err == ErrLadderGameNotPrearranged {
 		return "314"
-
-	} else {
+	} else { // Generic
 		return "106"
 	}
 }
@@ -833,6 +835,7 @@ func (conn *ClientConnection) OnChatMessage(txid int, data []byte) {
 	room, ok := conn.chatRooms[key]
 	if ok {
 		conn.logger.Println("Sent chat message to room", key, ":", message.GetMessage())
+		// room.SaveMessage(conn message)
 		msg := room.ChatRoomMessageMessage(conn, &message)
 		room.message <- &msg
 		conn.SendResponseMessage("UCM", txid, []byte{})
@@ -880,6 +883,29 @@ parent:
 		conn.SendResponseMessage("UCI", txid, data)
 	} else {
 		conn.SendResponseMessage("106", txid, []byte{})
+	}
+}
+
+func (conn *ClientConnection) OnChatHistory(txid int, data []byte) {
+	defer conn.panicRecovery(txid)
+
+	var messages protobufs.ChatHistoryMessages
+	var from protobufs.ChatRoomRequest
+
+	err := Unmarshal(data, &from)
+	room := conn.chatRooms[cleanChatRoomName(from.GetRoom())]
+
+	if room == nil {
+		conn.SendResponseMessage("512", txid, []byte{})
+	} else {
+		messages.Message = room.messageCache
+
+		data, err = Marshal(&messages)
+		if err == nil {
+			conn.SendResponseMessage("UCH", txid, data)
+		} else {
+			conn.SendResponseMessage("106", txid, []byte{})
+		}
 	}
 }
 
@@ -1046,7 +1072,6 @@ func (conn *ClientConnection) OnAuthCharacter(txid int, data []byte) {
 	oauth_request := OAuthRequest{region: region, conn: conn}
 
 	// Make sure the state is unique in the active requests
-
 	for exists := true; exists; _, exists = activeOAuths[state] {
 		url, state = oauth_request.RequestPermission()
 	}

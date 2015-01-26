@@ -101,6 +101,8 @@ func loadConfig() error {
 		config.AddOption("chat", "delay", "250")
 		config.AddOption("chat", "maxthrottletime", "300")
 		config.AddOption("chat", "maxmessagelength", "256")
+		config.AddOption("chat", "maxmessagecache", "500")
+
 		config.AddSection("python")
 		config.AddOption("python", "port", ":54321")
 
@@ -197,6 +199,9 @@ func loadConfig() error {
 	chatMaxThrottleTime = time.Duration(mtt) * time.Second
 	delay, _ := config.GetInt64("chat", "delay")
 	chatDelay = time.Duration(delay) * time.Millisecond
+
+	maxMessageCache64, _ := config.GetInt64("chat", "maxmessagecache")
+	maxMessageCache = int(maxMessageCache64)
 
 	// OAuth
 	oauthClientId, _ = config.GetString("oauth2", "clientid")

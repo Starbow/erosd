@@ -132,11 +132,16 @@ message ChatRoomMessage {
 	required ChatRoomInfo room = 1;
 	required UserStats sender = 2;
 	required string message = 3;
+	optional int64 timestamp = 4;
 }
 
 message ChatPrivateMessage {
 	required UserStats sender = 1;
 	required string message = 2;
+}
+
+message ChatHistoryMessages {
+	repeated ChatRoomMessage message = 1;
 }
 
 message ChatRoomUser {

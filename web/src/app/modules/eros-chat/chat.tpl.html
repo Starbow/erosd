@@ -1,7 +1,10 @@
 <div id="chat-content">
 	<h2 id="chat-channel-name">{{selectedRoom.room.name.toUpperCase()}}{{selectedRoom.priv.name}}</h2>
 	<div id="chat-text" scroll-glue>
-		<div ng-repeat="message in selectedRoom.messages">
+		<div ng-repeat="message in selectedRoom.old_messages | orderBy: 'date'" ng-if="selectedRoom.room" class="old-messages">
+			<span><span class="message-date">[{{message.date.toLocaleTimeString()}}]</span> <a href='#' class="message-sender" user="{{message.sender.username}}" ng-bind="message.sender.username" ng-click="addUserMsg(message.sender.username)"></a>: <span chat-message></span></span>
+		</div>
+		<div ng-repeat="message in selectedRoom.messages | orderBy: 'date'">
 			<span ng-if="message.event"><span class="message-date">[{{message.date.toLocaleTimeString()}}]</span> <span class="chat-event">{{message.sender.username}} {{message.message}}</span></span>
 			<span ng-if="!message.event"><span class="message-date">[{{message.date.toLocaleTimeString()}}]</span> <a href='#' class="message-sender" user="{{message.sender.username}}" ng-bind="message.sender.username" ng-click="addUserMsg(message.sender.username)"></a>: <span chat-message></span></span>
 		</div>
@@ -16,7 +19,7 @@
 <!-- Left Navigation: Chat channels, Private channels, Join Rooms -->
 
 <div id="chat-left-nav" ng-mouseenter="navhover = true" ng-mouseleave="navhover = false" ng-class="{'expand': navhover || showIndex}" ng-init='eros.chat.fetchRoomsIndex();'> <!--setDefaultRoom(rooms[Object.keys(rooms)[0]])-->
-	<li class="chat-channels" ng-repeat="room in rooms" ng-hide="showIndex" >
+	<li class="chat-channels" ng-repeat="room in rooms" ng-hide="showIndex" ng-init="eros.chat.requestChatHistory(room.room)">
 		<div ng-class="{'selected': selectedRoom.room.key==room.room.key}" class='channel' ng-click="selectRoom(room); room.visit()" >
 			<div class='select-channel'>
 				<span ng-hide="navhover" class='short'>{{room.room.name.slice(0,1).toUpperCase()}}</span>

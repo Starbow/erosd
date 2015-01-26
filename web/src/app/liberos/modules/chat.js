@@ -428,6 +428,26 @@
                 writeToChannel()
             }
         }
+
+        this.requestChatHistory = function(room){
+            sendRequest(new starbow.ErosRequests.ChatHistoryMessages(room, function(request){
+                var messages = []
+                for(var i = 0; i < request.result.message.length; i++){
+
+                    var row = request.result.message[i]
+                    var message = {
+                        'room': chat.room(row.room.key),
+                        'user': eros.user(row.sender.username),
+                        'content': row.message,
+                        'timestamp': row.timestamp || "1422217480"
+                    }
+                    messages.push(message)                    
+                }
+                if (typeof (options.message) === "function") {
+                    options.oldMessages(eros, messages);
+                }
+            }))
+        }
     };
 
     global.starbow.Eros.prototype.modules.chat = ChatModule;

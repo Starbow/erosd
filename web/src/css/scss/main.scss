@@ -82,9 +82,10 @@ $navHeight: 45px;
 #navbar {
     height: $navHeight;
     background-color: $navGrey;
-    // background-color: $redColor;
-    // background-image: url('/static/img/navbar.png');
-    width:$contentWidth;
+    /*background-color: $redColor;*/
+    /*background-image: url('/static/img/navbar.jpg'); */
+    
+    max-width:$contentWidth;
 
     font-size: 20px;
     line-height: $navHeight;

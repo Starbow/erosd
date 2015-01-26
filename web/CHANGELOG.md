@@ -1,14 +1,14 @@
 # Change Log
 
 ### Unresolved
-- Make config for local development (mocking, etc.)
-- Join private Room (just UI)
-- Create Room (just UI)
-- Request Draw
-- Matched notification volume
-- Lots of error server error catching
-- Select match channel when matched
-- User name color in chat
+
+## 0.2.3 - 2014-01-26
+## Added
+- Chat history for public chats
+
+## Changed
+- Fix both regions showing on queue and when matched
+- Fix how users on placement are showing when matched (no rank/points should show)
 
 ## 0.2.2 - 2014-01-22
 ### Added

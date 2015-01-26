@@ -28,6 +28,7 @@ var (
 	ErrChatRoomReserved      error = errors.New("The chat room name is reserved.")
 	ErrChatRoomNameTooShort  error = errors.New("The chat room name is too short")
 	_                              = log.Ldate
+	maxMessageCache          int   = 2
 )
 
 func initChat() {
@@ -59,6 +60,8 @@ type ChatRoom struct {
 
 	logger  *log.Logger
 	logFile *os.File
+
+	messageCache []*protobufs.ChatRoomMessage
 
 	sync.RWMutex
 }
@@ -283,11 +286,21 @@ func (ch *ChatRoom) ChatRoomMessageMessage(client *ClientConnection, message *pr
 		chat *protobufs.ChatRoomInfo = ch.ChatRoomInfoMessage(false)
 		user *protobufs.UserStats    = client.client.UserStatsMessage()
 		msg  protobufs.ChatRoomMessage
+		now  int64 = time.Now().Unix()
 	)
 	msg.Room = chat
 	msg.Sender = user
 	messageString := message.GetMessage()
 	msg.Message = &messageString
+	msg.Timestamp = &now
+
+	// Save message into cache
+	if len(ch.messageCache) >= maxMessageCache {
+		ch.messageCache[0] = nil
+		ch.messageCache = ch.messageCache[1:]
+	}
+	ch.messageCache = append(ch.messageCache, &msg)
+
 	return msg
 
 }

@@ -96,6 +96,8 @@ func initDb() (err error) {
 	dbMap.AddTableWithName(Map{}, "maps").SetKeys(true, "Id")
 	dbMap.AddTableWithName(MapVeto{}, "map_vetoes").SetKeys(true, "Id")
 
+	// dbMap.AddTableWithName(ChatMessage{}, "chat_messages").SetKeys(true, "Id")
+
 	if testMode {
 		dbMap.AddTableWithName(RealUser{}, "user_user").SetKeys(true, "Id")
 	}

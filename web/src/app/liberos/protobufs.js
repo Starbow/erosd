@@ -21,7 +21,8 @@ var protobufs = dcodeIO.ProtoBuf.newBuilder().import({
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "Division",
@@ -71,7 +72,8 @@ var protobufs = dcodeIO.ProtoBuf.newBuilder().import({
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "HandshakeResponse",
@@ -154,7 +156,8 @@ var protobufs = dcodeIO.ProtoBuf.newBuilder().import({
                 }
             ],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "UserRegionStats",
@@ -223,7 +226,7 @@ var protobufs = dcodeIO.ProtoBuf.newBuilder().import({
                     "id": 9
                 },
                 {
-                    "rule": "required",
+                    "rule": "optional",
                     "options": {},
                     "type": "int64",
                     "name": "division_rank",
@@ -232,7 +235,8 @@ var protobufs = dcodeIO.ProtoBuf.newBuilder().import({
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "UserStats",
@@ -338,7 +342,8 @@ var protobufs = dcodeIO.ProtoBuf.newBuilder().import({
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "MapPool",
@@ -353,7 +358,8 @@ var protobufs = dcodeIO.ProtoBuf.newBuilder().import({
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "Map",
@@ -403,7 +409,8 @@ var protobufs = dcodeIO.ProtoBuf.newBuilder().import({
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "SimulationResult",
@@ -432,7 +439,8 @@ var protobufs = dcodeIO.ProtoBuf.newBuilder().import({
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "MatchmakingQueue",
@@ -454,7 +462,8 @@ var protobufs = dcodeIO.ProtoBuf.newBuilder().import({
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "MatchmakingResult",
@@ -481,7 +490,7 @@ var protobufs = dcodeIO.ProtoBuf.newBuilder().import({
                     "id": 3
                 },
                 {
-                    "rule": "optional",
+                    "rule": "required",
                     "options": {},
                     "type": "int64",
                     "name": "opponent_latency",
@@ -525,7 +534,8 @@ var protobufs = dcodeIO.ProtoBuf.newBuilder().import({
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "ChatRoomInfo",
@@ -589,7 +599,8 @@ var protobufs = dcodeIO.ProtoBuf.newBuilder().import({
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "ChatRoomIndex",
@@ -604,7 +615,8 @@ var protobufs = dcodeIO.ProtoBuf.newBuilder().import({
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "ChatMessage",
@@ -633,7 +645,8 @@ var protobufs = dcodeIO.ProtoBuf.newBuilder().import({
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "ChatRoomMessage",
@@ -658,11 +671,19 @@ var protobufs = dcodeIO.ProtoBuf.newBuilder().import({
                     "type": "string",
                     "name": "message",
                     "id": 3
+                },
+                {
+                   "rule": "optional",
+                    "options": {},
+                    "type": "int64",
+                    "name": "timestamp",
+                    "id": 4
                 }
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "ChatPrivateMessage",
@@ -684,7 +705,24 @@ var protobufs = dcodeIO.ProtoBuf.newBuilder().import({
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
+        },
+        {
+            "name": "ChatHistoryMessages",
+            "fields": [
+                {
+                    "rule": "repeated",
+                    "options": {},
+                    "type": "ChatRoomMessage",
+                    "name": "message",
+                    "id": 1
+                }
+            ],
+            "enums": [],
+            "messages": [],
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "ChatRoomUser",
@@ -706,7 +744,8 @@ var protobufs = dcodeIO.ProtoBuf.newBuilder().import({
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "ChatRoomRequest",
@@ -728,7 +767,8 @@ var protobufs = dcodeIO.ProtoBuf.newBuilder().import({
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "MatchmakingStats",
@@ -750,7 +790,8 @@ var protobufs = dcodeIO.ProtoBuf.newBuilder().import({
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "ServerStats",
@@ -779,7 +820,8 @@ var protobufs = dcodeIO.ProtoBuf.newBuilder().import({
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "Character",
@@ -850,7 +892,8 @@ var protobufs = dcodeIO.ProtoBuf.newBuilder().import({
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "OAuthRequest",
@@ -939,7 +982,8 @@ var protobufs = dcodeIO.ProtoBuf.newBuilder().import({
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "MatchResult",
@@ -968,7 +1012,8 @@ var protobufs = dcodeIO.ProtoBuf.newBuilder().import({
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         },
         {
             "name": "BroadcastAlert",
@@ -990,7 +1035,8 @@ var protobufs = dcodeIO.ProtoBuf.newBuilder().import({
             ],
             "enums": [],
             "messages": [],
-            "options": {}
+            "options": {},
+            "oneofs": {}
         }
     ],
     "enums": [

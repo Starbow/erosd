@@ -671,6 +671,13 @@
                     "type": "string",
                     "name": "message",
                     "id": 3
+                },
+                {
+                   "rule": "optional",
+                    "options": {},
+                    "type": "int64",
+                    "name": "timestamp",
+                    "id": 4
                 }
             ],
             "enums": [],
@@ -694,6 +701,22 @@
                     "type": "string",
                     "name": "message",
                     "id": 2
+                }
+            ],
+            "enums": [],
+            "messages": [],
+            "options": {},
+            "oneofs": {}
+        },
+        {
+            "name": "ChatHistoryMessages",
+            "fields": [
+                {
+                    "rule": "repeated",
+                    "options": {},
+                    "type": "ChatRoomMessage",
+                    "name": "message",
+                    "id": 1
                 }
             ],
             "enums": [],

@@ -169,6 +169,9 @@ $chat-users-width: 150px;
 
 			font-size: 13px;
 
+			.old-messages{
+				opacity: 0.6;
+			}
 			.chat-event{
 				color: #aaa;
 			}

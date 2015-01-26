@@ -113,6 +113,7 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScop
 							room: room,
 							messages: [],
 							new_messages: [],
+							old_messages: [],
 							visit: function(){
 								this.messages = this.messages.concat(this.new_messages);
 								this.new_messages = [];
@@ -175,14 +176,15 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScop
 					$rootScope.$emit("chat_room","left");
 				});
 			},
-			message: function(eros, room, user, content) {
+			message: function(eros, room, user, content, timestamp) {
 				$scope.$apply(function() {
 
 					var message = {
 						sender: user,
 						message: content,
 						event: false,
-						date: new Date()
+						date: timestamp ? new Date(timestamp*1000) : new Date(),
+						old: timestamp > 0
 					};
 
 					if($scope.selectedRoom.room && room.key == $scope.selectedRoom.room.key){
@@ -192,6 +194,35 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScop
 					}
 					
 				});
+			},
+			oldMessages: function(eros, messages) {
+				if(messages.length == 0){
+					return
+				}
+
+				$scope.$apply(function() {
+
+					// for(var room in $scope.rooms){
+					// 	if($scope.rooms.hasOwnProperty(room)){
+					// 		$scope.rooms[room].messages = []
+					// 		$scope.rooms[room].old_messages = []
+					// 	}
+					// }
+					
+					for(var i = 0; i < messages.length; i++){
+						var row = messages[i]
+						var message = {
+							sender: row.user,
+							message: row.content,
+							event: false,
+							date: new Date(row.timestamp*1000)
+						};
+						$scope.rooms[row.room.key].old_messages.push(message);
+					}						
+				});
+				
+				// Scroll to the end
+				$('#chat-text').scrollTop($('#chat-text').scrollTopMax)
 			},
 			privjoined: function(eros, room){
 				if (!(room.key in $scope.privs)) {

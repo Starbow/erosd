@@ -116,6 +116,27 @@
         return request;
     }
 
+    var ChatHistoryMessages = function(room, callback){
+        room = new protobufs.ChatRoomRequest(room.key, '');
+
+        var request = new starbow.ErosRequests.Request("UCH", room.toBase64(), function(command, payload){
+            if (command === "UCH"){
+                request.result = protobufs.ChatHistoryMessages.decode64(payload);
+                request.complete = true;
+
+                if (typeof (callback) === "function") {
+                    callback(request);
+                }
+
+                return true;
+            }
+
+            return false
+        })
+
+        return request;
+    }
+
     if (!global["starbow"]) {
         global["starbow"] = {};
     }
@@ -129,4 +150,5 @@
     global["starbow"]["ErosRequests"]["ChatJoinRequest"] = ChatJoinRequest;
     global["starbow"]["ErosRequests"]["ChatLeaveRequest"] = ChatLeaveRequest;
     global["starbow"]["ErosRequests"]["ChatIndexRequest"] = ChatIndexRequest;
+    global["starbow"]["ErosRequests"]["ChatHistoryMessages"] = ChatHistoryMessages;
 })(this);
