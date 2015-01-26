@@ -58,6 +58,12 @@ angular.module('erosApp.chat', ['ngAudio'])
 				// Replace user names
 				$scope.chatMessage;
 			};
+
+			$scope.seeChat = function(){
+				if(!document.hidden){
+					$rootScope.$emit("favicon_alert", false);
+				}
+			}
 		}]
 	};
 }])

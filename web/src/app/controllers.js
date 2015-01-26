@@ -190,10 +190,14 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScop
 					if($scope.selectedRoom.room && room.key == $scope.selectedRoom.room.key){
 						$scope.rooms[room.key].messages.push(message);
 					}else{
+						$rootScope.$emit("favicon_alert", true);
 						$scope.rooms[room.key].new_messages.push(message);
 					}
 					
 				});
+				if(document.hidden){
+					$rootScope.$emit('favicon_alert', true)
+				}
 			},
 			oldMessages: function(eros, messages) {
 				if(messages.length == 0){
@@ -260,8 +264,6 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScop
 				}else{
 					delete $scope.rooms[room.key];
 				}	
-
-				
 				// })
 			},
 			privmessage: function(eros, room, user, message) {
@@ -273,8 +275,7 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScop
 				};
 
 				if($scope.selectedRoom.priv && room.key == $scope.selectedRoom.priv.key){
-					var message_array = $scope.privs[room.key].messages;
-					
+					var message_array = $scope.privs[room.key].messages;					
 				}else {
 					var message_array = $scope.privs[room.key].new_messages;
 					$scope.newMessages++;
@@ -289,6 +290,7 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScop
 				}
 
 				if(document.hidden){
+					$rootScope.$emit('favicon_alert', true)
 					notifier.message();
 				}
 			}
@@ -320,6 +322,13 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScop
 	$scope.connect = function(username, password) {
 		eros.connect(username, password);
 	};
+}]);
 
+controllers.controller('HeaderCtrl', ['$scope','$rootScope', function($scope, $rootScope) {
+	$scope.favicon_color = "black";
+
+	$rootScope.$on("favicon_alert", function (event, message, status) {
+		$scope.favicon_color = message ? "red" : "black";
+	})
 }]);
 

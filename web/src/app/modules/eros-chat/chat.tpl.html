@@ -1,4 +1,4 @@
-<div id="chat-content">
+<div id="chat-content" ng-mouseover="seeChat()">
 	<h2 id="chat-channel-name">{{selectedRoom.room.name.toUpperCase()}}{{selectedRoom.priv.name}}</h2>
 	<div id="chat-text" scroll-glue>
 		<div ng-repeat="message in selectedRoom.old_messages | orderBy: 'date'" ng-if="selectedRoom.room" class="old-messages">

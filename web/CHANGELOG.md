@@ -2,6 +2,10 @@
 
 ### Unresolved
 
+## 0.2.4
+## Added
+- Favicon changes color when there's new messages in any lobby
+
 ## 0.2.3 - 2014-01-26
 ## Added
 - Chat history for public chats
