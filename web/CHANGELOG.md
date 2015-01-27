@@ -3,14 +3,14 @@
 ### Unresolved
 
 ## 0.2.4
-## Added
+### Added
 - Favicon changes color when there's new messages in any lobby
 
 ## 0.2.3 - 2014-01-26
-## Added
+### Added
 - Chat history for public chats
 
-## Changed
+### Changed
 - Fix both regions showing on queue and when matched
 - Fix how users on placement are showing when matched (no rank/points should show)
 
