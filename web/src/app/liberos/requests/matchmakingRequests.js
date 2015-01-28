@@ -16,6 +16,8 @@
 
     var MatchmakingQueueRequest = function(regions, search_range, callback){ // MMQ
 
+        console.debug("Queue requested on "+regions+" with search_range "+search_range);
+
     	var queue_options = new protobufs.MatchmakingQueue(regions, search_range);
     	var request = new starbow.ErosRequests.Request(commands.queue, queue_options.toBase64(), function(command, payload){
     		if(command === commands.queue){
@@ -177,8 +179,13 @@
         return request;
     };
 
-    var MatchmakingLongProcessResponse = function(process, callback){
-        var request = new starbow.ErosRequests.Request(commands["lp_response"], process, function(command, payload){
+    var MatchmakingLongProcessResponse = function(accept, callback){
+        if(typeof accept !== 'undefined' && accept !== null){
+            accept = window.btoa(accept)
+        }else{
+            accept = ''
+        }
+        var request = new starbow.ErosRequests.Request(commands["lp_response"], accept, function(command, payload){
             if(command === commands["lp_response"]){
                 request.result = true;
                 request.complete = true;

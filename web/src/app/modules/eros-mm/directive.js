@@ -68,3 +68,10 @@ angular.module('erosApp.mm')
 		return regions[input-1];
 	};
 })
+
+.filter('noMixed', function(){
+	return function(input){
+		var replaced_src = input.replace(/https?:/, location.protocol)
+		return replaced_src
+	}
+})

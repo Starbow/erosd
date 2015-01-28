@@ -5,6 +5,11 @@
 ## 0.2.4
 ### Added
 - Favicon changes color when there's new messages in any lobby
+- Draw request
+
+### Changed
+- Matching regions are deselected by default
+- Fixed matching issues, they were not showing correctly
 
 ## 0.2.3 - 2014-01-26
 ### Added

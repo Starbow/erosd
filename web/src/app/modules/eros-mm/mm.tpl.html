@@ -56,7 +56,7 @@
 			</div>
 		</div>
 
-		<div class='matched' ng-show='matchmaking.status == "MATCHED"'>
+		<div class='matched' ng-show='matchmaking.status == "MATCHED"' ng-init="draw_requested=false; noshow_requested=false">
 			<div class='top'>
 				<div class='map'>
 					<div><b>{{matchmaking.match.map.battle_net_name}}</b></div>
@@ -70,13 +70,18 @@
 				<div class='right'>
 					<div ng-show='noshow_reponse'>
 						No-show reported:<br />
-						<button id='noshow-response' type="button" class="btn btn-default right" ng-click="respondNoShow()">I'm here! [{{noShowResponseTimer | timer}}]</button>
+						<button id='noshow-response' type="button" class="btn btn-default right" ng-click="respondNoShow()">I'm here! [{{longProcessResponseTimer | timer}}]</button>
+					</div>
+					<div ng-show='draw_reponse' style='text-align:right'>
+						Draw requested [{{longProcessResponseTimer | timer}}]<br />
+						<button id='noshow-response' type="button" class="btn btn-warning right" ng-click="respondDraw(1)" style="margin-left:7px;">Accept</button><button id='noshow-response' type="button" class="btn btn-default right" ng-click="respondDraw(0)">Reject</button>
 					</div>
 				</div>
 				<div id='forfeit' class='button' ng-click="forfeit()" style='margin-left: 19px'><div><span class="glyphicon glyphicon-flag" aria-hidden="true"></span> Forfeit</div></div>
-				<div id='request-draw' class='' ng-click="requestDraw()" style='margin-left: 15px; padding: 2px 7px; opacity:0.3; cursor: default'><div><span class="glyphicon glyphicon-tower" aria-hidden="true"></span> Request draw</div></div>
+				<div id='draw' class='button' ng-click="requestDraw()" ng-if="!draw_requested" style='margin-left: 8px; padding: 2px 7px;'><div><span class="glyphicon glyphicon-tower" aria-hidden="true"></span> Request draw</div></div>
+				<div id='draw-countdown' class='button' ng-if="draw_requested" style='margin-left: 8px; padding: 2px 7px;'><div><span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span> Draw requested [{{longProcessTimer | timer}}]</div></div>
 				<div id='noshow' class='button' ng-click="reportNoShow()" ng-if="!noshow_requested" style='margin-left: 12px'><div><span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span> Report no-show</div></div>
-				<div id='noshow-countdown' class='button' ng-if="noshow_requested" style='margin-left: 12px'><div><span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span> No-show reported [{{noShowTimer | timer}}]</div></div>
+				<div id='noshow-countdown' class='button' ng-if="noshow_requested" style='margin-left: 12px'><div><span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span> No-show reported [{{longProcessTimer | timer}}]</div></div>
 
 				<div id='upload-replay' class='button' ng-click='uploadreplay=!uploadreplay' style='margin-left: 8px; display: inline' ng-init='uploadreplay=false'><div><span class="glyphicon glyphicon-upload" aria-hidden="true"></span> Upload Replay</div></div>
 				<span ng-show='uploadreplay' class='upload-replay right'>
@@ -159,6 +164,8 @@
 	    	</div>
 	 	</div>
 	</div>
+
+	<!-- Vetoes Dialog -->
 	<div class="modal fade" id="vetoesDialog" tabindex="-1" role="dialog" aria-labelledby="vetoesDialog" aria-hidden="true" style='text-align:center; color: black; margin:0 auto;'>
 	  	<div class="modal-dialog modal-lg">
 	    	<div class="modal-content" ng-init="veto_region='NA'">

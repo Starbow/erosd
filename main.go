@@ -209,6 +209,10 @@ func loadConfig() error {
 	oauthCodeTimeout, _ = config.GetInt64("oauth2", "codetimeoutminutes")
 	oauthRedirectUri, _ = config.GetString("oauth2", "redirecturi")
 
+	// Print any important config
+	log.Println("matchmakingRadiusMultiplier:", matchmakingRadiusMultiplier)
+	log.Println("matchmakingRatingScalePerSecond:", matchmakingRatingScalePerSecond)
+
 	return nil
 }
 

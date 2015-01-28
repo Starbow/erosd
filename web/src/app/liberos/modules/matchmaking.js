@@ -96,7 +96,7 @@
             "LPR": processServerMessage, // LongProcess Response
             "LPF": processServerMessage, // LongProcess Forfeit
             "LPD": processServerMessage, // LongProcess Draw
-            "BNN": processServerMessage, // LongProcess Draw
+            "BNN": processServerMessage, // 
             "VET": processServerMessage // Map Vetos
     	};
 
@@ -186,11 +186,14 @@
             sendRequest(request);
         };
 
-        this.request_draw = function(){
+        this.request_draw = function(callback){
             console.log("Requesting long process");
-            var request =  new starbow.ErosRequests.MatchmakingLongProcessRequest(function(success,command){
+            var request =  new starbow.ErosRequests.MatchmakingLongProcessRequest(eros.enums.LongProcess.DRAW, function(success,command){
                 if(success){
-                    console.info("Forfeit success.");
+                    if(typeof callback == 'function'){
+                        callback();
+                    }
+                    console.info("Draw request success.");
                 }else{
                     // Need error handler
                     console.warn("Error "+command);
@@ -200,13 +203,29 @@
         };
 
         this.respond_noshow = function(callback){
-            var request =  new starbow.ErosRequests.MatchmakingLongProcessResponse(eros.enums.LongProcess.NOSHOW, function(success,command){
+            var request =  new starbow.ErosRequests.MatchmakingLongProcessResponse(0, function(success,command){
                 if(success){
                     if(typeof callback == 'function'){
                         callback();
                     }
                     
                     console.info("Respond no-show success.");
+                }else{
+                    // Need error handler
+                    console.warn("Error "+command);
+                }
+            });
+            sendRequest(request);
+        };
+
+        this.respond_draw = function(accept, callback){
+            var request =  new starbow.ErosRequests.MatchmakingLongProcessResponse(accept, function(success,command){
+                if(success){
+                    if(typeof callback == 'function'){
+                        callback();
+                    }
+                    
+                    console.info("Respond draw success.");
                 }else{
                     // Need error handler
                     console.warn("Error "+command);

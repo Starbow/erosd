@@ -651,6 +651,7 @@ func (conn *ClientConnection) OnLongProcessResponse(txid int, data []byte) {
 		return
 	}
 
+	log.Println(data)
 	var response bool = data[0] == '1'
 
 	match := matchmaker.Match(*conn.client.PendingMatchmakingId)

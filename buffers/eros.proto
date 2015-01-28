@@ -99,7 +99,7 @@ message MatchmakingResult {
 	required int64 timespan = 1;
 	required double quality = 2;
 	required UserStats opponent = 3;
-	required int64 opponent_latency = 4;
+	optional int64 opponent_latency = 4;
 	required string channel = 5;
 	required string chat_room = 6;
 	required Map map = 7;

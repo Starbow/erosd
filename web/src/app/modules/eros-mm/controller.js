@@ -17,15 +17,16 @@ angular.module('erosApp.mm', [])
 	$scope.search_radius = $scope.eros.localUser.stats.search_radius;
 	$scope.radius_options = [1,2,3,4,5];
 
-	$scope.noshow_requested = false;
+	// $scope.noshow_requested = false;
+	// $scope.draw_requested = false;
 	$scope.timeElapsed = {s: 0, m:0};
-	$scope.noShowTimer = {s: 0, m:0};
-	// $scope.$parent.noShowTimerResponse = {s: 0, m:0}
+	$scope.longProcessTimer = {s: 0, m:0};
+	// $scope.$parent.longProcessTimerResponse = {s: 0, m:0}
 	$scope.timerInterval = [];
 
 	$scope.selected_regions = {
 		NA: false,
-		EU: true
+		EU: false
 	};
 
 	$scope.mapPool = eros.ladder.maps;
@@ -43,8 +44,9 @@ angular.module('erosApp.mm', [])
 					$scope.matchmaking.status = "IDLE";
 
 					timer.stop('timeElapsed');
-					timer.stop('noShowTimer');
+					timer.stop('longProcessTimer');
 					$scope.noshow_requested = false;
+					$scope.draw_requested = false;
 					notifier.title('','mm', false);
 				} else if (value == eros.enums.MatchmakingState.Matched){
 					$scope.hover = true;
@@ -54,6 +56,7 @@ angular.module('erosApp.mm', [])
 					notifier.title('[Matched]','mm', true);
 					notifier.matched();
 					$scope.noshow_requested = false;
+					$scope.draw_requested = false;
 					$scope.uploadreplay = false;
 
 					$('[eros-mm]').on('mouseover', function(){
@@ -79,14 +82,16 @@ angular.module('erosApp.mm', [])
 			$scope.$apply(function(){
 				if(type==eros.enums.LongProcess.NOSHOW){
 					$scope.noshow_reponse = true;
-					timer.timedown($scope,'noShowResponseTimer',$scope.matchmaking.match.long_response_time.low);
+					timer.timedown($scope,'longProcessResponseTimer',$scope.matchmaking.match.long_response_time.low);
 				}else if(type==eros.enums.LongProcess.DRAW){
 					$scope.draw_reponse = true;
-					timer.timedown($scope,'noShowResponseTimer',$scope.matchmaking.match.long_response_time.low);
+					timer.timedown($scope,'longProcessResponseTimer',$scope.matchmaking.match.long_response_time.low);
 				}else{
 					$scope.noshow_reponse = false;
 					$scope.noshow_requested = false;
-					timer.stop('noShowResponseTimer');
+					$scope.draw_reponse = false;
+					$scope.draw_requested = false;
+					timer.stop('longProcessResponseTimer');
 				}
 			});
 		},
@@ -180,16 +185,30 @@ angular.module('erosApp.mm', [])
 	$scope.reportNoShow=function(){
 		eros.matchmaking.request_noshow(function(){
 			$scope.noshow_requested = true;
-			timer.timedown($scope,'noShowTimer', $scope.matchmaking.match.long_response_time.low);
+			timer.timedown($scope,'longProcessTimer', $scope.matchmaking.match.long_response_time.low);
 		});
 	};
 
 	$scope.respondNoShow= function(){
 		eros.matchmaking.respond_noshow(function(){
 			$scope.noshow_reponse = false;
-			timer.stop('noShowResponseTimer');
+			timer.stop('longProcessResponseTimer');
 		});
 	};
+
+	$scope.requestDraw = function(){
+		eros.matchmaking.request_draw(function(){
+			$scope.draw_requested = true;
+			timer.timedown($scope,'longProcessTimer', $scope.matchmaking.match.long_response_time.low);
+		});
+	}
+
+	$scope.respondDraw = function(accept){
+		eros.matchmaking.respond_draw(accept, function(){
+			$scope.draw_reponse = false;
+			timer.stop('longProcessResponseTimer');
+		});
+	}
 
 	$scope.statusToString = function(value){
 		if(typeof value === 'undefined'){
