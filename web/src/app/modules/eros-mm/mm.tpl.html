@@ -33,12 +33,15 @@
 			<div class='ranked' style='display:none'>
 				<button id='ranked' type='button' class='btn' ng-class="ranked ? 'btn-primary' : 'btn-default'" ng-click="ranked = !ranked" >RANKED</button>
 			</div>
-			<div class='queue'>
+			<div class='queue' ng-show="selected_regions.NA || selected_regions.EU">
 				<div class='search-radius' style=''>Search Radius: <select style='color:black' ng-model='search_radius' ng-options='radius for radius in radius_options' ng-change='updateSearchRadius'/><!-- <input ng-model="search_radius" ng-change='updateSearchRadius'/> --></div>
 
 				<button id='queue' type='button' class='btn btn-default rounded' ng-click="queue()">
 					Queue <span class="icon-bowstarbow" display="font-size:120%"></span>
 				</button>
+			</div>
+			<div class="queue" ng-show="!(selected_regions.NA || selected_regions.EU)">
+				Select a region <span class="glyphicon glyphicon-chevron-right"></span>
 			</div>
 		</div>
 		<div class='queing' ng-show='matchmaking.status == "QUEUED"'>
@@ -84,8 +87,10 @@
 				<div id='noshow-countdown' class='button' ng-if="noshow_requested" style='margin-left: 12px'><div><span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span> No-show reported [{{longProcessTimer | timer}}]</div></div>
 
 				<div id='upload-replay' class='button' ng-click='uploadreplay=!uploadreplay' style='margin-left: 8px; display: inline' ng-init='uploadreplay=false'><div><span class="glyphicon glyphicon-upload" aria-hidden="true"></span> Upload Replay</div></div>
-				<span ng-show='uploadreplay' class='upload-replay right'>
-					<input type="file" id="file" onchange="angular.element(this).scope().upload_replay()" ng-model="replay"/>
+				<span ng-show='uploadreplay' class='upload-replay align-right' style="position:absolute; bottom:0px; right:0px" ng-init='uploading_file=false; upload_response=null'>
+					<div ng-if='upload_response'><span class="glyphicon glyphicon-warning-sign"></span> {{upload_response}}</div>
+					<div ng-if='uploading_file'>Uploading replay...</div>
+					<input type="file" id="file" onchange="angular.element(this).scope().upload_replay()" ng-model="replay" ng-if='!uploading_file'/>
 				</span>
 			</div>
 			

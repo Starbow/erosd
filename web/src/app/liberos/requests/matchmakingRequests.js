@@ -121,7 +121,7 @@
                 request.complete = true;
 
                 if (typeof (callback) === "function") {
-                    callback(true, request);
+                    callback(true, command);
                 }
 
                 return true;
@@ -130,7 +130,7 @@
                 request.complete = true;
 
                 if (typeof (callback) === "function") {
-                    callback(true, request);
+                    callback(true, command);
                 }
 
                 return true;

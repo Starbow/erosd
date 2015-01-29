@@ -6,6 +6,8 @@
 ### Added
 - Favicon changes color when there's new messages in any lobby
 - Draw request
+- Error control on replay upload
+- No Queue button if no region is selected
 
 ### Changed
 - Matching regions are deselected by default

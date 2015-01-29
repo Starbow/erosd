@@ -29,6 +29,8 @@ angular.module('erosApp.mm', [])
 		EU: false
 	};
 
+	$scope.sel_regions = []
+
 	$scope.mapPool = eros.ladder.maps;
 	$scope.vetoedMaps = eros.ladder.vetoes;
 
@@ -142,9 +144,18 @@ angular.module('erosApp.mm', [])
 		// reader.readAsBinaryString(file);
 		reader.readAsDataURL(file);
 
+		$scope.upload_response = null;
+
+		
 		reader.onload = (function(read_file) {
-			$scope.eros.matchmaking.upload_replay(read_file.target.result);
+			$scope.uploading_file = true;
+			$scope.eros.matchmaking.upload_replay(read_file.target.result, function(result){
+				$scope.uploading_file = false;
+				$scope.upload_response = result
+			});
+
 		});
+				
 	};
 
 	$scope.toggle_region = function(region){

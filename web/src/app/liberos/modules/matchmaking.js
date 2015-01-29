@@ -149,20 +149,22 @@
             sendRequest(request);
         };
 
-        this.upload_replay = function(file) {
-            var request = new starbow.ErosRequests.MatchmakingUploadReplayRequest(file, function(success, request){
+        this.upload_replay = function(file, callback) {
+            var request = new starbow.ErosRequests.MatchmakingUploadReplayRequest(file, function(success, command){
                 if(success){
-                    if(request.command == "REP"){
+                    if(command == "REP"){
                         console.log("[MM] Upload success.");
 
                         matchmaking.controller.update_status(eros.enums.MatchmakingState.Idle);
                         matchmaking.match = null;
                         // options.update_match(null)
+                        callback("Replay accepted.")
                     }
                 }else{
                     // Need error handler
                     // console.warn("Error "+command+": "+eros.locale.Error[command])
                     console.warn("Error "+command);
+                    callback(eros.enums.ErrorDescriptor[command])
                 }
             });
             console.log("[MM] Uploading replay.");
