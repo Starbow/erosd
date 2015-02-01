@@ -9,6 +9,7 @@
 - Error control on replay upload
 - No Queue button if no region is selected
 - Color code on division and names
+- Simple hyperlink recognition
 
 ### Changed
 - Matching regions are deselected by default
