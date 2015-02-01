@@ -8,6 +8,7 @@
 - Draw request
 - Error control on replay upload
 - No Queue button if no region is selected
+- Color code on division and names
 
 ### Changed
 - Matching regions are deselected by default

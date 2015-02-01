@@ -19,11 +19,12 @@ angular.module('erosApp.chat', ['ngAudio'])
 			};
 
 			$scope.sendChatMessage = function(target, message) {
-				if(message[0] === "@"){
-					target = message.split(" ",1)[0].split("@")[1];
-					eros.chat.sendToPriv(target, message.split(" ").slice(1).join(" "));
-					$scope.selectRoom($scope.privs[target.toLowerCase()]);
-				}else if(typeof ($scope.selectedRoom.priv) == 'object'){
+				// if(message[0] === "@"){
+				// 	target = message.split(" ",1)[0].split("@")[1];
+				// 	eros.chat.sendToPriv(target, message.split(" ").slice(1).join(" "));
+				// 	$scope.selectRoom($scope.privs[target.toLowerCase()]);
+				// }else 
+				if(typeof ($scope.selectedRoom.priv) == 'object'){
 					eros.chat.sendToPriv($scope.selectedRoom.priv.name, message);
 				}else{
 					eros.chat.sendToRoom(target, message);
@@ -31,6 +32,7 @@ angular.module('erosApp.chat', ['ngAudio'])
 				// $scope.chatMessage = "real"
 			};
 
+			// Deprecated
 			$scope.addUserMsg = function(user){
 				var newmessage;
 				if(typeof $scope.chatMessage == "undefined" || $scope.chatMessage.length === 0){
@@ -79,7 +81,7 @@ angular.module('erosApp.chat', ['ngAudio'])
 				var room = $scope.$parent.selectedRoom.room;
 				if(room){
 					if(typeof(room.users) === "function"){
-						$scope.roomusers=room.users();
+						$scope.roomusers=room.users(), 'stats.division';
 					}else{
 						$scope.roomusers=[];
 					}
@@ -118,4 +120,56 @@ angular.module('erosApp.chat', ['ngAudio'])
 		}
 	};
 })
-
+.filter('toColor', function() {
+	return function(input) {
+		switch (input.length) {
+		case 1:
+		case 6:
+		case 11:
+			return "#FF0000"; // Red
+			break;
+		case 2:
+		case 7:
+		case 12:
+			return "#4F64FF"; // Blue
+			break;
+		case 3:
+		case 8:
+		case 13:
+			return "#23A136"; // Green
+			break;
+		case 4:
+		case 9:
+		case 14:
+			return "#A75EAD"; // Purple
+			break;
+		default:
+			return "#CC8E4B"; // Brown
+			break;
+		}
+	};
+})
+.filter('divisionColor', function(){
+	return function(division){
+		switch(division) {
+		case 'E':
+			return "#888";
+			break
+		case 'D':
+			return "#AB3E3E";
+			break
+		case 'C':
+			return "#ED9121";
+			break
+		case 'B':
+			return "#0892d0";
+			break
+		case 'A':
+			return "#009e60";
+			break		
+		default: // unranked
+			return "#888";
+			break;
+		}
+	}
+})

@@ -173,7 +173,8 @@ $chat-users-width: 150px;
 				opacity: 0.6;
 			}
 			.chat-event{
-				color: #aaa;
+				color: #bbb;
+				font-size: 0.8em;
 			}
 		}
 
@@ -237,7 +238,7 @@ $chat-users-width: 150px;
 		}
 
 		.message-date{
-			color:#999;
+			color:#bbb;
 			font-size: 85%;
 		}
 
@@ -257,7 +258,7 @@ $chat-users-width: 150px;
 
 	#chat-right-nav{
 		position: absolute;
-		overflow-y: auto;
+		overflow-y: hidden;
 		overflow-x: hidden;
 		top: 2px;
 		right: 2px;
@@ -292,16 +293,29 @@ $chat-users-width: 150px;
 		.user-rank-block{
 			font-family: $bodyFont;
 			display: inline-block;
-			width: $chat-users-rank-width;
+			/*width: $chat-users-rank-width;*/
+
+			border-radius: 3px;
+			padding: 0px 3px;
+			background: none repeat scroll 0% 0% rgb(171, 62, 62);
+			margin-right: 3px;
+			height: 18px;
+			vertical-align: bottom;
+			border: medium none;
+			width: 24px;
+			text-align: center;
 		
 			.user-division{
-				color: $lightRedColor;
-				font-size: 13px;
+				/*color: $lightRedColor;*/
+				color: #fff;
+				/*font-size: 13px;*/
+				font-size: 11px;
 				font-weight: bold;
 			}
 			.user-rank{
 				font-family: $bodyFont;
-				font-size: 10px;
+				font-size: 9px;
+				color: #eee;
 			}
 		}
 		.user-username{

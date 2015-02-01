@@ -167,12 +167,13 @@ controllers.controller('ErosTestCtrl', ['$scope', '$http','connGrowl','$rootScop
 			userLeft: function(eros, room, user) {
 				$scope.$apply(function() {
 					$scope.rooms[room.key].active = false;
-					$scope.rooms[room.key].messages.push({
+					var message = {
 						sender: user,
 						message: 'left the channel.',
 						event: true,
 						date: new Date()
-					});
+					}
+					$scope.rooms[room.key].messages.push(message);
 					$rootScope.$emit("chat_room","left");
 				});
 			},

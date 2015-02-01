@@ -222,7 +222,7 @@
                     }
                 }
 
-                console.debug(moduleOptions);
+                console.debug("Loading module: "+module);
                 // Init the module
                 eros[module] = new eros.modules[module](eros, sendRequest, moduleOptions);
 
@@ -500,6 +500,11 @@
                 eros[module].controller = options
             }
         };
+
+        this.processServerMessage = function(command, payload){
+            // if(isTest)
+            processServerMessage(command, payload)
+        }
 
         this.vetoMaps = function(m){
             eros.ladder.vetoes = {}

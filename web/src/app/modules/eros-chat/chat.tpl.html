@@ -2,15 +2,14 @@
 	<h2 id="chat-channel-name">{{selectedRoom.room.name.toUpperCase()}}{{selectedRoom.priv.name}}</h2>
 	<div id="chat-text" scroll-glue>
 		<div ng-repeat="message in selectedRoom.old_messages | orderBy: 'date'" ng-if="selectedRoom.room" class="old-messages">
-			<span><span class="message-date">[{{message.date.toLocaleTimeString()}}]</span> <a href='#' class="message-sender" user="{{message.sender.username}}" ng-bind="message.sender.username" ng-click="addUserMsg(message.sender.username)"></a>: <span chat-message></span></span>
+			<span><span class="message-date">[{{message.date.toLocaleTimeString()}}]</span> <a href='#' class="message-sender" user="{{message.sender.username}}" ng-bind="message.sender.username" style='color: {{message.sender.username | toColor}}'></a>: <span chat-message></span></span>
 		</div>
-		<div ng-repeat="message in selectedRoom.messages | orderBy: 'date'">
+		<div ng-repeat="message in selectedRoom.messages | orderBy: 'date'" class="animate-fade">
 			<span ng-if="message.event"><span class="message-date">[{{message.date.toLocaleTimeString()}}]</span> <span class="chat-event">{{message.sender.username}} {{message.message}}</span></span>
-			<span ng-if="!message.event"><span class="message-date">[{{message.date.toLocaleTimeString()}}]</span> <a href='#' class="message-sender" user="{{message.sender.username}}" ng-bind="message.sender.username" ng-click="addUserMsg(message.sender.username)"></a>: <span chat-message></span></span>
+			<span ng-if="!message.event"><span class="message-date">[{{message.date.toLocaleTimeString()}}]</span> <a href='#' class="message-sender" user="{{message.sender.username}}" ng-bind="message.sender.username" style='color: {{message.sender.username | toColor}}'></a>: <span chat-message></span></span>
 		</div>
-		<div ng-repeat="message in selectedRoom.new_messages">
-			<span ng-if="message.event"><span class="message-date">[{{message.date.toLocaleTimeString()}}]</span> <span class="chat-event">{{message.sender.username}} {{message.message}}</span></span>
-			<span ng-if="!message.event"><span class="message-date">[{{message.date.toLocaleTimeString()}}]</span> <a href='#' class="message-sender" user="{{message.sender.username}}" ng-bind="message.sender.username" ng-click="addUserMsg(message.sender.username)"></a>: <span chat-message></span></span>
+		<div class="chat-message" ng-repeat="message in selectedRoom.new_messages">
+			<span ng-if="!message.event"><span class="message-date">[{{message.date.toLocaleTimeString()}}]</span> <a href='#' class="message-sender" user="{{message.sender.username}}" ng-bind="message.sender.username" style='color: {{message.sender.username | toColor}}'></a>: <span chat-message></span></span>
 		</div>
 	</div>
 	<form id="chat-input"><input type="text" ng-model="$parent.chatMessage" placeholder="Message"> <button type="submit" ng-click="sendChatMessage(selectedRoom.room, $parent.chatMessage); $parent.chatMessage = ''" ng-disabled="!$parent.chatMessage"><span class="glyphicon glyphicon-chevron-right"></span></button></form>
@@ -82,13 +81,15 @@
 <div id="chat-right-nav"  class="animate-fade">
 
 	<!-- Public chat -->
-	<div class="room-users" ng-show="selectedRoom.room">
-		<div ng-repeat="user in roomusers" class="animate-fade">
-			<div class="room-user" ng-dblclick="openPrivUser(user.username)"> <!-- ng-click="addUserMsg(user.username)" -->
-				<div class="user-rank-block">
-					<span ng-bind="user.stats.division" class="user-division"></span><span ng-hide="user.stats.division == 'P'" ng-bind="user.stats.divisionRank" class="user-rank"></span>
+	<div class="wrapper" style="overflow: auto; position: absolute; bottom: 31px; top: 0px; width: 100%;">
+		<div class="room-users" ng-show="selectedRoom.room">
+			<div ng-repeat="user in roomusers | orderBy:'stats'" class="animate-fade">
+				<div class="room-user" ng-dblclick="openPrivUser(user.username)"> <!-- ng-click="addUserMsg(user.username)" -->
+					<div class="user-rank-block" style="background-color: {{user.stats.division | divisionColor}}">
+						<span ng-bind="user.stats.division" class="user-division"></span><span ng-hide="user.stats.division == 'P'" ng-bind="user.stats.divisionRank" class="user-rank" ></span>
+					</div>
+					<span ng-bind="user.username" class="user-username" style='color: {{user.username | toColor}}'></span>
 				</div>
-				<span ng-bind="user.username" class="user-username"></span>
 			</div>
 		</div>
 	</div>
