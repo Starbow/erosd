@@ -8,7 +8,7 @@
 - Draw request
 - Error control on replay upload
 - No Queue button if no region is selected
-- Color code on division and names
+- Color code on division and names (same for both)
 - Simple hyperlink recognition
 
 ### Changed
