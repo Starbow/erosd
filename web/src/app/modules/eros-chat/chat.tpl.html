@@ -1,7 +1,7 @@
 <div id="chat-content">
 	<h2 id="chat-channel-name">{{selectedRoom.room.name.toUpperCase()}}{{selectedRoom.priv.name}}</h2>
-	<!-- <div id="chat-text" scroll-glue> -->
-	<div id="chat-text">
+	<div id="chat-text" scroll-glue>
+	<!-- <div id="chat-text"> -->
 		<div ng-repeat="message in selectedRoom.old_messages | orderBy: 'date'" ng-if="selectedRoom.room" class="old-messages">
 			<span><span class="message-date">[{{message.date.toLocaleTimeString()}}]</span> <a href='#' class="message-sender" user="{{message.sender.username}}" ng-bind="message.sender.username" style='color: {{message.sender.stats.division | divisionColor}}'></a>: <span chat-message></span></span>
 		</div>

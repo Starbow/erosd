@@ -14,11 +14,11 @@
     "protobuf": "~3.0.0",
     "web-socket-js": "~1.0.2",
     "long": "~1.1.4",
-    "angularjs-scroll-glue": "~0.0.1",
     "angular-animate": "~1.2.21",
     "jquery": "~2.1.1",
     "bootstrap": "~3.2.0",
     "angular-audio": "*",
-    "underscore": "~1.7.0"
+    "underscore": "~1.7.0",
+    "angular-scroll-glue": "~2.0.3"
   }
 }
