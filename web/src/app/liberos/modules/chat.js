@@ -433,15 +433,19 @@
             sendRequest(new starbow.ErosRequests.ChatHistoryMessages(room, function(request){
                 var messages = []
                 for(var i = 0; i < request.result.message.length; i++){
-
                     var row = request.result.message[i]
+
+                    var user = eros.user(row.sender.username);
+                    user.update(row.sender);
+                    
                     var message = {
                         'room': chat.room(row.room.key),
-                        'user': eros.user(row.sender.username),
+                        'user': user,
                         'content': row.message,
-                        'timestamp': row.timestamp || "1422217480"
+                        'timestamp': row.timestamp
                     }
-                    messages.push(message)                    
+                    messages.push(message)
+
                 }
                 if (typeof (options.message) === "function") {
                     options.oldMessages(eros, messages);

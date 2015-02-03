@@ -329,7 +329,12 @@ controllers.controller('HeaderCtrl', ['$scope','$rootScope', function($scope, $r
 	$scope.favicon_color = "black";
 
 	$rootScope.$on("favicon_alert", function (event, message, status) {
-		$scope.favicon_color = message ? "red" : "black";
+		if(message){
+			$scope.favicon_color = "red";
+			$(window).one('mouseover', function(){
+				$scope.favicon_color = "black"
+			})
+		}
 	})
 }]);
 
