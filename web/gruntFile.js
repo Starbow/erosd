@@ -143,7 +143,7 @@ module.exports = function (grunt) {
       },
       dev: {
         src:[
-          'components/angularjs-scroll-glue/src/scrollglue.js',
+          'components/angular-scroll-glue/src/scrollglue.js',
           'src/assets/bootstrap/js/bootstrap.min.js',
           'components/html5-boilerplate/js/vendor/modernizr-2.6.2.min.js',
 
