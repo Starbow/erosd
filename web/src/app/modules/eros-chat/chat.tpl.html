@@ -82,7 +82,7 @@
 <div id="chat-right-nav"  class="animate-fade">
 
 	<!-- Public chat -->
-	<div class="wrapper" style="overflow: auto; position: absolute; bottom: 31px; top: 0px; width: 100%;">
+	<div class="wrapper" style="overflow: auto; position: absolute; bottom: 31px; top: 0px; width: 100%; padding: 2px 0px;">
 		<div class="room-users" ng-show="selectedRoom.room">
 			<div ng-repeat="user in roomusers | orderBy:'stats'" class="animate-fade">
 				<div class="room-user" ng-dblclick="openPrivUser(user.username)"> <!-- ng-click="addUserMsg(user.username)" -->

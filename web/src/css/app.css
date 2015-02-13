@@ -453,21 +453,25 @@
     width: 111px;
     height: 218px;
     display: inline-block;
-    opacity: 0.3;
     cursor: pointer;
     padding: 0;
-    background-repeat: no-repeat;
-    background-position: center;
     float: right;
-    margin-right: 1px;
-    position: relative; }
-  #eros-mm .region:hover {
+    position: relative;
+    background-repeat: no-repeat;
+    background-position: center; }
+    #eros-mm .region > .region-map {
+      opacity: 0.3;
+      height: 100%;
+      background-repeat: no-repeat;
+      background-position: center; }
+  #eros-mm .region:not(.selected):not([disabled]):hover > div {
     opacity: 0.5; }
   #eros-mm .region[disabled] {
-    width: 30px;
-    opacity: 0.3;
-    cursor: default; }
-  #eros-mm .region.selected {
+    width: 30px; }
+    #eros-mm .region[disabled] > .region-map {
+      opacity: 0.3;
+      cursor: default; }
+  #eros-mm .region.selected div {
     opacity: 1; }
   #eros-mm .character {
     position: absolute;
@@ -476,7 +480,10 @@
     margin: 3px 0px;
     text-align: left;
     background: rgba(171, 62, 62, 0.5);
-    width: 100%; }
+    width: 100%;
+    opacity: 0.5; }
+    #eros-mm .character.new {
+      opacity: 1; }
     #eros-mm .character .remove-char {
       width: 15px;
       height: 100%;
@@ -507,7 +514,6 @@
     font-size: 25px;
     margin-top: -15px; }
   #eros-mm .player #user-placement {
-    margin-top: -15px;
     font-size: 1.1em; }
   #eros-mm #mm-left {
     position: absolute;
@@ -580,7 +586,8 @@
         #eros-mm #mm-center .matched > .top .map {
           float: right;
           text-align: right;
-          margin-top: 4px; }
+          margin-top: 4px;
+          font-size: 1.1em; }
       #eros-mm #mm-center .matched > .bottom {
         position: absolute;
         bottom: 10px;

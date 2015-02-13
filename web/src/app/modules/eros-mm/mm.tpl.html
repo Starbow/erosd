@@ -14,7 +14,10 @@
 			<span id='user-rank' ng-bind='localUser.stats.divisionRank' ng-hide="localUser.stats.placementsRemaining > 0"></span>
 			<div id='user-points' ng-bind='localUser.stats.points' ng-hide="localUser.stats.placementsRemaining > 0"></div>
 			<div id='user-placement' ng-show="localUser.stats.placementsRemaining > 0 && localUser.characters.length > 0">Placement matches: {{localUser.stats.placementsRemaining}}</div>
-			<div id='user-placement' ng-hide="localUser.characters.length > 0"><span style="color:white; background: #AB3E3E; border-radius: 3px; padding: 1px 5px; margin-right: 5px; cursor: pointer">+ Add profile</span></div>	
+			<div id='user-placement' ng-hide="localUser.characters.length > 0" ng-init='showProfileRegions=false'>
+				<span style="color:white; cursor: pointer" ng-click='showProfileRegions=true' ng-hide='showProfileRegions'>+ Add profile</span>
+				<span ng-click='showProfileRegions=false' ng-show='showProfileRegions'><span ng-repeat="region in bnet_regions"> <a ng-click="RequestVerification(region)" style="color:white; cursor:pointer">{{region}}</a></span>
+			</div>	
 			<!-- <div id='user-mmr' ng-bind='localUser.stats.mmr'></div> -->
 		</div>
 		
@@ -105,26 +108,35 @@
 		<div class='pre' ng-show='matchmaking.status == "IDLE"' ng-init="localUser.char_per_region = toRegions(localUser.characters)">
 			<!-- <div class="region kr" value='KR' disabled/> -->
 			<div ng-switch on="localUser.char_per_region[1].length > 0" style="display: inline-block">
-				<div ng-switch-when="true" class="region unselectable" id='region-na' ng-class='{selected: selected_regions.NA}' value='NA' ng-click='toggle_region("NA")'>
+				<div ng-switch-when="true" class="region unselectable" ng-class='{selected: selected_regions.NA}' value='NA' ng-click='toggle_region("NA")'>
+					<div class="region-map" id='region-na'></div>
 					<div class="character" ng-repeat="char in localUser.char_per_region[1] track by char.profile_id">
 						<span class="glyphicon glyphicon-user"></span> {{char.character_name}}
 						<span class="small remove-char" ng-click="removeChar(char); event.stopPropagation()">x</span>
 					</div>
 				</div>
-				<div ng-switch-default class="region unselectable " disabled="disabled" id='region-na' value='NA'>
-					<div class="character rotate270" style="width:200px">
-						Add profile
+				<div ng-switch-default class="region unselectable " disabled="disabled"  value='NA'>
+					<div class="region-map" id='region-na'></div>
+					<div class="character new" style="width:200px" ng-click="RequestVerification('NA')">
+						+<span class="glyphicon glyphicon-user"></span>
 					</div>
 				</div>
 			</div>
+
 			<div ng-switch on="localUser.char_per_region[2].length > 0" style="display: inline-block">
-				<div ng-switch-when="true" class="region unselectable" id='region-eu' ng-class='{selected: selected_regions.EU}' value='EU' ng-click='toggle_region("EU")'>
+				<div ng-switch-when="true" class="region unselectable" ng-class='{selected: selected_regions.EU}' value='EU' ng-click='toggle_region("EU")'>
+					<div class="region-map" id='region-eu'></div>
 					<div class="character" ng-repeat="char in localUser.char_per_region[2] track by char.profile_id">
 						<span class="glyphicon glyphicon-user"></span> {{char.character_name}}
 						<span class="small remove-char" ng-click="removeChar(char); event.stopPropagation()">x</span>
 					</div>
 				</div>
-				<div ng-switch-default class="region unselectable" disabled="disabled" id='region-eu' value='EU'></div>
+				<div ng-switch-default class="region unselectable " disabled="disabled"  value='EU'>
+					<div class="region-map" id='region-eu'></div>
+					<div class="character new" style="width:200px" ng-click="RequestVerification('EU')">
+						+<span class="glyphicon glyphicon-user"></span>
+					</div>
+				</div>
 			</div>
 		</div>
 

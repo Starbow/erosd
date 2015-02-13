@@ -10,10 +10,13 @@
 - No Queue button if no region is selected
 - Color code on division and names (same for both)
 - Simple hyperlink recognition
+- Add "Add profile" links in Matchmaking
 
 ### Changed
 - Matching regions are deselected by default
 - Fixed matching issues, they were not showing correctly
+- Disabled profile can now be assigned to another account
+- Profile now can be added from region map
 
 ## 0.2.3 - 2014-01-26
 ### Added

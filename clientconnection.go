@@ -1254,7 +1254,7 @@ func (conn *ClientConnection) handlePendingMatchmaking(txid int) bool {
 				if opponent.PendingMatchmakingId == conn.client.PendingMatchmakingId {
 					since := time.Now().Unix() - match.AddTime
 
-					if since >= matchmakingMatchTimeout {
+					if since >= matchmakingMatchTimeout && matchmakingMatchTimeout != 0 {
 						// Match has expired. End it.
 						if opponent != nil {
 							matchmaker.logger.Println("Cleaning up old match between", conn.client.Username, opponent.Username)

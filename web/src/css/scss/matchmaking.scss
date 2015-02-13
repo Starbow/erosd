@@ -36,31 +36,38 @@ $mmHeight: 218px;
 		height: $mmHeight;
 		display: inline-block;
 
-		opacity: 0.3;
 		cursor: pointer;
 		padding: 0;
+		float: right;
+		position: relative;
 
 		background-repeat: no-repeat;
 		background-position: center;
 
-		float: right;
-		margin-right: 1px;
-
-		position: relative;
+		& > .region-map {
+			opacity: 0.3;
+			height: 100%;
+			background-repeat: no-repeat;
+			background-position: center;
+		}
 	}
 
-	.region:hover{
-		opacity: 0.5;
+	.region:not(.selected):not([disabled]):hover{
+		& > div {
+			opacity: 0.5;
+		}
 	}
 
 	.region[disabled]{
 		width: 30px;
 
-		opacity: 0.3;
-		cursor: default;
+		& > .region-map {
+			opacity: 0.3;
+			cursor: default;
+		}
 	}
 
-	.region.selected{
+	.region.selected div{
 		opacity: 1;
 	}
 
@@ -72,6 +79,12 @@ $mmHeight: 218px;
 		text-align: left;
 		background: rgba(171,62,62,0.5);
 		width: 100%; 
+
+		opacity: 0.5;
+
+		&.new{
+			opacity:1;
+		}
 
 		.remove-char {
 			width: 15px;
@@ -130,7 +143,6 @@ $mmHeight: 218px;
 		}
 
 		#user-placement {
-			margin-top: -15px;
 			font-size: 1.1em;
 		}
 	}
@@ -237,6 +249,8 @@ $mmHeight: 218px;
 					float: right;
 					text-align: right;
 					margin-top: 4px;
+
+					font-size: 1.1em;
 
 					// background-position: left;
 					// background-size: 40px;

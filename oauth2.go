@@ -232,9 +232,10 @@ func AddOAuthProfile(oar *OAuthRequest) (profile Sc2Char, character *BattleNetCh
 		return
 	}
 
+	// TODO: Change this to a more intelligent query instead of two queries
 	if count > 0 {
-		// Check if there's any profiles which have been disabled for this user
-		count, err = dbMap.SelectInt("SELECT COUNT(*) FROM battle_net_characters WHERE Region=? and SubRegion=? and ProfileId=? and ClientId=? and Enabled=?", region, subregion, id, oar.conn.client.Id, false)
+		// Check if profile is disabled
+		count, err = dbMap.SelectInt("SELECT COUNT(*) FROM battle_net_characters WHERE Region=? and SubRegion=? and ProfileId=? and Enabled=?", region, subregion, id, false)
 
 		if err != nil {
 			oar.conn.logger.Println(err)
@@ -243,7 +244,7 @@ func AddOAuthProfile(oar *OAuthRequest) (profile Sc2Char, character *BattleNetCh
 		}
 
 		if count == 0 {
-			// Profile exists but is not from that user
+			// Profile exists and is already enabled
 			err = ErosErrors(202)
 			return
 		}
@@ -267,7 +268,8 @@ func AddOAuthProfile(oar *OAuthRequest) (profile Sc2Char, character *BattleNetCh
 	} else {
 		// count, err = dbMap.Update(character)
 		oar.conn.logger.Println("Reenabling character.")
-		_, err = dbMap.Exec("UPDATE battle_net_characters SET Enabled=?, CharacterName=? WHERE Region=? and SubRegion=? and ProfileId=?", true, name, region, subregion, id)
+		_, err = dbMap.Exec("UPDATE battle_net_characters SET Enabled=?, CharacterName=?, ClientId=? WHERE Region=? and SubRegion=? and ProfileId=?",
+			true, name, oar.conn.client.Id, region, subregion, id)
 
 	}
 
