@@ -2,71 +2,12 @@
 
 /* Chat directives */
 
-angular.module('erosApp.chat', ['ngAudio'])
+angular.module('erosApp.chat')
 .directive('erosChat', ['$rootScope','notifier', function($rootScope, notifier){
 	return {
 		restrict: 'A',
 		templateUrl: 'modules/eros-chat/chat.tpl.html',
-		controller: ['$scope',  function($scope){
-
-			$scope.selectRoom = function(room){
-				if(typeof room == "object"){
-					$scope.$parent.selectedRoom = room;
-					$rootScope.$emit("chat_room","selectedRoom");
-
-					$('#chat-input > input').focus()
-				}
-			};
-
-			$scope.sendChatMessage = function(target, message) {
-				// if(message[0] === "@"){
-				// 	target = message.split(" ",1)[0].split("@")[1];
-				// 	eros.chat.sendToPriv(target, message.split(" ").slice(1).join(" "));
-				// 	$scope.selectRoom($scope.privs[target.toLowerCase()]);
-				// }else 
-				if(typeof ($scope.selectedRoom.priv) == 'object'){
-					eros.chat.sendToPriv($scope.selectedRoom.priv.name, message);
-				}else{
-					eros.chat.sendToRoom(target, message);
-				}
-				// $scope.chatMessage = "real"
-			};
-
-			// Deprecated
-			$scope.addUserMsg = function(user){
-				var newmessage;
-				if(typeof $scope.chatMessage == "undefined" || $scope.chatMessage.length === 0){
-					newmessage = "@" + user + " ";
-				}else{
-					newmessage = $scope.chatMessage + " @" + user + " ";
-				}
-				$scope.$parent.chatMessage = newmessage;
-
-				document.getElementById("chat-input").childNodes[0].focus();
-			};
-
-			$scope.openPrivUser = function(username){
-				if(typeof username === 'string' && username != eros.localUser.username){
-					if(typeof $scope.privs[username.toLowerCase()] === 'undefined'){
-						eros.chat.joinPriv(username);
-					}
-
-					$scope.selectRoom($scope.privs[username.toLowerCase()]);
-					$('#chat-input > input').focus();
-				}
-			};
-
-			$scope.updateChatInput = function(message){
-				// Replace user names
-				$scope.chatMessage;
-			};
-
-			$scope.seeChat = function(){
-				if(!document.hidden){
-					$rootScope.$emit("favicon_alert", false);
-				}
-			}
-		}]
+		controller: 'ChatCtrl'
 	};
 }])
 .directive('roomUsers', ['$rootScope', '$animate', function($rootScope, $animate){
