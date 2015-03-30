@@ -12,6 +12,7 @@ var erosApp = angular.module('erosApp', [
   'erosApp.controllers',
   'erosApp.chat',
   'erosApp.mm',
+  'pascalprecht.translate',
   'templates.app',
 ]);
 

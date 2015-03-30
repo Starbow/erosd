@@ -106,6 +106,9 @@
            <div class="right" id="navbar-account">
                 <!-- <div browserid ng-if='!connected'>Login</div> -->
                 <div ng-if="connected">{{eros.localUser.username}}</div>
+                <div change-language lang='es'>ES</div>
+                <div change-language lang='en'>EN</div>
+                <div change-language lang='kr'>KR</div>
             </div>
         </div>
 
@@ -114,10 +117,10 @@
                 <div ng-if="!connected">
                     <!-- <div> -->
                         <br />
-                        <p>Login at <a href='http://starbowmod.com'>starbowmod.com</a> to automatically login here.</p>
-                        <input type="text" placeholder="username" ng-model="login.username" />
-                        <input type="password" placeholder="auth token" ng-model="login.password" />
-                        <button ng-click="connect(login.username, login.password)" class="button">Connect</button>
+                        <p translate="LOGIN_AT"></p>
+                        <input type="text" placeholder="{{ 'USERNAME' | translate }}" ng-model="login.username" />
+                        <input type="password" placeholder="{{ 'AUTH_TOKEN' | translate }}" ng-model="login.password" />
+                        <button ng-click="connect(login.username, login.password)" class="button">{{ 'CONNECT' | translate }}</button>
                     <!-- </div> -->
                 </div>
                 <div ng-if="connected" class='row'>
@@ -140,11 +143,11 @@
                     </div>
                 
                     <div id="feedback" class="right small align-right col-md-6">
-                        This is an <b>alpha</b> version of ErosJS.</br >
-                        Please feel free to provide feedback <a href="http://starbowmod.com/forum/showthread.php?tid=585">here</a>.<br />
+                        <div translate="{{ 'DISCLAIMER_ALPHA' }}"></div>
+                        <div translate="{{ 'DISCLAIMER_FEEDBACK' }}"></div>
                         <br />
                         Starbow ErosJS <%=version%><br />
-                        <a href="https://github.com/Starbow/erosd/blob/websockets/web/CHANGELOG.md">Changelog</a>
+                        <a href="https://github.com/Starbow/erosd/blob/websockets/web/CHANGELOG.md">{{ 'CHANGELOG' | translate }}</a>
 
                     </div>
                 </div>

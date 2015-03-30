@@ -13,9 +13,9 @@
 			<span id='user-division' ng-bind='localUser.stats.division'></span>
 			<span id='user-rank' ng-bind='localUser.stats.divisionRank' ng-hide="localUser.stats.placementsRemaining > 0"></span>
 			<div id='user-points' ng-bind='localUser.stats.points' ng-hide="localUser.stats.placementsRemaining > 0"></div>
-			<div id='user-placement' ng-show="localUser.stats.placementsRemaining > 0 && localUser.characters.length > 0">Placement matches: {{localUser.stats.placementsRemaining}}</div>
+			<div id='user-placement' ng-show="localUser.stats.placementsRemaining > 0 && localUser.characters.length > 0">{{ 'PLACEMENT_MATCHES' | translate }} {{localUser.stats.placementsRemaining}}</div>
 			<div id='user-placement' ng-hide="localUser.characters.length > 0" ng-init='showProfileRegions=false'>
-				<span style="color:white; cursor: pointer" ng-click='showProfileRegions=true' ng-hide='showProfileRegions'>+ Add profile</span>
+				<span style="color:white; cursor: pointer" ng-click='showProfileRegions=true' ng-hide='showProfileRegions'>+ {{ 'ADD_PROFILE' | translate }}</span>
 				<span ng-click='showProfileRegions=false' ng-show='showProfileRegions'><span ng-repeat="region in bnet_regions"> <a ng-click="RequestVerification(region)" style="color:white; cursor:pointer">{{region}}</a></span>
 			</div>	
 			<!-- <div id='user-mmr' ng-bind='localUser.stats.mmr'></div> -->
@@ -26,7 +26,7 @@
 	<!-- Center -->
 	<div id="mm-center" class="anim" ng-class='hover ? "min" : "full"'>
 		<div class='pre' ng-show='matchmaking.status == "IDLE"'>
-			<div style="display:inline-block; margin-top:15px; padding: 3px 4px; background-color:#fff; color:#AB3E3E; border-radius: 3px; cursor: pointer" ng-click="vetoModal()"><span class="glyphicon glyphicon-ban-circle"></span> Map vetoes</div>
+			<div style="display:inline-block; margin-top:15px; padding: 3px 4px; background-color:#fff; color:#AB3E3E; border-radius: 3px; cursor: pointer" ng-click="vetoModal()"><span class="glyphicon glyphicon-ban-circle"></span> {{ 'MAP_VETOES' | translate }}</div>
 			<div class='matchtypes' style='display:none'>
 				<button id='1v1' type='button' class='btn' ng-class="matchtypes.one ? 'btn-primary' : 'btn-default'" ng-click="matchtypes.one = !matchtypes.one">1v1</button>
 				<button id='2v2' type='button' class='btn' ng-class="matchtypes.two ? 'btn-primary' : 'btn-default'" ng-click="matchtypes.two = !matchtypes.two">2v2</button>
@@ -37,14 +37,14 @@
 				<button id='ranked' type='button' class='btn' ng-class="ranked ? 'btn-primary' : 'btn-default'" ng-click="ranked = !ranked" >RANKED</button>
 			</div>
 			<div class='queue' ng-show="selected_regions.NA || selected_regions.EU">
-				<div class='search-radius' style=''>Search Radius: <select style='color:black' ng-model='search_radius' ng-options='radius for radius in radius_options' ng-change='updateSearchRadius'/><!-- <input ng-model="search_radius" ng-change='updateSearchRadius'/> --></div>
+				<div class='search-radius' style=''>{{ 'SEARCH_RADIUS' | translate }} <select style='color:black' ng-model='search_radius' ng-options='radius for radius in radius_options' ng-change='updateSearchRadius'/><!-- <input ng-model="search_radius" ng-change='updateSearchRadius'/> --></div>
 
 				<button id='queue' type='button' class='btn btn-default rounded' ng-click="queue()">
-					Queue <span class="icon-bowstarbow" display="font-size:120%"></span>
+					{{ 'QUEUE' | translate }} <span class="icon-bowstarbow" display="font-size:120%"></span>
 				</button>
 			</div>
 			<div class="queue" ng-show="!(selected_regions.NA || selected_regions.EU)">
-				Select a region <span class="glyphicon glyphicon-chevron-right"></span>
+				{{ 'SELECT_REGION' | translate }} <span class="glyphicon glyphicon-chevron-right"></span>
 			</div>
 		</div>
 		<div class='queing' ng-show='matchmaking.status == "QUEUED"'>
@@ -52,13 +52,13 @@
 				<div ng-repeat='type in selected-matchtypes' ng-bind='type'/>
 			</div> -->
 			<div class='ranked' style='display:none'>
-				<div id='ranked'>RANKED</div>
+				<div id='ranked'>{{ 'RANKED' | translate }}</div>
 			</div>
-			<div class='timer'>{{timeElapsed|timer}}</div>
+			<div class='timer'>{{ timeElapsed | timer }}</div>
 
 			<div class='dequeue'>
-				<div class='search-radius' style=''>Search Radius: <span ng-bind='search_radius'></span></div>
-				<button id='dequeue' type='button' class='btn btn-warning rounded' ng-click="dequeue()">Cancel</button>
+				<div class='search-radius' style=''>{{ 'SEARCH_RADIUS' | translate }} <span ng-bind='search_radius'></span></div>
+				<button id='dequeue' type='button' class='btn btn-warning rounded' ng-click="dequeue()">{{ 'CANCEL' | translate }}</button>
 			</div>
 		</div>
 
@@ -68,31 +68,31 @@
 					<div><b>{{matchmaking.match.map.battle_net_name}}</b></div>
 					<div>{{matchmaking.match.map.region | region}}</div>
 				</div>
-				<div id='gotomap' class='button' ng-click="goToMap()" style='margin-left: 22px'><div><span class="glyphicon glyphicon-link" aria-hidden="true"></span> Go to map</div></div>
-				<div id='copychat' class='button' ng-click='copyChat()' style='margin-left: 18px'><div><span class=" glyphicon glyphicon-comment" aria-hidden="true"></span> Copy chat name</div></div>
+				<div id='gotomap' class='button' ng-click="goToMap()" style='margin-left: 22px'><div><span class="glyphicon glyphicon-link" aria-hidden="true"></span> {{ 'GO_TO_MAP' | translate }}</div></div>
+				<div id='copychat' class='button' ng-click='copyChat()' style='margin-left: 18px'><div><span class=" glyphicon glyphicon-comment" aria-hidden="true"></span> {{ 'COPY_CHAT_NAME' | translate }}</div></div>
 			</div>
 
 			<div class='bottom'>
 				<div class='right'>
 					<div ng-show='noshow_reponse'>
-						No-show reported:<br />
-						<button id='noshow-response' type="button" class="btn btn-default right" ng-click="respondNoShow()">I'm here! [{{longProcessResponseTimer | timer}}]</button>
+						{{ 'NO_SHOW_REPORTED' | translate }}<br />
+						<button id='noshow-response' type="button" class="btn btn-default right" ng-click="respondNoShow()">{{ "I_AM_HERE" | translate }} [{{longProcessResponseTimer | timer}}]</button>
 					</div>
 					<div ng-show='draw_reponse' style='text-align:right'>
-						Draw requested [{{longProcessResponseTimer | timer}}]<br />
-						<button id='noshow-response' type="button" class="btn btn-warning right" ng-click="respondDraw(1)" style="margin-left:7px;">Accept</button><button id='noshow-response' type="button" class="btn btn-default right" ng-click="respondDraw(0)">Reject</button>
+						{{ 'DRAW_REQUESTED' | translate }} [{{longProcessResponseTimer | timer}}]<br />
+						<button id='noshow-response' type="button" class="btn btn-warning right" ng-click="respondDraw(1)" style="margin-left:7px;">{{ 'ACCEPT' | translate }}</button><button id='noshow-response' type="button" class="btn btn-default right" ng-click="respondDraw(0)">{{ 'REJECT' | translate }}</button>
 					</div>
 				</div>
-				<div id='forfeit' class='button' ng-click="forfeit()" style='margin-left: 19px'><div><span class="glyphicon glyphicon-flag" aria-hidden="true"></span> Forfeit</div></div>
-				<div id='draw' class='button' ng-click="requestDraw()" ng-if="!draw_requested" style='margin-left: 8px; padding: 2px 7px;'><div><span class="glyphicon glyphicon-tower" aria-hidden="true"></span> Request draw</div></div>
-				<div id='draw-countdown' class='button' ng-if="draw_requested" style='margin-left: 8px; padding: 2px 7px;'><div><span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span> Draw requested [{{longProcessTimer | timer}}]</div></div>
-				<div id='noshow' class='button' ng-click="reportNoShow()" ng-if="!noshow_requested" style='margin-left: 12px'><div><span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span> Report no-show</div></div>
-				<div id='noshow-countdown' class='button' ng-if="noshow_requested" style='margin-left: 12px'><div><span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span> No-show reported [{{longProcessTimer | timer}}]</div></div>
+				<div id='forfeit' class='button' ng-click="forfeit()" style='margin-left: 19px'><div><span class="glyphicon glyphicon-flag" aria-hidden="true"></span> {{ 'FORFEIT' | translate }}</div></div>
+				<div id='draw' class='button' ng-click="requestDraw()" ng-if="!draw_requested" style='margin-left: 8px; padding: 2px 7px;'><div><span class="glyphicon glyphicon-tower" aria-hidden="true"></span> {{ 'REQUEST_DRAW' | translate }}</div></div>
+				<div id='draw-countdown' class='button' ng-if="draw_requested" style='margin-left: 8px; padding: 2px 7px;'><div><span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span> {{ 'DRAW_REQUEST' | translate }} [{{longProcessTimer | timer}}]</div></div>
+				<div id='noshow' class='button' ng-click="reportNoShow()" ng-if="!noshow_requested" style='margin-left: 12px'><div><span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span> {{ 'REPORT_NO_SHOW' | translate }}</div></div>
+				<div id='noshow-countdown' class='button' ng-if="noshow_requested" style='margin-left: 12px'><div><span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span> {{ 'NO_SHOW_REPORTED' | translate }} [{{longProcessTimer | timer}}]</div></div>
 
-				<div id='upload-replay' class='button' ng-click='uploadreplay=!uploadreplay' style='margin-left: 8px; display: inline' ng-init='uploadreplay=false'><div><span class="glyphicon glyphicon-upload" aria-hidden="true"></span> Upload Replay</div></div>
+				<div id='upload-replay' class='button' ng-click='uploadreplay=!uploadreplay' style='margin-left: 8px; display: inline' ng-init='uploadreplay=false'><div><span class="glyphicon glyphicon-upload" aria-hidden="true"></span> {{ 'UPLOAD_REPLAY' | translate }}</div></div>
 				<span ng-show='uploadreplay' class='upload-replay align-right' style="position:absolute; bottom:0px; right:0px" ng-init='uploading_file=false; upload_response=null'>
 					<div ng-if='upload_response'><span class="glyphicon glyphicon-warning-sign"></span> {{upload_response}}</div>
-					<div ng-if='uploading_file'>Uploading replay...</div>
+					<div ng-if='uploading_file'>{{ 'UPLOADING_REPLAY' | translate }}</div>
 					<input type="file" id="file" onchange="angular.element(this).scope().upload_replay()" ng-model="replay" ng-if='!uploading_file'/>
 				</span>
 			</div>
@@ -168,15 +168,15 @@
 	    	<div class="modal-content">
 	     		<div class="modal-header" style="border:none; padding:10px; text-align:center;">
 			        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-			        <h4 class="modal-title" id="confirmRemoveCharLabel" ng-hide="char_remove_status">Are you sure you want to delete this profile?</h4>
+			        <h4 class="modal-title" id="confirmRemoveCharLabel" ng-hide="char_remove_status">{{ 'CONFIRM_REMOVE_CHAR' | translate }}</h4>
 			        <h4 class="modal-title" id="confirmRemoveCharLabel" ng-show="char_remove_status">{{char_remove_status}}</h4>
 	      		</div>
 	      		<div class="modal-body" style="text-align:center; padding: 10px;">
 	        		<span class="small-region" style="color:white; background: #AB3E3E; border-radius: 3px; padding: 1px 5px; margin-right: 5px;"> {{char_to_remove.region | region_short}}</span>{{char_to_remove.character_name}}
 			    </div>
 			    <div class="modal-footer" style="border: none; padding:10px; text-align:center">
-			        <button type="button" class="btn round" data-dismiss="modal" ng-hide="char_remove_status">No</button>
-			        <button type="button" class="btn round" ng-click="requestCharRemove()" ng-hide="char_remove_status">Yes</button>
+			        <button type="button" class="btn round" data-dismiss="modal" ng-hide="char_remove_status">{{ 'NO' | translate }}</button>
+			        <button type="button" class="btn round" ng-click="requestCharRemove()" ng-hide="char_remove_status">{{ 'YES' | translate }}</button>
 	      		</div>
 	    	</div>
 	 	</div>
@@ -190,7 +190,7 @@
 			        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
 			        <div class="modal-title" id="vetoesDialogLabel" ng-hide="char_remove_status">
 			        	<div ng-show="veto_region" class="left" style="line-height:37px; font-size:0.95em; color:#555; width:0px;">
-			        		<div style="width: 100px; text-align: left"><span class="vetoes-left red-tag">{{eros.maxVetoes - vetoedMaps[veto_region].length}}</span>vetoes left</span></div>
+			        		<div style="width: 100px; text-align: left"><span class="vetoes-left red-tag">{{eros.maxVetoes - vetoedMaps[veto_region].length}}</span>{{ 'VETOES_LEFT' | translate }}</span></div>
 			        	</div>
 			        	<div>
 				        	<span ng-repeat="reg in eros.activeRegions" ng-click="$parent.veto_region=eros.regionFromCode(reg)" ng-class="{'red-tag': eros.regionFromCode(reg) == veto_region}" class="btn">{{eros.regionFromCode(reg)}}</span>

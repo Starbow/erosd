@@ -34,11 +34,6 @@ module.exports = function (grunt) {
         'src/assets/starbow-icons/style.css'
       ], 
       cssWatch: ['src/css/scss/*.scss'],
-      // locales: {
-      //   es: ['src/**/locale-es.json' ],
-      //   en: ['src/**/locale-en.json' ],
-      //   compiled: ['<%= tmpdir %>/locales/**/*.js', 'src/app/locale-default.tpl']
-      // }
     },
     clean: ['<%= distdir %>/*', '<%= tmpdir %>/*'],
     copy: {
@@ -62,7 +57,7 @@ module.exports = function (grunt) {
       },
       jsMap: {
         files: [{ dest: '<%= distdir %>', src: ["*.map"], expand: true, cwd: 'components/angular-route'}]
-      }
+      },
     },
     html2js: {
       app: {
@@ -75,16 +70,6 @@ module.exports = function (grunt) {
       }
     },
     concat:{
-       // i18n files
-      // langEN: {
-      //   src:['src/app/locale-start-en.tpl', '<%= src.locales.en %>', 'src/app/locale-end.tpl'],
-      //   dest: '<%= tmpdir %>/locales/localeEN.js'
-      // },
-      // langES: {
-      //   src:['src/app/locale-start-es.tpl', '<%= src.locales.es %>', 'src/app/locale-end.tpl'],
-      //   dest: '<%= tmpdir %>/locales/localeES.js'
-      // },
-      // app source + i18n files + templates
       js:{
         options: {
           banner: "<%= banner %>"
@@ -162,7 +147,10 @@ module.exports = function (grunt) {
 
           'components/angular-audio/app/angular.audio.js',
           'components/underscore/underscore-min.js',
-          'components/ng-flow/dist/ng-flow-standalone.js'
+          'components/ng-flow/dist/ng-flow-standalone.js',
+
+          'components/bower-angular-translate/angular-translate.min.js'
+
         ],
         dest: '<%= distdir %>/components.js'
       }
@@ -215,10 +203,6 @@ module.exports = function (grunt) {
         files:['<%= src.html %>'],
         tasks: ['concat:index', 'concat:404', 'concat:500', 'timestamp']
       }
-      // ,locales: {
-      //   files:['<%= src.locales.es %>', '<%= src.locales.en %>'],
-      //   tasks: ['concat:langEN', 'concat:langES', 'concat:js', 'timestamp']
-      // }
       ,js: {
         files:['<%= src.js %>'],
         tasks: ['concat:js', 'timestamp']
