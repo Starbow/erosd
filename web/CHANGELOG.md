@@ -2,6 +2,10 @@
 
 ### Unresolved
 
+## 0.2.5
+### Added
+- Locale, although not sure if it works atm.
+
 ## 0.2.4
 ### Added
 - Favicon changes color when there's new messages in any lobby
