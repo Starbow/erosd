@@ -106,9 +106,14 @@
            <div class="right" id="navbar-account">
                 <!-- <div browserid ng-if='!connected'>Login</div> -->
                 <div ng-if="connected">{{eros.localUser.username}}</div>
-                <div change-language lang='es'>ES</div>
-                <div change-language lang='en'>EN</div>
-                <div change-language lang='kr'>KR</div>
+                <div id="language-selector" style="padding: 0px 10px;" ng-controller="LocaleController">
+                    <span style="font-size: 8pt; font-family: 'noto_sansregular'; display: inline-block; text-align: right; line-height: 9pt; vertical-align: middle">
+                        <div style="display:block;">Lang</div>
+                        <div style="display:block;">언어</div>
+                    </span>
+                    <span class="pointer" change-language lang='en' ng-class="{'selected': setLanguage == 'en'}"><img src="/static/img/locale-en.png" /></span>
+                    <span class="pointer" change-language lang='kr' ng-class="{'selected': setLanguage == 'kr'}"><img src="/static/img/locale-kr.png" /></span>
+                </div>
             </div>
         </div>
 

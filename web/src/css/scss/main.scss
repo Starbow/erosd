@@ -95,6 +95,7 @@ $navHeight: 45px;
     border-bottom: 2px solid $lightRedColor;
 
     padding: 0 20px;
+    padding-right: 0px;
 
     div{
         display: inline-block;
@@ -106,5 +107,15 @@ $navHeight: 45px;
 
     #navbar-account{
         font-size: 18px;
+    }
+}
+
+#language-selector {
+    [change-language] {
+        opacity: 0.5;
+
+        &.selected {
+            opacity: 1;
+        }
     }
 }

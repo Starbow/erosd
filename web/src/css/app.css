@@ -84,13 +84,19 @@
   font-family: 'goboldregular';
   color: #fff;
   border-bottom: 2px solid #ab3e3e;
-  padding: 0 20px; }
+  padding: 0 20px;
+  padding-right: 0px; }
   #navbar div {
     display: inline-block; }
   #navbar .erosjs {
     color: #ab3e3e; }
   #navbar #navbar-account {
     font-size: 18px; }
+
+#language-selector [change-language] {
+  opacity: 0.5; }
+  #language-selector [change-language].selected {
+    opacity: 1; }
 
 .no-gutter {
   margin: 0px !important; }
@@ -124,6 +130,9 @@
   margin-right: auto;
   left: 0;
   right: 0; }
+
+.pointer {
+  cursor: pointer; }
 
 .red-tag {
   color: white !important;
