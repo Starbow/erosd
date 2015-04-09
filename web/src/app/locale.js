@@ -5,6 +5,7 @@ var module = angular.module('erosApp');
 module.config(['$translateProvider', function ($translateProvider) {
     $translateProvider.translations('en', starbow.locale["en"]);
 	$translateProvider.translations('kr', starbow.locale["kr"]);
+	$translateProvider.translations('es', starbow.locale["es"]);
 
     $translateProvider.preferredLanguage('en');
     // console.log($translateProvider.preferredLanguage())
@@ -15,11 +16,17 @@ module.controller('LocaleController', ['$scope', '$locale', '$translate', functi
 	// alert($locale.id + ", "+$locale.id.split('-')[0])
 
 	var lang;
-	if($locale.id.split('-')[0] == 'kr'){
-		lang = 'kr'
-	}else{
-		lang = 'en'
+	switch($locale.id.split('-')[0]){
+		case 'kr': 
+			lang = 'kr';
+			break;
+		case 'es':
+			lang = 'es'
+			break;
+		default:
+			lang = 'en'
 	}
+
 	$scope.setLanguage = lang;
 	$translate.use(lang);
 }]);

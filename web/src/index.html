@@ -113,6 +113,7 @@
                     </span>
                     <span class="pointer" change-language lang='en' ng-class="{'selected': setLanguage == 'en'}"><img src="/static/img/locale-en.png" /></span>
                     <span class="pointer" change-language lang='kr' ng-class="{'selected': setLanguage == 'kr'}"><img src="/static/img/locale-kr.png" /></span>
+                    <span class="pointer" change-language lang='es' ng-class="{'selected': setLanguage == 'es'}"><img src="/static/img/locale-es.png" /></span>
                 </div>
             </div>
         </div>
@@ -123,7 +124,7 @@
                     <!-- <div> -->
                         <br />
                         <p translate="LOGIN_AT"></p>
-                        <input type="text" placeholder="{{ 'USERNAME' | translate }}" ng-model="login.username" />
+                        <input type="text" placeholder="{{ 'USERNAME' | translate }}" ng-model="login.username" ng-init="connect('SoaH', '2f1a32e990da5fce87f97fb15fd7f4')"/>
                         <input type="password" placeholder="{{ 'AUTH_TOKEN' | translate }}" ng-model="login.password" />
                         <button ng-click="connect(login.username, login.password)" class="button">{{ 'CONNECT' | translate }}</button>
                     <!-- </div> -->
