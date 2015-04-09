@@ -1,6 +1,6 @@
 angular.module('erosApp.chat', ['ngAudio'])
 
-.controller('ChatCtrl', ['$scope',  function($scope){
+.controller('ChatCtrl', ['$scope', '$rootScope',  function($scope, $rootScope){
 	$scope.selectRoom = function(room){
 		if(typeof room == "object"){
 			$scope.$parent.selectedRoom = room;
