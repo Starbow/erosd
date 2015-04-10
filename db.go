@@ -22,6 +22,7 @@ type RealUser struct {
 	Username  string `db:"username"`
 	AuthToken string `db:"authtoken"`
 	Email     string `db:"email"`
+	IsActive  bool   `db:"is_active"`
 }
 
 // Attempt to log in. Should probably rate limit this.
@@ -30,7 +31,7 @@ func GetRealUser(username, authtoken string) *RealUser {
 		return nil
 	}
 	var user RealUser
-	err := dbMap.SelectOne(&user, "SELECT id, username, authtoken FROM user_user WHERE username=?", username)
+	err := dbMap.SelectOne(&user, "SELECT id, username, authtoken, is_active FROM user_user WHERE username=?", username)
 	if testMode {
 		// Test mode creates the user if it doesn't exist.
 		if err != nil || user.Id == 0 {
@@ -43,6 +44,10 @@ func GetRealUser(username, authtoken string) *RealUser {
 			}
 		}
 
+	}
+
+	if !user.IsActive {
+		return nil
 	}
 
 	if err != nil || user.Id == 0 {
