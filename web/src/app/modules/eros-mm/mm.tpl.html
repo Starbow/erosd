@@ -227,7 +227,7 @@
 			        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
 			        <div class="modal-title" id="vetoesDialogLabel" ng-hide="char_remove_status">
 			        	<div ng-show="veto_region" class="left" style="line-height:37px; font-size:0.95em; color:#555; width:0px;">
-			        		<div style="width: 100px; text-align: left"><span class="vetoes-left red-tag">{{eros.maxVetoes - vetoedMaps[veto_region].length}}</span>{{ 'VETOES_LEFT' | translate }}</span></div>
+			        		<div style="width: 300px; text-align: left"><span class="vetoes-left red-tag">{{eros.maxVetoes - vetoedMaps[veto_region].length}}</span>{{ 'VETOES_LEFT' | translate }}</span></div>
 			        	</div>
 			        	<div>
 				        	<span ng-repeat="reg in eros.activeRegions" ng-click="$parent.veto_region=eros.regionFromCode(reg)" ng-class="{'red-tag': eros.regionFromCode(reg) == veto_region}" class="btn">{{eros.regionFromCode(reg)}}</span>
