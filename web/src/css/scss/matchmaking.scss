@@ -53,7 +53,7 @@ $mmHeight: 218px;
 	}
 
 	.region:not(.selected):not([disabled]):hover{
-		& > div {
+		& > .region-map {
 			opacity: 0.5;
 		}
 	}
@@ -69,6 +69,15 @@ $mmHeight: 218px;
 
 	.region.selected div{
 		opacity: 1;
+	}
+
+	.region-name{
+		opacity: 0.6;
+		position: absolute; 
+		top: 0px; 
+		width: 100%; 
+		text-align: center;
+		background: rgba(171,62,62,0.7);
 	}
 
 	.character{
@@ -306,6 +315,12 @@ $mmHeight: 218px;
 
 	#region-na{
 		background-image: url(../img/mm-na.png);
+	}
+
+	#region-kr{
+		/*background-image: url(../img/mm-kr.png);*/
+		background-image: url(../img/svg_korea.svg);
+		background-size: 151px;
 	}
 
 }

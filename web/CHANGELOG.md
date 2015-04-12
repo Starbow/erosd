@@ -1,10 +1,16 @@
 # Change Log
 
 ### Unresolved
+- Refactor matchmaking regions to include just the available ones.
+
+
+## 0.3.0
+### Added
+- Korean ladder (enabled on backend, added UI on frontend)
 
 ## 0.2.5
 ### Added
-- Locale, although not sure if it works atm.
+- Korean and spanish Locale.
 
 ## 0.2.4
 ### Added

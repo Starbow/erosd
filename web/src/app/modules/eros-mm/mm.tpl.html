@@ -36,14 +36,14 @@
 			<div class='ranked' style='display:none'>
 				<button id='ranked' type='button' class='btn' ng-class="ranked ? 'btn-primary' : 'btn-default'" ng-click="ranked = !ranked" >RANKED</button>
 			</div>
-			<div class='queue' ng-show="selected_regions.NA || selected_regions.EU">
+			<div class='queue' ng-show="selected_regions.NA || selected_regions.EU || selected_regions.KR">
 				<div class='search-radius' style=''>{{ 'SEARCH_RADIUS' | translate }} <select style='color:black' ng-model='search_radius' ng-options='radius for radius in radius_options' ng-change='updateSearchRadius'/><!-- <input ng-model="search_radius" ng-change='updateSearchRadius'/> --></div>
 
 				<button id='queue' type='button' class='btn btn-default rounded' ng-click="queue()">
 					{{ 'QUEUE' | translate }} <span class="icon-bowstarbow" display="font-size:120%"></span>
 				</button>
 			</div>
-			<div class="queue" ng-show="!(selected_regions.NA || selected_regions.EU)">
+			<div class="queue" ng-show="!(selected_regions.NA || selected_regions.EU || selected_regions.KR)">
 				{{ 'SELECT_REGION' | translate }} <span class="glyphicon glyphicon-chevron-right"></span>
 			</div>
 		</div>
@@ -114,11 +114,17 @@
 						<span class="glyphicon glyphicon-user"></span> {{char.character_name}}
 						<span class="small remove-char" ng-click="removeChar(char); event.stopPropagation()">x</span>
 					</div>
+					<div class="region-name">
+						NA
+					</div>
 				</div>
 				<div ng-switch-default class="region unselectable " disabled="disabled"  value='NA'>
 					<div class="region-map" id='region-na'></div>
 					<div class="character new" style="width:200px" ng-click="RequestVerification('NA')">
 						+<span class="glyphicon glyphicon-user"></span>
+					</div>
+					<div class="region-name">
+						NA
 					</div>
 				</div>
 			</div>
@@ -130,11 +136,39 @@
 						<span class="glyphicon glyphicon-user"></span> {{char.character_name}}
 						<span class="small remove-char" ng-click="removeChar(char); event.stopPropagation()">x</span>
 					</div>
+					<div class="region-name">
+						EU
+					</div>
 				</div>
 				<div ng-switch-default class="region unselectable " disabled="disabled"  value='EU'>
 					<div class="region-map" id='region-eu'></div>
 					<div class="character new" style="width:200px" ng-click="RequestVerification('EU')">
 						+<span class="glyphicon glyphicon-user"></span>
+					</div>
+					<div class="region-name">
+						EU
+					</div>
+				</div>
+			</div>
+
+			<div ng-switch on="localUser.char_per_region[3].length > 0" style="display: inline-block">
+				<div ng-switch-when="true" class="region unselectable" ng-class='{selected: selected_regions.KR}' value='KR' ng-click='toggle_region("KR")'>
+					<div class="region-map" id='region-kr'></div>
+					<div class="character" ng-repeat="char in localUser.char_per_region[3] track by char.profile_id">
+						<span class="glyphicon glyphicon-user"></span> {{char.character_name}}
+						<span class="small remove-char" ng-click="removeChar(char); event.stopPropagation()">x</span>
+					</div>
+					<div class="region-name">
+						KR
+					</div>
+				</div>
+				<div ng-switch-default class="region unselectable " disabled="disabled"  value='KR'>
+					<div class="region-map" id='region-kr'></div>
+					<div class="character new" style="width:200px" ng-click="RequestVerification('KR')">
+						+<span class="glyphicon glyphicon-user"></span>
+					</div>
+					<div class="region-name">
+						KR
 					</div>
 				</div>
 			</div>
@@ -142,13 +176,16 @@
 
 		<div class='queing' ng-show='matchmaking.status == "QUEUED"'>
 			<!-- <div ng-repeat='region in selected-regions' class='region' /> -->
+			<div class="region selected" id='region-kr' ng-show='selected_regions.KR' value='KR'></div>
 			<div class="region selected" id='region-eu' ng-show='selected_regions.EU' value='EU'></div>
 			<div class="region selected" id='region-na' ng-show='selected_regions.NA' value='NA'></div>
+			
 		</div>
 
 		<div class='matched' ng-show='matchmaking.status == "MATCHED"'>
 			<div style="float:right"> 
 				<!-- <div ng-repeat='region in selected-regions' class='region' /> -->
+				<div class="region selected" id='region-kr' ng-show='selected_regions.KR' value='KR'></div>
 				<div class="region selected" id='region-eu' ng-show='selected_regions.EU' value='EU'></div>
 				<div class="region selected" id='region-na' ng-show='selected_regions.NA' value='NA'></div>
 			</div>

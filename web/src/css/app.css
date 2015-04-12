@@ -473,7 +473,7 @@
       height: 100%;
       background-repeat: no-repeat;
       background-position: center; }
-  #eros-mm .region:not(.selected):not([disabled]):hover > div {
+  #eros-mm .region:not(.selected):not([disabled]):hover > .region-map {
     opacity: 0.5; }
   #eros-mm .region[disabled] {
     width: 30px; }
@@ -482,6 +482,13 @@
       cursor: default; }
   #eros-mm .region.selected div {
     opacity: 1; }
+  #eros-mm .region-name {
+    opacity: 0.6;
+    position: absolute;
+    top: 0px;
+    width: 100%;
+    text-align: center;
+    background: rgba(171, 62, 62, 0.7); }
   #eros-mm .character {
     position: absolute;
     bottom: 0px;
@@ -623,6 +630,10 @@
     background-image: url(../img/mm-eu.png); }
   #eros-mm #region-na {
     background-image: url(../img/mm-na.png); }
+  #eros-mm #region-kr {
+    /*background-image: url(../img/mm-kr.png);*/
+    background-image: url(../img/svg_korea.svg);
+    background-size: 151px; }
 
 #vetoesDialog .veto-box {
   display: inline-block;
