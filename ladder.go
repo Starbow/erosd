@@ -23,6 +23,8 @@ var (
 	ErrLadderWrongMap                 = errors.New("The provided game was not on the correct map.")
 	ErrLadderWrongSpeed               = errors.New("The provided game was not on the Faster speed setting.")
 	ErrLadderGameNotPrearranged       = errors.New("The provided game was not arranged by the Eros matchmaker.")
+
+	ladder = Iccup{}
 )
 
 type Division struct {
@@ -33,6 +35,7 @@ type Division struct {
 	IconUrl            string  `db:"icon_url"`
 	SmallIconUrl       string  `db:"small_icon_url"`
 	LadderGroup        int64   `db:"ladder_group"`
+	System             string  `db:"system"`
 }
 
 func (d *Division) DivisionMessage() *protobufs.Division {
@@ -160,13 +163,16 @@ func (this *Division) GetDifference(other *Division) int64 {
 	return p2 - p1
 }
 
-func (d Divisions) GetDivision(mmr float64) (division *Division, position int64) {
+// TODO: add to Ladderer interface
+func (d Divisions) GetDivision(points int64) (division *Division, position int64) {
 	i := int64(len(d))
 	for {
 		i--
 
-		if mmr >= d[i].PromotionThreshold {
-			return d[i], i
+		if float64(points) >= float64(d[i].PromotionThreshold) {
+			division = d[i]
+			position = i
+			break
 		}
 
 		if i == 0 {
@@ -174,16 +180,19 @@ func (d Divisions) GetDivision(mmr float64) (division *Division, position int64)
 		}
 	}
 
+	log.Println("GetDivision:", division)
+
 	return nil, 0
 }
 
 // Get the difference in ranks
-func (d Divisions) GetDifference(mmr, mmr2 float64) int64 {
-	_, p1 := d.GetDivision(mmr)
-	_, p2 := d.GetDivision(mmr2)
+// DEPRECATED: using interface now
+// func (d Divisions) GetDifference(mmr, mmr2 float64) int64 {
+// 	_, p1 := d.GetDivision(mmr)
+// 	_, p2 := d.GetDivision(mmr2)
 
-	return p2 - p1
-}
+// 	return p2 - p1
+// }
 
 func (m Maps) Get(region BattleNetRegion, name string) *Map {
 	sanitized := strings.TrimSpace(strings.ToLower(name))
@@ -496,6 +505,7 @@ func NewMatchResult(replay *Replay, client *Client) (result *MatchResult, player
 			opponent.PointsBefore = opponentRegion.LadderPoints
 		}
 
+		// Adjust points
 		client.Defeat(opponentClient, region)
 
 		if playerRegion == nil || opponentRegion == nil {
@@ -540,6 +550,7 @@ func NewMatchResult(replay *Replay, client *Client) (result *MatchResult, player
 	return
 }
 
+// DEPRECATED: Old system, should move to interface
 func calculateNewPoints(winner, loser int64, winnerDivision, loserDivision *Division) (winnerNew, loserNew int64) {
 	// Update points
 	// GetDifference(2000, 1000) would return -1

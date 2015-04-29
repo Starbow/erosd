@@ -375,7 +375,8 @@ func (client *Client) PostGame(region BattleNetRegion) {
 
 	}
 
-	division, _ := divisions.GetDivision(client.RatingMean)
+	// division, _ := divisions.GetDivision(client.RatingMean)
+	division, _ := divisions.GetDivision(client.LadderPoints)
 	if client.PlacementMatchesRemaining == 0 && client.Division == nil {
 		client.Division = division
 	}
@@ -395,7 +396,8 @@ func (client *Client) PostGame(region BattleNetRegion) {
 
 	}
 
-	division, _ = divisions.GetDivision(regionStats.RatingMean)
+	// division, _ = divisions.GetDivision(regionStats.RatingMean)
+	division, _ = divisions.GetDivision(regionStats.LadderPoints)
 	if regionStats.PlacementMatchesRemaining == 0 && regionStats.Division == nil {
 
 		regionStats.Division = division
@@ -422,7 +424,7 @@ func (client *Client) Defeat(opponent *Client, region BattleNetRegion) float64 {
 
 	var quality float64
 
-	client.LadderPoints, opponent.LadderPoints = calculateNewPoints(client.LadderPoints, opponent.LadderPoints, client.Division, opponent.Division)
+	client.LadderPoints, opponent.LadderPoints = ladder.CalculateNewPoints(client.LadderPoints, opponent.LadderPoints, client.Division, opponent.Division)
 	client.RatingMean, client.RatingStdDev, opponent.RatingMean, opponent.RatingStdDev, quality = calculateNewRating(client.Id, opponent.Id, client.RatingMean, client.RatingStdDev, opponent.RatingMean, opponent.RatingStdDev)
 
 	regionStats, err := client.RegionStats(region)
@@ -435,7 +437,7 @@ func (client *Client) Defeat(opponent *Client, region BattleNetRegion) float64 {
 		return quality
 	}
 
-	regionStats.LadderPoints, opponentRegionStats.LadderPoints = calculateNewPoints(regionStats.LadderPoints, opponentRegionStats.LadderPoints, regionStats.Division, opponentRegionStats.Division)
+	regionStats.LadderPoints, opponentRegionStats.LadderPoints = ladder.CalculateNewPoints(regionStats.LadderPoints, opponentRegionStats.LadderPoints, regionStats.Division, opponentRegionStats.Division)
 	regionStats.RatingMean, regionStats.RatingStdDev, opponentRegionStats.RatingMean, opponentRegionStats.RatingStdDev, quality = calculateNewRating(client.Id, opponent.Id, regionStats.RatingMean, regionStats.RatingStdDev, opponentRegionStats.RatingMean, opponentRegionStats.RatingStdDev)
 	regionStats.Wins += 1
 	opponentRegionStats.Losses += 1

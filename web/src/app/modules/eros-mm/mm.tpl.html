@@ -26,7 +26,7 @@
 	<!-- Center -->
 	<div id="mm-center" class="anim" ng-class='hover ? "min" : "full"'>
 		<div class='pre' ng-show='matchmaking.status == "IDLE"'>
-			<div style="display:inline-block; margin-top:15px; padding: 3px 4px; background-color:#fff; color:#AB3E3E; border-radius: 3px; cursor: pointer" ng-click="vetoModal()"><span class="glyphicon glyphicon-ban-circle"></span> {{ 'MAP_VETOES' | translate }}</div>
+			<div style="display:inline-block; margin-top:15px; padding: 3px 8px; background-color:#fff; color:#AB3E3E; border-radius: 3px; cursor: pointer" ng-click="vetoModal()"><span class="glyphicon glyphicon-ban-circle"></span> {{ 'MAP_VETOES' | translate }}</div>
 			<div class='matchtypes' style='display:none'>
 				<button id='1v1' type='button' class='btn' ng-class="matchtypes.one ? 'btn-primary' : 'btn-default'" ng-click="matchtypes.one = !matchtypes.one">1v1</button>
 				<button id='2v2' type='button' class='btn' ng-class="matchtypes.two ? 'btn-primary' : 'btn-default'" ng-click="matchtypes.two = !matchtypes.two">2v2</button>

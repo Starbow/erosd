@@ -641,9 +641,11 @@ func (mp *MatchmakerParticipant) IsMatch(mp2 *MatchmakerParticipant) (match bool
 
 	r1 := mp.rating
 	r2 := mp2.rating
+	d1, _ := divisions.GetDivision(mp.points)
+	d2, _ := divisions.GetDivision(mp2.points)
 	mp1d, r1v := mp.SearchBoundaries()
 	mp2d, r2v := mp2.SearchBoundaries()
-	diff := math.Abs(float64(divisions.GetDifference(mp.rating, mp2.rating)))
+	diff := math.Abs(float64(ladder.GetDifference(d1, d2)))
 
 	r1Match := (r1+r1v >= r2) && (r1-r1v <= r2) && (mp.radius == 0 || diff < float64(mp.radius)) && diff <= mp1d
 	r2Match := (r2+r2v >= r1) && (r2-r2v <= r1) && (mp2.radius == 0 || diff < float64(mp2.radius)) && diff <= mp2d
