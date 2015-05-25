@@ -1,0 +1,121 @@
+/*
+ * Navigation
+ */
+
+$navWidth: 270px;
+$contentWidth: 1020px;
+$lightGrey: #393939;
+$navGrey: #2e2e2e;
+$navButtonColor: #acacac;
+$navButtonColorHover: #e9e9e9;
+$navHeight: 45px;
+
+#left-nav {
+    position: fixed;
+    bottom: 0;
+    top: 0;
+    width: $navWidth;
+
+    background-color: $navGrey;
+    color: $navButtonColor;
+
+    font-family: $headerFont;
+    // font-family: 'goboldregular';
+
+    #brand{
+    	font-family: $headerFont;
+    	// height: 200px;
+    	margin-top: 40px;
+    	margin-bottom: 120px;
+    	text-align: center;
+    	margin-right: 7px;
+
+        a {
+            text-decoration: none;
+        }
+
+    	.title{
+    		color:$lightRedColor;
+    		font-size: 3em;
+    	}
+    	.subtitle{
+    		color:#fff;
+    		font-size: 1.5em;
+    	}
+
+    }
+
+    .navigation{
+    	font-size: 15px;
+    	cursor: pointer;
+
+    	.button {
+    		padding-left: 25px;
+    		height: 40px;
+    		line-height: 40px;
+    		// width: 100%;
+
+    		&:hover{
+    			background-color: $lightGrey;
+    			color: $navButtonColorHover;
+    		}
+
+    		&.selected {
+    			border-right: 4px solid $lightRedColor;
+    			color: $lightRedColor;
+    			background-color: $lightGrey;
+    		}
+    	}
+    }
+}
+
+#main-content {
+	/*padding-left: $navWidth;*/
+    max-width: $contentWidth;
+    margin: 0px auto;
+    margin-top: $navHeight;
+    background: #efefef;
+    padding-bottom:20px;
+    border-bottom: #fafafa 1px solid;
+}
+
+#navbar {
+    height: $navHeight;
+    background-color: $navGrey;
+    /*background-color: $redColor;*/
+    /*background-image: url('/static/img/navbar.jpg'); */
+    
+    max-width:$contentWidth;
+
+    font-size: 20px;
+    line-height: $navHeight;
+    font-family: $headerFont;
+    color: #fff;
+
+    border-bottom: 2px solid $lightRedColor;
+
+    padding: 0 20px;
+    padding-right: 0px;
+
+    div{
+        display: inline-block;
+    }
+
+    .erosjs{
+        color: $lightRedColor;
+    }
+
+    #navbar-account{
+        font-size: 18px;
+    }
+}
+
+#language-selector {
+    [change-language] {
+        opacity: 0.5;
+
+        &.selected {
+            opacity: 1;
+        }
+    }
+}

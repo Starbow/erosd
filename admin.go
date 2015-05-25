@@ -153,7 +153,7 @@ func (conn *AdminConnection) read() {
 					username = el.client.Username
 				}
 
-				conn.writer.WriteString(fmt.Sprintf("CLIENT %d %s %s\n", id, el.conn.RemoteAddr().String(), username))
+				conn.writer.WriteString(fmt.Sprintf("CLIENT %d %s %s\n", id, el.RemoteAddr().String(), username))
 			}
 		}
 

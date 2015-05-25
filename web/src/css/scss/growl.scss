@@ -1,0 +1,59 @@
+
+/*
+ * Growls
+ */
+
+[conn-growl] {
+	position: fixed;
+	bottom: 10px;
+	right: 10px;
+
+	z-index: 200;
+	
+	color: #333;
+
+	background: rgba(0,0,0,0.2);
+	font-size: 12px;
+	/*padding: 2px 5px;*/
+
+	border-radius: 3px;
+
+	.conn-growl{
+		min-height: 25px;
+		min-width: 25px;
+		padding-left: 26px;
+		background: url('/static/img/connect-icon.png') no-repeat;
+		background-size: 16px;
+		background-position: 5px 4px;
+
+		&.on{
+			background-image: url('/static/img/connect-icon-on.png');
+		}
+		&.off{
+			background-image: url('/static/img/connect-icon-off.png');
+		}
+
+		.message{
+			padding: 4px 3px;
+			padding-right: 7px;
+		}
+	}
+
+}
+ 
+.animate-fade.ng-enter,
+.animate-fade.ng-leave,
+.animate-fade.ng-move {
+  -webkit-transition:all ease-in-out 0.2s;
+  transition:all ease-in-out 0.2s;
+}
+ 
+.animate-fade.ng-enter,
+.animate-fade.ng-leave.ng-leave-active {
+  opacity:0;
+}
+ 
+.animate-fade.ng-enter.ng-enter-active,
+.animate-fade.ng-leave {
+  opacity:1;
+}

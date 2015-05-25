@@ -1,0 +1,24 @@
+{
+  "name": "Eros",
+  "description": "A starter project for AngularJS",
+  "version": "0.0.0",
+  "homepage": "https://github.com/angular/angular-seed",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "angular": "1.2.x",
+    "angular-route": "1.2.x",
+    "angular-loader": "1.2.x",
+    "angular-mocks": "~1.2.x",
+    "html5-boilerplate": "~4.3.0",
+    "protobuf": "~3.0.0",
+    "web-socket-js": "~1.0.2",
+    "long": "~1.1.4",
+    "angular-animate": "~1.2.21",
+    "jquery": "~2.1.1",
+    "bootstrap": "~3.2.0",
+    "angular-audio": "*",
+    "underscore": "~1.7.0",
+    "angular-scroll-glue": "~2.0.3"
+  }
+}

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html lang="en" ng-app="erosApp" class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html lang="en" ng-app="erosApp" class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html lang="en" ng-app="erosApp" class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!-->
+<html lang="en" ng-app="erosApp" class="no-js" style='background: #380404;'>
+<!--<![endif]-->
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>[ALPHA] Starbow :: Eros Matchmaking</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    
+    <link rel="stylesheet" href="/static/html5-boilerplate/normalize.css">
+    <link rel="stylesheet" href="/static/html5-boilerplate/main.css">
+    
+    <script type="text/javascript" src="/static/jquery.js"></script>
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+    <!-- Check if modernizr must be included in head
+    <script src="/static/components/html5-boilerplate/js/vendor/modernizr-2.6.2.min.js"></script> -->
+
+    <!-- Customized bootstrap -->
+    <!-- <link rel="stylesheet" href="/static/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/bootstrap/css/bootstrap-theme.min.css"> -->
+    <link rel="stylesheet" href="/static/css/<%= grunt.config.get('pkg.name') %>.css?v=<%=version%>" />
+    <!-- <script src="/bootstrap/js/bootstrap.min.js"></script> -->
+</head>
+
+
+<body style='background: #380404;'>
+
+    <!--[if lt IE 7]>
+      <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
+    <![endif]-->
+
+    <div >
+        
+        <div class="page container-fluid" style="display:block; text-align:center; margin: 15% auto; color: #fff; position: absolute; top:0;bottom:0;left:0;right:0;">
+            {{if.Error}}<h3><span class="glyphicon glyphicon-remove" style="color:red"></span> {{.Error}}</h3>
+            {{else}}
+                <h3><span class="glyphicon glyphicon-ok" style="color:#33CC33"></span> Account verified</h3>
+                <div style="display:block; margin:0 auto; padding-left: 14px;">
+                    
+                    <div class="portrait" style="width: {{.Char.Portrait.W}}px; height: {{.Char.Portrait.H}}px; overflow: hidden; border: 1px solid #333; background: url('{{.Char.Portrait.Url}}'); background-position: {{.Char.Portrait.X}}px {{.Char.Portrait.Y}}px; z-index: 1; display:inline-block; margin-right: -104px; margin-bottom: 11px; box-shadow: 0px 0px 100px #AB3E3E;"></div>
+                    <div style="background: url('http://eu.battle.net/sc2/static/images/profile/portrait-summary-default.png'); width:112px; height:112px; z-index:2; display:inline-block; "></div>
+                </div>
+                
+                <h4>{{if len .Char.ClanTag}}{{printf "[%s]" .Char.ClanTag}}{{end}} {{.Char.DisplayName}}</h4>
+            {{end}}
+            <div style="position:fixed; bottom:15px; height:20px; font-family: 'goboldregular'; text-align:center; left: 0; right:0; font-size:12px">Starbow ErosJS</div>
+        </div>
+    </div>
+</body>
+
+</html>

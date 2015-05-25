@@ -1,0 +1,370 @@
+
+$chat-height:450px;
+$chat-nav-width-min:50px;
+$chat-nav-width-max:150px;
+$chat-input-height:27px;
+$chat-title-height: 39px; // Same as channel buttons
+$chat-channel-height: 39px;
+$chat-close-width:15px;
+
+$chat-users-width: 150px;
+
+[eros-chat] {
+	background-color:#fff;
+	height: $chat-height;
+	display:block;
+	position:relative;
+
+	#chat-left-nav {
+		list-style: none;
+		height: $chat-height - 4;
+		position: absolute;
+		top: 2px;
+		left: 2px;
+		/*margin-top:2px;
+		margin-left: 2px;*/
+		width: $chat-nav-width-min;
+		
+		/*display: inline-block;*/
+		padding:0;
+		/*float:left;*/
+		text-align: left;
+
+		background-color: $navGrey;
+		font-family:$bodyFont;
+		font-size: 13px;
+		padding-top: 0px;
+
+		z-index: 3;
+		cursor: pointer;
+
+		&.expand{
+			width: $chat-nav-width-max;
+		} 
+
+		.chat-channels .channel {
+			height: $chat-channel-height;
+			line-height: $chat-channel-height;
+
+			display: block;
+
+			.select-channel {
+				color: $navButtonColor;
+				text-decoration: none;
+				font-weight: lighter;
+				display: inline-block;
+
+				// position:absolute;
+				// left: 20px;
+				padding-left: 18px;
+				// width: $chat-nav-width-max - $chat-close-width;
+
+			}
+
+    		&:hover{
+    			background-color: $lightGrey;
+    			color: $navButtonColorHover;
+    		}
+
+    		&.selected {
+    			border-right: 4px solid $lightRedColor;
+    			color: $lightRedColor;
+    			background-color: $lightGrey;
+
+    			.select-channel {
+    				color: $lightRedColor;
+    			}
+    		}
+
+    		.close-channel {
+    			float: right;
+    			font-size:11px; 
+    			font-weight:normal; 
+    			opacity: 0.5;
+    			line-height: $chat-channel-height;
+    			display: inline-block;
+    			width: $chat-close-width;
+    			text-align: center;
+    			cursor: pointer;
+
+    			&:hover{
+    				opacity: 1;
+    				color: $lightRedColor;
+    				background-color: #333;	
+    			}
+    		}
+
+    		.room-new-messages{
+				font-size: 7px;
+				background-color: $lightRedColor;
+				display: inline-block;
+				line-height: 11px;
+				text-align: center;
+				color: #fff;
+				// width: 8px;
+				padding: 0 2px;
+				height: 11px;
+				border-radius: 2px;
+
+				position: absolute;
+				left: 8px;
+				margin-top: 20px;
+			}
+		}
+
+		hr {
+			border:none;
+			margin:0px;
+			color:#666;
+			background-color:#666;
+			height:1px;
+		}
+
+		#chat-hide a{
+			height: 30px;
+			line-height: 30px;
+			font-size: 14px;
+
+			padding-left: 18px;
+
+			color: $navButtonColor;
+			text-decoration: none;
+			display: block;
+
+			&:hover{
+    			color: $navButtonColorHover;
+    		}
+
+		}
+	}
+
+	#chat-content{
+		z-index: 2;
+		font-size: 14px;
+
+		#chat-channel-name{
+			position:absolute;
+			top:2px;
+			left: $chat-nav-width-min + 4;
+			right:$chat-users-width+4;
+			margin: 0px;
+
+			height: $chat-title-height;
+			line-height: $chat-title-height;
+			padding-left: 10px;
+
+			color: $lightRedColor;
+			font-size: 16px;
+			// background-color: #efefef;
+		}
+
+		#chat-text {
+			overflow-y: auto;
+			// height: $chat-height - $chat-input-height - 4;
+			position: absolute;
+			left:$chat-nav-width-min+4;
+			right: $chat-users-width+4;
+			top: $chat-title-height + 2;
+			bottom: $chat-input-height + 4;
+
+			font-size: 13px;
+
+			.old-messages{
+				opacity: 0.6;
+			}
+			.chat-event{
+				color: #bbb;
+				font-size: 0.8em;
+			}
+		}
+
+		#chat-input {
+			position:absolute;
+			right:2px;
+			bottom:2px;
+			left:$chat-nav-width-min+4;
+
+			input {
+				z-index: 0;
+				position:absolute;
+				bottom:0;
+				right:0;
+
+				width: 100%;
+				height: $chat-input-height;
+				background: #e5e5e5;
+				border: none;
+				padding-left: 10px;
+
+				font-size:12px;
+
+				border: 1px solid #ddd;
+
+				&:hover{
+					border: 1px solid #bbb;
+				}
+
+				&:focus{
+					border: 1px solid #aaa;
+				}
+			}
+			button{
+				position:absolute;
+				bottom:0;
+				right:0;
+				cursor: pointer;
+
+				border:none;
+				padding:0;
+
+				height: $chat-input-height;
+				width: $chat-input-height;
+
+				background-color: $redColor;
+				color: $navButtonColorHover;
+
+				span{
+					height: $chat-input-height;
+					width: $chat-input-height;
+					line-height: $chat-input-height;
+					top:0;
+				}
+
+				&:hover{
+					background-color: $lightRedColor;
+					color: #efefef;
+				}
+			}
+		}
+
+		.message-date{
+			color:#bbb;
+			font-size: 85%;
+		}
+
+		#chat-text > div{
+			margin: 2px 0;
+		}
+
+		[username]{
+			font-size: 12px;
+			color:#fff;
+			background-color: rgba(0,0,0,0.6);
+			padding: 0 2px;
+			padding-right: 3px;
+			border-radius:2px;
+		}
+	}
+
+	#chat-right-nav{
+		position: absolute;
+		overflow-y: hidden;
+		overflow-x: hidden;
+		top: 2px;
+		right: 2px;
+		bottom: 31px;
+		width: $chat-users-width;
+		padding: 2px;
+
+		background-color: #efefef;
+		border-left: 1px solid #e2e2e2;
+		
+		color: #666;
+		font-size: 12px;
+
+		.user-details{
+			text-align: center;
+			padding-top: 30px;
+
+			.user-rank-block{
+				font-family: $bodyFont;
+			}
+		}
+	}
+
+	.room-user {
+		$chat-users-rank-width: 28px;
+
+		// height: 18px;
+		width: auto;
+		cursor:pointer;
+		padding:1px 2px;
+
+		.user-rank-block{
+			font-family: $bodyFont;
+			display: inline-block;
+			/*width: $chat-users-rank-width;*/
+
+			border-radius: 3px;
+			padding: 0px 3px;
+			background: none repeat scroll 0% 0% rgb(171, 62, 62);
+			margin-right: 3px;
+			height: 18px;
+			vertical-align: bottom;
+			border: medium none;
+			width: 24px;
+			text-align: center;
+		
+			.user-division{
+				/*color: $lightRedColor;*/
+				color: #fff;
+				/*font-size: 13px;*/
+				font-size: 11px;
+				font-weight: bold;
+			}
+			.user-rank{
+				font-family: $bodyFont;
+				font-size: 9px;
+				color: #eee;
+			}
+		}
+		.user-username{
+			position:absolute;
+			overflow: hidden;
+			width: $chat-users-width - $chat-users-rank-width - 6px;//60px;
+		}
+		&:hover{
+			background-color:#e3e3e3;
+		}
+	}
+	
+
+	// #join-room-menu {
+	// 	position: absolute;
+	// 	left: $chat-nav-width-max;
+	// 	z-index: 50;
+
+	// 	div:hover {
+	// 		background-color: $lightGrey;
+	// 	}
+	// }
+}
+
+
+#notification-settings{
+	position:absolute;
+	bottom: 0px;
+	left:0;
+    right:0;
+    background-color: #e9e9e9;
+
+    // border-top: 1px #e2e2e2 solid;
+
+    &>div{
+	    margin-left:auto;
+	    margin-right:auto;
+	    width: 80px;
+	    border-radius: 0px;
+
+	    .btn{
+	    	border:none;
+	    	box-shadow: none;
+	    	background: none;
+	    	color: #bbb;
+
+	    	&.active{
+	    		color: #444;
+	    	}
+	    }
+	}
+}

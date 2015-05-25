@@ -3,9 +3,13 @@
 *.a
 *.so
 
+# Binaries
+erosd
+
 # Folders
 _obj
 _test
+replays
 
 # Architecture specific extensions/prefixes
 *.[568vq]
@@ -34,3 +38,27 @@ mpyq.py
 
 #logs
 logs/*
+*.log
+nohup.out
+
+#Web stuff
+web/node_modules
+web/components
+web/static/components
+web/dist
+web/.tmp
+*.scssc
+web/static/css/app.css
+*.psd
+npm-debug.log
+
+#Mac crap
+.DS_Store
+pid
+erosd
+*.sublime*
+
+# TLS
+*.key
+*.cert
+*.crt

@@ -5,8 +5,10 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"github.com/Starbow/erosd/buffers"
+	"github.com/gorilla/websocket"
 	"io"
 	"io/ioutil"
 	"log"
@@ -27,14 +29,34 @@ var (
 	activeClients     map[int64]*ClientConnection = make(map[int64]*ClientConnection)
 	usernameValidator *regexp.Regexp              = regexp.MustCompile(`^[a-zA-Z0-9_\-]{3,15}$`)
 	connectionIdBase  int64                       = 0
+	activeOAuths      map[string]OAuthRequest     = make(map[string]OAuthRequest)
 )
+
+type ClientConnectionType int
+
+func (this ClientConnectionType) String() string {
+	switch this {
+	case CLIENT_CONNECTION_TYPE_SOCKET:
+		return "Socket"
+	case CLIENT_CONNECTION_TYPE_WEBSOCKET:
+		return "Websocket"
+	default:
+		return "Unknown"
+	}
+}
 
 const MAXIMUM_DATA_SIZE = 500 * 1024
 const READ_BUFFER_SIZE = 4096
+const PING_TIMEOUT = 60
+const (
+	CLIENT_CONNECTION_TYPE_SOCKET    ClientConnectionType = iota
+	CLIENT_CONNECTION_TYPE_WEBSOCKET ClientConnectionType = iota
+)
 
 type ClientConnection struct {
 	id                int64 // Connection ID
-	conn              net.Conn
+	connType          ClientConnectionType
+	conn              interface{}
 	reader            *bufio.Reader
 	writer            *bufio.Writer
 	authenticated     bool
@@ -54,30 +76,42 @@ type ClientConnection struct {
 	sync.RWMutex
 }
 
-func NewClientConnection(conn net.Conn) (clientConn *ClientConnection) {
+func newClientConnection(conn interface{}, connType ClientConnectionType) (clientConn *ClientConnection) {
 	clientConn = &ClientConnection{
 		id:            atomic.AddInt64(&connectionIdBase, 1),
 		conn:          conn,
 		authenticated: false,
-		reader:        bufio.NewReader(conn),
-		writer:        bufio.NewWriter(conn),
 		chatRooms:     make(map[string]*ChatRoom),
 	}
-	var source string = conn.RemoteAddr().String()
+
 	var logfile string = path.Join(logPath, fmt.Sprintf("%d-conn-%d.log", os.Getpid(), clientConn.id))
 	file, err := os.Create(logfile)
 	if err != nil {
-		log.Println("Failed to create log file", logfile, "for new connection from", source)
+		log.Println("Failed to create log file", logfile, "for new", connType.String(), "connection from", clientConn.RemoteAddr().String())
 		clientConn.logger = log.New(os.Stdout, fmt.Sprintf("conn-%d:", clientConn.id), log.Ldate|log.Ltime|log.Lshortfile)
 	} else {
-		log.Println("Logging new connection from", source, "to", logfile)
+		log.Println("Logging new", connType.String(), "connection from", clientConn.RemoteAddr().String(), "to", logfile)
 		clientConn.logger = log.New(file, "", log.Ldate|log.Ltime|log.Lshortfile)
 		clientConn.logFile = file
-		clientConn.logger.Println("Logging new connection from", source, "to", logfile)
+		clientConn.logger.Println("Logging new", connType.String(), "connection from", clientConn.RemoteAddr().String(), "to", logfile)
 	}
 
 	clientConnections[clientConn.id] = clientConn
 	return clientConn
+}
+
+func NewClientConnection(conn net.Conn) (clientConn *ClientConnection) {
+	clientConn = newClientConnection(conn, CLIENT_CONNECTION_TYPE_SOCKET)
+	clientConn.reader = bufio.NewReader(conn)
+	clientConn.writer = bufio.NewWriter(conn)
+	return
+}
+
+func NewWebsocketClientConnection(conn websocket.Conn) (clientConn *ClientConnection) {
+	conn.SetReadLimit(MAXIMUM_DATA_SIZE + 1024)
+	conn.SetReadDeadline(time.Now().Add(PING_TIMEOUT * time.Second))
+
+	return newClientConnection(conn, CLIENT_CONNECTION_TYPE_WEBSOCKET)
 }
 
 func DisconnectClient(id int64, command string) {
@@ -91,6 +125,19 @@ func DisconnectClient(id int64, command string) {
 	}
 }
 
+func (this *ClientConnection) RemoteAddr() net.Addr {
+	switch this.conn.(type) {
+	case net.Conn:
+		conn := this.conn.(net.Conn)
+		return conn.RemoteAddr()
+	case websocket.Conn:
+		conn := this.conn.(websocket.Conn)
+		return conn.RemoteAddr()
+	}
+
+	return nil
+}
+
 func (conn *ClientConnection) panicRecovery(txid int) {
 	if r := recover(); r != nil {
 		fmt.Println("Recovered from a panic", r)
@@ -101,12 +148,57 @@ func (conn *ClientConnection) panicRecovery(txid int) {
 	}
 }
 
-// Handles sending out messages to everyone
+// Read the next message from a regular socket
+func (conn *ClientConnection) readPayload(reader *bufio.Reader) (event string, txid int, length int, data []byte, err error) {
+	data = make([]byte, 0)
+	var line string
+	line, err = reader.ReadString('\n')
+
+	if err != nil {
+		// If the error isn't a straight disconnection, print it
+		if err != io.EOF {
+			conn.logger.Println("Socket Error", err)
+		}
+		return
+	}
+	var unpackErr error
+	event, txid, length, unpackErr = Unpack(line)
+	if unpackErr != nil {
+		err = unpackErr
+		return
+	}
+
+	if length > MAXIMUM_DATA_SIZE {
+		err = io.EOF
+		return
+	}
+
+	var buffer bytes.Buffer
+	if length > 0 {
+
+		var written int64
+		written, err = io.CopyN(&buffer, reader, int64(length))
+		if err != nil {
+
+			conn.logger.Println(err)
+			return
+		}
+
+		if written != int64(length) {
+			conn.logger.Println("Expecting", length, "got", written)
+			err = io.ErrUnexpectedEOF
+		}
+
+		data = buffer.Bytes()
+	}
+
+	return
+}
 
 // Client data reader loop goroutine
 func (conn *ClientConnection) read() {
 	defer conn.panicRecovery(0)
-	//Defer executes a function after this function returns.
+	//Some hard core cleanuppery.
 	defer func() {
 
 		// Handle removing the user from any matchmaking or lobbies they may be in
@@ -156,21 +248,35 @@ func (conn *ClientConnection) read() {
 		}
 	}()
 
+	// If we're not authed after 30 seconds then disconnect.
 	go func() {
 		ticker := time.NewTicker(time.Second * 30)
 		for _ = range ticker.C {
 			if conn.client == nil {
-				// We're not authed after 30 seconds. Disconnect.
 				conn.Close()
-				return
 			}
 
+			return
+		}
+	}()
+
+	// Ping/pongery
+
+	go func() {
+		ticker := time.NewTicker(time.Second * (PING_TIMEOUT / 2))
+		for _ = range ticker.C {
 			if conn.lastPingChallenge != "" {
-				if time.Since(conn.lastPong).Seconds() > 30 {
+				if time.Since(conn.lastPong).Seconds() > PING_TIMEOUT {
 					// ping timeout
 					conn.Close()
 					return
 				}
+			}
+
+			switch conn.conn.(type) {
+			case websocket.Conn:
+				ws := conn.conn.(websocket.Conn)
+				ws.SetReadDeadline(time.Now().Add(PING_TIMEOUT * time.Second))
 			}
 
 			conn.lastPing = time.Now()
@@ -184,41 +290,39 @@ func (conn *ClientConnection) read() {
 
 	//Infinite loop
 	for {
-		line, err := conn.reader.ReadString('\n')
 
-		if err != nil {
-			// If the error isn't a straight disconnection, print it
-			if err != io.EOF {
-				conn.logger.Println("Socket Error", err)
+		var (
+			event  string
+			txid   int
+			length int
+			data   []byte
+			err    error
+		)
+		switch conn.conn.(type) {
+		case net.Conn:
+			event, txid, length, data, err = conn.readPayload(conn.reader)
+		case websocket.Conn:
+			ws := conn.conn.(websocket.Conn)
+			_, r, err := ws.NextReader()
+			if err != nil {
+				return
 			}
-			return
-		}
+			reader := bufio.NewReader(r)
 
-		event, txid, length, err := Unpack(line)
-		if err != nil {
-			return
+			event, txid, length, data, err = conn.readPayload(reader)
+			var decoded []byte = make([]byte, base64.StdEncoding.DecodedLen(len(data)))
+			decodedLength, _ := base64.StdEncoding.Decode(decoded, data)
+			data = decoded[:decodedLength]
 		}
 
 		if length > MAXIMUM_DATA_SIZE {
-			conn.logger.Printf("Connection from %s exceeded max data size (%d)", conn.conn.RemoteAddr().String(), length)
+			conn.logger.Printf("Connection from %s exceeded max data size (%d)", conn.RemoteAddr().String(), length)
 			return
 		}
 
-		var data bytes.Buffer
-
-		if length > 0 {
-
-			written, err := io.CopyN(&data, conn.reader, int64(length))
-			if err != nil {
-				conn.logger.Println(err)
-			}
-
-			if written != int64(length) {
-				conn.logger.Println("Expecting", length, "got", written)
-			}
-
+		if err != nil {
+			return
 		}
-
 		conn.Lock()
 		conn.lastactive = time.Now()
 		conn.Unlock()
@@ -227,7 +331,7 @@ func (conn *ClientConnection) read() {
 
 		if conn.client == nil {
 			if event == "HSH" {
-				if !conn.OnHandshake(txid, data.Bytes()) {
+				if !conn.OnHandshake(txid, data) {
 					return
 				} else {
 					stats := NewServerStats()
@@ -252,39 +356,43 @@ func (conn *ClientConnection) read() {
 			// dispatch
 			switch event {
 			case "SIM":
-				go conn.OnSimulation(txid, data.Bytes())
+				go conn.OnSimulation(txid, data)
 			case "MMQ":
-				go conn.OnQueueMatchmaking(txid, data.Bytes())
+				go conn.OnQueueMatchmaking(txid, data)
 			case "MMD":
-				go conn.OnDequeueMatchmaking(txid, data.Bytes())
+				go conn.OnDequeueMatchmaking(txid, data)
 			case "MMF":
-				go conn.OnForfeitMatchmaking(txid, data.Bytes())
+				go conn.OnForfeitMatchmaking(txid, data)
 			case "BNA":
-				go conn.OnAddCharacter(txid, data.Bytes())
+				go conn.OnAddCharacter(txid, data)
+			case "BNN":
+				go conn.OnAuthCharacter(txid, data) // New method for OAuth2 request
 			case "BNU":
-				go conn.OnUpdateCharacter(txid, data.Bytes())
+				go conn.OnUpdateCharacter(txid, data)
 			case "BNR":
-				go conn.OnRemoveCharacter(txid, data.Bytes())
+				go conn.OnRemoveCharacter(txid, data)
 			case "REP":
-				go conn.OnReplay(txid, data.Bytes())
+				go conn.OnReplay(txid, data)
 			case "PNR":
-				go conn.OnPong(txid, data.Bytes())
+				go conn.OnPong(txid, data)
 			case "UCJ":
-				go conn.OnChatJoin(txid, data.Bytes())
+				go conn.OnChatJoin(txid, data)
 			case "UCL":
-				go conn.OnChatLeave(txid, data.Bytes())
+				go conn.OnChatLeave(txid, data)
 			case "UCM":
-				go conn.OnChatMessage(txid, data.Bytes())
+				go conn.OnChatMessage(txid, data)
 			case "UPM":
-				go conn.OnPrivateMessage(txid, data.Bytes())
+				go conn.OnPrivateMessage(txid, data)
+			case "UCH":
+				go conn.OnChatHistory(txid, data)
 			case "UCI":
-				go conn.OnChatIndex(txid, data.Bytes())
+				go conn.OnChatIndex(txid, data)
 			case "RLP":
-				go conn.OnLongProcessRequest(txid, data.Bytes())
+				go conn.OnLongProcessRequest(txid, data)
 			case "LPR":
-				go conn.OnLongProcessResponse(txid, data.Bytes())
+				go conn.OnLongProcessResponse(txid, data)
 			case "VET":
-				go conn.OnToggleVeto(txid, data.Bytes())
+				go conn.OnToggleVeto(txid, data)
 			}
 		}
 	}
@@ -338,6 +446,7 @@ func (conn *ClientConnection) read() {
 // 509 - Can't create room. Name too short.
 // 510 - Can't send message. Rate limit.
 // 511 - Can't send message. Message too long.
+// 512 - Room not found.
 func ErrorCode(err error) string {
 	if err == ErrLadderClientNotInvolved {
 		return "304"
@@ -367,14 +476,22 @@ func ErrorCode(err error) string {
 		return "509"
 	} else if err == ErrLadderGameNotPrearranged {
 		return "314"
-
-	} else {
+	} else { // Generic
 		return "106"
 	}
 }
 
-func (conn *ClientConnection) Close() {
-	conn.conn.Close()
+func (this *ClientConnection) Close() error {
+	switch this.conn.(type) {
+	case net.Conn:
+		conn := this.conn.(net.Conn)
+		return conn.Close()
+	case websocket.Conn:
+		conn := this.conn.(websocket.Conn)
+		return conn.Close()
+	}
+
+	return nil
 }
 
 func (conn *ClientConnection) OnToggleVeto(txid int, data []byte) {
@@ -534,6 +651,7 @@ func (conn *ClientConnection) OnLongProcessResponse(txid int, data []byte) {
 		return
 	}
 
+	log.Println(data)
 	var response bool = data[0] == '1'
 
 	match := matchmaker.Match(*conn.client.PendingMatchmakingId)
@@ -718,6 +836,7 @@ func (conn *ClientConnection) OnChatMessage(txid int, data []byte) {
 	room, ok := conn.chatRooms[key]
 	if ok {
 		conn.logger.Println("Sent chat message to room", key, ":", message.GetMessage())
+		// room.SaveMessage(conn message)
 		msg := room.ChatRoomMessageMessage(conn, &message)
 		room.message <- &msg
 		conn.SendResponseMessage("UCM", txid, []byte{})
@@ -768,13 +887,36 @@ parent:
 	}
 }
 
+func (conn *ClientConnection) OnChatHistory(txid int, data []byte) {
+	defer conn.panicRecovery(txid)
+
+	var messages protobufs.ChatHistoryMessages
+	var from protobufs.ChatRoomRequest
+
+	err := Unmarshal(data, &from)
+	room := conn.chatRooms[cleanChatRoomName(from.GetRoom())]
+
+	if room == nil {
+		conn.SendResponseMessage("512", txid, []byte{})
+	} else {
+		messages.Message = room.messageCache
+
+		data, err = Marshal(&messages)
+		if err == nil {
+			conn.SendResponseMessage("UCH", txid, data)
+		} else {
+			conn.SendResponseMessage("106", txid, []byte{})
+		}
+	}
+}
+
 func (conn *ClientConnection) OnPong(txid int, data []byte) {
 	defer conn.panicRecovery(txid)
 
 	conn.lastPong = time.Now()
 	conn.latency = conn.lastPong.Sub(conn.lastPing).Nanoseconds() / 1000000
-
 	if conn.lastPingChallenge == "" || string(data) != conn.lastPingChallenge {
+		conn.logger.Printf("Bad PNR response. Expected %s, got %v", conn.lastPingChallenge, data)
 		conn.Close()
 	} else {
 		conn.SendResponseMessage("PNR", txid, []byte{})
@@ -902,6 +1044,54 @@ func (conn *ClientConnection) OnAddCharacter(txid int, data []byte) {
 	data, _ = Marshal(payload)
 	conn.SendResponseMessage("BNA", txid, data)
 }
+
+func (conn *ClientConnection) OnAuthCharacter(txid int, data []byte) {
+	var (
+		state string
+		url   string
+	)
+
+	defer conn.panicRecovery(txid)
+
+	if len(data) == 0 {
+		conn.SendResponseMessage("201", txid, []byte("Payload too short"))
+		return
+	}
+
+	var request protobufs.OAuthRequest
+	err := Unmarshal(data, &request)
+
+	if err != nil {
+		conn.SendResponseMessage("201", txid, []byte("Error unmarshalling payload"))
+		return
+	}
+
+	conn.logger.Println("Asked from region", request.GetRegion())
+
+	region := BattleNetRegion(request.GetRegion())
+
+	oauth_request := OAuthRequest{region: region, conn: conn}
+
+	// Make sure the state is unique in the active requests
+	for exists := true; exists; _, exists = activeOAuths[state] {
+		url, state = oauth_request.RequestPermission()
+	}
+
+	activeOAuths[oauth_request.state] = oauth_request
+
+	// Cleanup after a given time
+	timer := time.NewTimer(time.Minute * time.Duration(oauthCodeTimeout))
+	go func() {
+		<-timer.C
+		delete(activeOAuths, oauth_request.state)
+	}()
+
+	var payload protobufs.OAuthUrl
+	payload.Url = &url
+	data, _ = Marshal(&payload)
+	conn.SendResponseMessage("BNN", txid, data)
+}
+
 func (conn *ClientConnection) OnUpdateCharacter(txid int, data []byte) {
 	defer conn.panicRecovery(txid)
 
@@ -1008,7 +1198,10 @@ func (conn *ClientConnection) OnRemoveCharacter(txid int, data []byte) {
 		return
 	}
 
-	_, err = dbMap.Delete(character)
+	// _, err = dbMap.Delete(character)
+	character.Enabled = false
+	// _, err = dbMap.Update(character)
+	_, err = dbMap.Exec("UPDATE battle_net_characters SET Enabled=? WHERE Region=? and SubRegion=? and ProfileId=?", false, BattleNetRegion(character_message.GetRegion()), int(character_message.GetSubregion()), int(character_message.GetProfileId()))
 	if err != nil {
 		conn.SendResponseMessage("102", txid, []byte{})
 		conn.logger.Println(err)
@@ -1061,7 +1254,7 @@ func (conn *ClientConnection) handlePendingMatchmaking(txid int) bool {
 				if opponent.PendingMatchmakingId == conn.client.PendingMatchmakingId {
 					since := time.Now().Unix() - match.AddTime
 
-					if since >= matchmakingMatchTimeout {
+					if since >= matchmakingMatchTimeout && matchmakingMatchTimeout != 0 {
 						// Match has expired. End it.
 						if opponent != nil {
 							matchmaker.logger.Println("Cleaning up old match between", conn.client.Username, opponent.Username)
@@ -1331,25 +1524,58 @@ func (conn *ClientConnection) OnHandshake(txid int, data []byte) bool {
 
 func (conn *ClientConnection) SendResponseMessage(command string, txid int, data []byte) error {
 
-	header := fmt.Sprintf("%s %d %d", command, txid, len(data))
-	conn.logger.Println("send:", header)
 	conn.Lock()
 	defer conn.Unlock()
-	_, err := conn.writer.WriteString(header)
+
+	var writer *bufio.Writer
+
+	switch conn.conn.(type) {
+	case net.Conn:
+		writer = conn.writer
+	case websocket.Conn:
+		ws := conn.conn.(websocket.Conn)
+		w, err := ws.NextWriter(websocket.TextMessage)
+		if err != nil {
+			return err
+		}
+		defer w.Close()
+
+		writer = bufio.NewWriter(w)
+
+		if err != nil {
+			return err
+		}
+
+		// Base64 encode so we can safely send data as TextMessage over websocket.
+		// The flash fallback doesn't support BinaryMessage.
+		var encoded []byte = make([]byte, base64.StdEncoding.EncodedLen(len(data)))
+		base64.StdEncoding.Encode(encoded, data)
+		data = encoded
+	}
+
+	var header string
+	if txid >= 0 {
+		header = fmt.Sprintf("%s %d %d", command, txid, len(data))
+	} else {
+		header = fmt.Sprintf("%s %d", command, len(data))
+	}
+	conn.logger.Println("send:", header)
+
+	_, err := writer.WriteString(header)
 
 	if err != nil {
 		return err
 	}
 
-	err = conn.writer.WriteByte('\n')
+	err = writer.WriteByte('\n')
 	if err != nil {
 		return err
 	}
-	_, err = conn.writer.Write(data)
+	_, err = writer.Write(data)
 	if err != nil {
 		return err
 	}
-	err = conn.writer.Flush()
+	err = writer.Flush()
 	if err != nil {
 		return err
 	}
@@ -1358,27 +1584,5 @@ func (conn *ClientConnection) SendResponseMessage(command string, txid int, data
 }
 
 func (conn *ClientConnection) SendServerMessage(command string, data []byte) error {
-
-	header := fmt.Sprintf("%s %d", command, len(data))
-	conn.logger.Println("send:", header)
-	conn.Lock()
-	defer conn.Unlock()
-	_, err := conn.writer.WriteString(header)
-	if err != nil {
-		return err
-	}
-	err = conn.writer.WriteByte('\n')
-	if err != nil {
-		return err
-	}
-	_, err = conn.writer.Write(data)
-	if err != nil {
-		return err
-	}
-	err = conn.writer.Flush()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return conn.SendResponseMessage(command, -9001, data)
 }

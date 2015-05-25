@@ -1,0 +1,52 @@
+/*
+ * theme.scss
+ *
+ * Desc: sets up variables to be used for scss styles
+ */
+
+$whiteColor: #e3e4e6;
+$grayColor: #20201f;
+$blackColor: #000001;
+
+// $lighterRedColor: #662424;
+$lighterRedColor: #BE6666;
+$lightRedColor: #ab3e3e;
+$redColor: #560d0d;
+$darkRedColor:#560d0d;
+$darkerRedColor: #380404;
+
+$headerHeight: 40px;
+
+$pagePadding: 10px;
+$pageWidth: 800px;
+
+/*
+ * font setup
+ */
+
+@font-face {
+  font-family: 'goboldregular';
+  src: url('../fonts/gobold-webfont.eot');
+  src: url('../fonts/gobold-webfont.eot?#iefix') format('embedded-opentype'),
+       url('../fonts/gobold-webfont.woff') format('woff'),
+       url('../fonts/gobold-webfont.ttf') format('truetype'),
+       url('../fonts/gobold-webfont.svg#goboldregular') format('svg');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'noto_sansregular';
+  src: url('../fonts/NotoSans-Regular-webfont.eot');
+  src: url('../fonts/NotoSans-Regular-webfont.eot?#iefix') format('embedded-opentype'),
+       url('../fonts/NotoSans-Regular-webfont.woff') format('woff'),
+       url('../fonts/NotoSans-Regular-webfont.ttf') format('truetype'),
+       url('../fonts/NotoSans-Regular-webfont.svg#noto_sansregular') format('svg');
+  font-weight: normal;
+  font-style: normal;
+}
+
+$headerFont: 'goboldregular';
+/* $techFont: 'Technonomicon'; */
+$bodyFont: 'noto_sansregular';
+// $headerFont: 'noto_sansregular';

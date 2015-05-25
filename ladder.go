@@ -64,7 +64,7 @@ var (
 	ladderWinPointsIncrement  float64           = 25
 	ladderLosePointsIncrement float64           = 12.5
 	ladderMaxMapVetos         int64             = 3
-	ladderActiveRegions       []BattleNetRegion = []BattleNetRegion{BATTLENET_REGION_NA, BATTLENET_REGION_EU}
+	ladderActiveRegions       []BattleNetRegion = []BattleNetRegion{BATTLENET_REGION_NA, BATTLENET_REGION_EU, BATTLENET_REGION_KR}
 )
 
 // Load maps from the database

@@ -1,0 +1,45 @@
+{
+  "name": "erosjs",
+  "private": true,
+  "version": "0.3.0",
+  "author": "Starbow Dev team",
+  "description": "Starbow's matchmaking web client.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Starbow/erosd"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "bower": "^1.3.1",
+    "grunt": "latest",
+    "grunt-cli": "latest",
+    "grunt-contrib-clean": "latest",
+    "grunt-contrib-concat": "latest",
+    "grunt-contrib-copy": "latest",
+    "grunt-contrib-watch": "^0.6.1",
+    "grunt-html2js": "latest",
+    "grunt-karma": "latest",
+    "grunt-recess": "latest",
+    "grunt-sass": "~0.14.0",
+    "http-server": "^0.6.1",
+    "karma": "latest",
+    "karma-junit-reporter": "^0.2.2",
+    "load-grunt-tasks": "latest",
+    "protobufjs": "~3.0.0",
+    "protractor": "~0.20.1",
+    "shelljs": "^0.2.6",
+    "time-grunt": "latest",
+    "karma-jasmine": "~0.1.5",
+    "karma-ie-launcher": "~0.1.5",
+    "karma-safari-launcher": "~0.1.1",
+    "karma-spec-reporter": "0.0.13"
+  },
+  "scripts": {
+    "postinstall": "bower install",
+    "pretest": "npm install",
+    "test": "karma start test/karma.conf.js",
+    "test-single-run": "karma start test/karma.conf.js  --single-run",
+    "prebuildproto": "npm install",
+    "buildproto": "proto2js ../buffers/eros.proto -class=protobufs > src/app/liberos/protobufs.js"
+  }
+}
