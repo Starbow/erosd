@@ -149,7 +149,7 @@ module.exports = function (grunt) {
           'components/underscore/underscore-min.js',
           'components/ng-flow/dist/ng-flow-standalone.js',
 
-          'components/bower-angular-translate/angular-translate.min.js'
+          'components/angular-translate/angular-translate.min.js'
 
         ],
         dest: '<%= distdir %>/components.js'
