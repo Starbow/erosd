@@ -52,7 +52,7 @@ type ChatRoom struct {
 	id      int64
 	members map[int64]*ClientConnection
 
-	key      string
+	key      string // key identifying this chatroom
 	name     string // Friendly name
 	password string // Password
 	joinable bool   // False if this is a server forced joining room (matchmaking)
@@ -85,6 +85,7 @@ func GetChatRoom(name string, password string, joinable, fixed bool) (room *Chat
 	return room
 }
 
+// run is the main loop that runs and handles events for a ChatRoom.
 func (cr *ChatRoom) run() {
 	defer func() {
 		// Handle closing the room
@@ -161,6 +162,7 @@ func (cr *ChatRoom) run() {
 	}
 }
 
+// Broadcast a command and/or message to a ChatRoom minus exclude list
 func (cr *ChatRoom) Broadcast(command string, message proto.Message, exclude ...*ClientConnection) error {
 	data, err := Marshal(message)
 	if err != nil {
@@ -299,6 +301,7 @@ func (ch *ChatRoom) ChatRoomMessageMessage(client *ClientConnection, message *pr
 	msg.Timestamp = &now
 
 	// Save message into cache
+	// This method will thrash the entire cache every time when full if we only delete message one by one...
 	if len(ch.messageCache) >= maxMessageCache {
 		ch.messageCache[0] = nil
 		ch.messageCache = ch.messageCache[1:]
