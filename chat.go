@@ -102,64 +102,50 @@ func (cr *ChatRoom) run() {
 	for {
 		select {
 		case <-timer.C:
-			// Nobody has joined after a set time. Close the room.
-			if len(cr.members) == 0 && !cr.fixed {
-				cr.logger.Println("Closing unjoined room")
-				if cr.logFile != nil {
-					cr.logFile.Close()
-				}
+			// Nobody has joined after a set time. Close the room if we can.
+			if cr.CanShutdown() {
+				cr.Close()
 				return
 			}
+
 		case client := <-cr.join:
-			cr.Lock()
-			_, exists := cr.members[client.id]
-			if exists {
-				cr.Unlock()
-				continue
-			}
+			// TODO: We might be able to do this in a go routine?
+			cr.ClientJoin(client)
 
-			cr.members[client.id] = client
-			cr.Unlock()
-			join := cr.ChatRoomUserMessage(client, false)
-			cr.Broadcast("CHJ", &join, client)
-			detailedJoin := cr.ChatRoomUserMessage(client, true)
-			data, _ := Marshal(&detailedJoin)
-			client.SendServerMessage("CHJ", data)
-			client.chatRooms[cr.key] = cr
-			cr.logger.Println("join:", client.id, client.client.Username)
 		case client := <-cr.leave:
-			cr.Lock()
-			_, exists := cr.members[client.id]
-			if !exists {
-				cr.Unlock()
-				continue
-			}
-
-			delete(cr.members, client.id)
-			delete(client.chatRooms, cr.key)
-			cr.Unlock()
-			leave := cr.ChatRoomUserMessage(client, false)
-			cr.Broadcast("CHL", &leave)
-			cr.logger.Println("left:", client.id, client.client.Username)
-			if len(cr.members) == 0 && !cr.fixed {
-				// Everyone has left. We're a non-fixed room. Leave.
-				cr.logger.Println("Closing inactive room")
-				if cr.logFile != nil {
-					cr.logFile.Close()
-				}
+			// TODO: We might be able to do this in a go routine?
+			cr.ClientLeave(client)
+			if cr.CanShutdown() {
+				cr.Close()
 				return
 			}
+
 		case msg := <-cr.message:
 			cr.logger.Println("msg:", msg.GetSender().GetUsername(), ":", msg.GetMessage())
 			cr.Broadcast(ChannelMsg, msg)
 		case <-cr.abort:
 			cr.logger.Println("Closing aborted room")
-			if cr.logFile != nil {
-				cr.logFile.Close()
-			}
+			cr.Close()
 			return
 		}
 	}
+}
+
+func (cr *ChatRoom) ClientLeave(client *ClientConnection) {
+	cr.Lock()
+	defer cr.Unlock()
+
+	_, exists := cr.members[client.id]
+	if !exists {
+		return
+	}
+
+	delete(cr.members, client.id)
+	delete(client.chatRooms, cr.key)
+
+	leave := cr.ChatRoomUserMessage(client, false)
+	cr.Broadcast("CHL", &leave)
+	cr.logger.Println("left:", client.id, client.client.Username)
 }
 
 // Broadcast a command and/or message to a ChatRoom minus exclude list
@@ -310,6 +296,53 @@ func (ch *ChatRoom) ChatRoomMessageMessage(client *ClientConnection, message *pr
 
 	return msg
 
+}
+
+// canShutdown() checks if room can be shutdown
+// We acquire the lock here, so make sure you don't already hold a writelock
+func (cr *ChatRoom) CanShutdown() bool {
+	cr.RLock()
+	defer cr.RUnlock()
+
+	if len(cr.members) != 0 || cr.fixed {
+		return false
+	}
+	return true
+}
+
+// Close does cleanup so we can close the room
+func (cr *ChatRoom) Close() {
+	cr.logger.Printf("Closing room: %v", cr.key)
+
+	if cr.logFile != nil {
+		cr.logFile.Close()
+	}
+}
+
+func (cr *ChatRoom) ClientJoin(client *ClientConnection) {
+	if !cr.addMemberIfNew(client) {
+		return
+	}
+	join := cr.ChatRoomUserMessage(client, false)
+	cr.Broadcast(ChannelJoin, &join, client)
+	detailedJoin := cr.ChatRoomUserMessage(client, true)
+	data, _ := Marshal(&detailedJoin)
+	client.SendServerMessage(ChannelJoin, data)
+	client.chatRooms[cr.key] = cr
+	cr.logger.Println("join:", client.id, client.client.Username)
+}
+
+func (cr *ChatRoom) addMemberIfNew(client *ClientConnection) bool {
+	cr.Lock()
+	defer cr.Unlock()
+
+	_, exists := cr.members[client.id]
+	if exists {
+		return false
+	}
+
+	cr.members[client.id] = client
+	return true
 }
 
 func cleanChatRoomName(name string) string {
