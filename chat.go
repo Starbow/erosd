@@ -14,6 +14,11 @@ import (
 	"time"
 )
 
+const (
+	ChannelMsg  = "CHM"
+	ChannelJoin = "CHJ"
+)
+
 var (
 	chatRooms                map[string]*ChatRoom
 	joinableChatRooms        map[string]*ChatRoom
@@ -145,7 +150,7 @@ func (cr *ChatRoom) run() {
 			}
 		case msg := <-cr.message:
 			cr.logger.Println("msg:", msg.GetSender().GetUsername(), ":", msg.GetMessage())
-			cr.Broadcast("CHM", msg)
+			cr.Broadcast(ChannelMsg, msg)
 		case <-cr.abort:
 			cr.logger.Println("Closing aborted room")
 			if cr.logFile != nil {
@@ -229,7 +234,7 @@ func NewChatRoom(name, password string, joinable, fixed bool) (cr *ChatRoom, err
 	return
 }
 
-func (ch *ChatRoom) ChatRoomInfoMessage(detailed bool) *protobufs.ChatRoomInfo {
+func (ch *ChatRoom) ChatRoomInfoMessage(includeUserStats bool) *protobufs.ChatRoomInfo {
 	ch.RLock()
 	defer ch.RUnlock()
 	var (
@@ -255,7 +260,7 @@ func (ch *ChatRoom) ChatRoomInfoMessage(detailed bool) *protobufs.ChatRoomInfo {
 	chat.Users = &users
 	chat.Forced = &forced
 
-	if detailed {
+	if includeUserStats {
 		chat.Participant = make([]*protobufs.UserStats, 0, users)
 		for x := range ch.members {
 			chat.Participant = append(chat.Participant, ch.members[x].client.UserStatsMessage())
@@ -277,7 +282,6 @@ func (ch *ChatRoom) ChatRoomUserMessage(client *ClientConnection, detailed bool)
 	join.User = user
 
 	return join
-
 }
 
 func (ch *ChatRoom) ChatRoomMessageMessage(client *ClientConnection, message *protobufs.ChatMessage) protobufs.ChatRoomMessage {
