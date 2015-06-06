@@ -98,6 +98,7 @@ func (cr *ChatRoom) run() {
 		}
 	}()
 	timer := time.NewTicker(time.Second * 30)
+	defer timer.Stop()
 
 	for {
 		select {
