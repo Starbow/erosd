@@ -39,3 +39,13 @@ func TestAddingMemberToChatRoom(t *testing.T) {
 	assert.False(t, addedTwice, "a new member should not be added twice and return false")
 
 }
+
+func TestJoiningRoom(t *testing.T) {
+	cr := createTestRoom(false)
+	fc := fakeClient(1)
+
+	cr.ClientJoin(fc)
+
+	_, ok := cr.members[fc.id]
+	assert.True(t, ok, "a member should be there after joining")
+}
