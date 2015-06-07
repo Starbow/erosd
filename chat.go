@@ -133,23 +133,6 @@ func (cr *ChatRoom) run() {
 	}
 }
 
-func (cr *ChatRoom) ClientLeave(client *ClientConnection) {
-	cr.Lock()
-	defer cr.Unlock()
-
-	_, exists := cr.members[client.id]
-	if !exists {
-		return
-	}
-
-	delete(cr.members, client.id)
-	delete(client.chatRooms, cr.key)
-
-	leave := cr.ChatRoomUserMessage(client, false)
-	cr.Broadcast(ChannelLeave, &leave)
-	cr.logger.Println("left:", client.id, client.client.Username)
-}
-
 // Broadcast a command and/or message to a ChatRoom minus exclude list
 func (cr *ChatRoom) Broadcast(command string, message proto.Message, exclude ...*ClientConnection) error {
 	data, err := Marshal(message)
@@ -325,6 +308,35 @@ func (cr *ChatRoom) Close() {
 	if cr.logFile != nil {
 		cr.logFile.Close()
 	}
+}
+
+// removeMemberIfPresent returns whether some client was actually removed or not
+func (cr *ChatRoom) removeMemberIfPresent(client *ClientConnection) bool {
+	cr.Lock()
+	defer cr.Unlock()
+
+	_, exists := cr.members[client.id]
+	if !exists {
+		return false
+	}
+
+	delete(cr.members, client.id)
+	delete(client.chatRooms, cr.key)
+
+	return true
+}
+
+func (cr *ChatRoom) ClientLeave(client *ClientConnection) {
+	left := cr.removeMemberIfPresent(client)
+	if !left {
+		// client already left somehow, nothing to do here!
+		return
+	}
+
+	leave := cr.ChatRoomUserMessage(client, false)
+
+	cr.Broadcast(ChannelLeave, &leave)
+	cr.logger.Println("left:", client.id, client.client.Username)
 }
 
 func (cr *ChatRoom) ClientJoin(client *ClientConnection) {
