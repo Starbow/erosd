@@ -11,6 +11,8 @@ Installation
 - Install python and sc2reader.
 - Set up your PATH and GOPATH.
 - `go install github.com/Starbow/erosd`
+- goto $GOPATH/src/github.com/Sikian/oauth2
+- git checkout authenticatedExchange
 - `erosd`
 
 Todo (Short Term)
