@@ -312,10 +312,10 @@ func (cr *ChatRoom) CanShutdown() bool {
 	cr.RLock()
 	defer cr.RUnlock()
 
-	if len(cr.members) != 0 || cr.fixed {
-		return false
+	if len(cr.members) == 0 && !cr.fixed {
+		return true
 	}
-	return true
+	return false
 }
 
 // Close does cleanup so we can close the room
