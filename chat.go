@@ -1,10 +1,10 @@
 package main
 
 import (
-	"github.com/golang/protobuf/proto"
 	"errors"
 	"fmt"
 	"github.com/Starbow/erosd/buffers"
+	"github.com/golang/protobuf/proto"
 	"log"
 	"os"
 	"path"
@@ -88,16 +88,9 @@ func GetChatRoom(name string, password string, joinable, fixed bool) (room *Chat
 
 // run is the main loop that runs and handles events for a ChatRoom.
 func (cr *ChatRoom) run() {
-	defer func() {
-		// Handle closing the room
-		delete(chatRooms, cr.key)
-		delete(joinableChatRooms, cr.key)
+	// make sure we cleanup before we leave for good
+	defer cr.Close()
 
-		for x := range cr.members {
-			delete(cr.members[x].chatRooms, cr.key)
-
-		}
-	}()
 	timer := time.NewTicker(time.Second * 30)
 	defer timer.Stop()
 
@@ -106,7 +99,6 @@ func (cr *ChatRoom) run() {
 		case <-timer.C:
 			// Nobody has joined after a set time. Close the room if we can.
 			if cr.CanShutdown() {
-				cr.Close()
 				return
 			}
 
@@ -118,7 +110,6 @@ func (cr *ChatRoom) run() {
 			// TODO: We might be able to do this in a go routine?
 			cr.ClientLeave(client)
 			if cr.CanShutdown() {
-				cr.Close()
 				return
 			}
 
@@ -126,8 +117,7 @@ func (cr *ChatRoom) run() {
 			cr.logger.Println("msg:", msg.GetSender().GetUsername(), ":", msg.GetMessage())
 			cr.Broadcast(ChannelMsg, msg)
 		case <-cr.abort:
-			cr.logger.Println("Closing aborted room")
-			cr.Close()
+			cr.logger.Println("Closing aborted room: %v", cr.key)
 			return
 		}
 	}
@@ -307,6 +297,14 @@ func (cr *ChatRoom) Close() {
 
 	if cr.logFile != nil {
 		cr.logFile.Close()
+	}
+
+	// Handle closing the room
+	delete(chatRooms, cr.key)
+	delete(joinableChatRooms, cr.key)
+
+	for x := range cr.members {
+		delete(cr.members[x].chatRooms, cr.key)
 	}
 }
 
