@@ -3,11 +3,15 @@ package main
 import (
 	"testing"
 	"github.com/stretchr/testify/assert"
+	"log"
+	"os"
+	"fmt"
 )
 
 func createTestRoom(fixed bool) *ChatRoom {
 	initChat()
-	_, room := NewChatRoom("test", "test", true, fixed)
+	room, _ := createChatRoom("test", "test", "test", true, fixed)
+	room.logger = log.New(os.Stdout, fmt.Sprintf("chat-%d:", room.id), log.Ldate|log.Ltime|log.Lshortfile)
 	return room
 }
 
@@ -27,6 +31,9 @@ func TestAddingMemberToChatRoom(t *testing.T) {
 
 	added := cr.addMemberIfNew(fc)
 	assert.True(t, added, "a new member should be added and return true")
+
+	_, ok := cr.members[fc.id]
+	assert.True(t, ok, "a member should be there after being added")
 
 	addedTwice := cr.addMemberIfNew(fc)
 	assert.False(t, addedTwice, "a new member should not be added twice and return false")

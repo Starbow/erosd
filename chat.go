@@ -15,8 +15,9 @@ import (
 )
 
 const (
-	ChannelMsg  = "CHM"
-	ChannelJoin = "CHJ"
+	ChannelMsg   = "CHM"
+	ChannelJoin  = "CHJ"
+	ChannelLeave = "CHL"
 )
 
 var (
@@ -145,7 +146,7 @@ func (cr *ChatRoom) ClientLeave(client *ClientConnection) {
 	delete(client.chatRooms, cr.key)
 
 	leave := cr.ChatRoomUserMessage(client, false)
-	cr.Broadcast("CHL", &leave)
+	cr.Broadcast(ChannelLeave, &leave)
 	cr.logger.Println("left:", client.id, client.client.Username)
 }
 
@@ -172,23 +173,7 @@ parent:
 	return nil
 }
 
-func NewChatRoom(name, password string, joinable, fixed bool) (cr *ChatRoom, err error) {
-	key := cleanChatRoomName(name)
-	if len(key) < 3 {
-		err = ErrChatRoomNameTooShort
-		return
-	}
-	if joinable && key[:2] == "mm" {
-		err = ErrChatRoomReserved
-		return
-	}
-
-	_, ok := chatRooms[key]
-	if ok {
-		err = ErrChatRoomAlreadyExists
-		return
-	}
-
+func createChatRoom(key, name, password string, joinable, fixed bool) (cr *ChatRoom, err error) {
 	cr = &ChatRoom{
 		id:       atomic.AddInt64(&chatIdBase, 1),
 		members:  make(map[int64]*ClientConnection),
@@ -202,6 +187,28 @@ func NewChatRoom(name, password string, joinable, fixed bool) (cr *ChatRoom, err
 		fixed:    fixed,
 		password: strings.TrimSpace(password),
 	}
+	return cr, nil
+}
+
+func NewChatRoom(name, password string, joinable, fixed bool) (cr *ChatRoom, err error) {
+	key := cleanChatRoomName(name)
+	if len(key) < 3 {
+		err = ErrChatRoomNameTooShort
+		return
+	}
+
+	if joinable && key[:2] == "mm" {
+		err = ErrChatRoomReserved
+		return
+	}
+
+	_, ok := chatRooms[key]
+	if ok {
+		err = ErrChatRoomAlreadyExists
+		return
+	}
+
+	cr, err = createChatRoom(key, name, password, joinable, fixed)
 
 	var logfile string = path.Join(logPath, fmt.Sprintf("%d-chat-%d.log", os.Getpid(), cr.id))
 	file, err := os.Create(logfile)
@@ -260,10 +267,10 @@ func (ch *ChatRoom) ChatRoomInfoMessage(includeUserStats bool) *protobufs.ChatRo
 
 }
 
-func (ch *ChatRoom) ChatRoomUserMessage(client *ClientConnection, detailed bool) protobufs.ChatRoomUser {
+func (cr *ChatRoom) ChatRoomUserMessage(client *ClientConnection, detailed bool) protobufs.ChatRoomUser {
 
 	var (
-		chat *protobufs.ChatRoomInfo = ch.ChatRoomInfoMessage(detailed)
+		chat *protobufs.ChatRoomInfo = cr.ChatRoomInfoMessage(detailed)
 		user *protobufs.UserStats    = client.client.UserStatsMessage()
 		join protobufs.ChatRoomUser
 	)
