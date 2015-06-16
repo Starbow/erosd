@@ -75,3 +75,8 @@
     -ms-transform: rotate(270deg);
     transform: rotate(270deg);
 }
+
+abbr[title] {
+  cursor: help;
+  border-bottom: 1px dotted white !important;
+}

@@ -37,7 +37,7 @@
 				<button id='ranked' type='button' class='btn' ng-class="ranked ? 'btn-primary' : 'btn-default'" ng-click="ranked = !ranked" >RANKED</button>
 			</div>
 			<div class='queue' ng-show="selected_regions.NA || selected_regions.EU || selected_regions.KR">
-				<div class='search-radius' style=''>{{ 'SEARCH_RADIUS' | translate }} <select style='color:black' ng-model='search_radius' ng-options='radius for radius in radius_options' ng-change='updateSearchRadius'/><!-- <input ng-model="search_radius" ng-change='updateSearchRadius'/> --></div>
+				<div class='search-radius' style=''><abbr title="{{ 'SEARCH_RADIUS_HINT' | translate }}">{{ 'SEARCH_RADIUS' | translate }}</abbr> <select style='color:black' ng-model='search_radius' ng-options='radius for radius in radius_options' ng-change='updateSearchRadius'/><!-- <input ng-model="search_radius" ng-change='updateSearchRadius'/> --></div>
 
 				<button id='queue' type='button' class='btn btn-default rounded' ng-click="queue()">
 					{{ 'QUEUE' | translate }} <span class="icon-bowstarbow" display="font-size:120%"></span>
@@ -69,7 +69,7 @@
 					<div>{{matchmaking.match.map.region | region}}</div>
 				</div>
 				<div id='gotomap' class='button' ng-click="goToMap()" style='margin-left: 22px'><div><span class="glyphicon glyphicon-link" aria-hidden="true"></span> {{ 'GO_TO_MAP' | translate }}</div></div>
-				<div id='copychat' class='button' ng-click='copyChat()' style='margin-left: 18px'><div><span class=" glyphicon glyphicon-comment" aria-hidden="true"></span> {{ 'COPY_CHAT_NAME' | translate }}</div></div>
+				<div id='copychat' class='button' ng-click='copyChat()' style='margin-left: 18px'><div><span class=" glyphicon glyphicon-comment" aria-hidden="true"></span> <abbr title='{{ 'CHAT_CHANNEL_HINT' | translate }}'>{{ 'COPY_CHAT_NAME' | translate }}</abbr></div></div>
 			</div>
 
 			<div class='bottom'>
