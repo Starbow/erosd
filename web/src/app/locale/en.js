@@ -2,6 +2,7 @@
 	if (!global["starbow"]["locale"]) global["starbow"]["locale"] = {};
 
 	global["starbow"]["locale"]["en"] = {
+        HOW_TO_PLAY: "How to play",
 		USERNAME: "Username",
 		YES: "Yes",
 		NO: "No",
