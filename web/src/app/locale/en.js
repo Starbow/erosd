@@ -17,7 +17,7 @@
 	    MESSAGE: "Message",
 	    JOIN_ROOM: "Join room",
 
-	    ADD_PROFILE: "Add profile",
+		ADD_PROFILE: "To start playing, please add a Battle.net profile:",
 	    PLACEMENT_MATCHES: "Placement matches:",
 	    SELECT_REGION: "Select a region",
 	    ADD_BNET_PROFILE: "Add Bnet profile:",
