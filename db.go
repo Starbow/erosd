@@ -38,6 +38,7 @@ func GetRealUser(username, authtoken string) *RealUser {
 			user.Username = username
 			user.AuthToken = authtoken
 			user.Email = username + "@starbowmod.com"
+			user.IsActive = true
 			err = dbMap.Insert(&user)
 			if err != nil {
 				log.Println(err)

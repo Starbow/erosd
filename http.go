@@ -99,6 +99,12 @@ func setupRouter(r *mux.Router) {
 }
 
 func listenAndServeHTTP(address string) {
+	if testMode {
+		upgrader.CheckOrigin = func(r *http.Request) bool {
+			// allow all connections in testmode
+			return true
+		}
+	}
 	r := mux.NewRouter()
 	setupRouter(r)
 
@@ -144,7 +150,11 @@ func listenAndServeHTTPS(address string) error {
 
 		log.Println("Listening HTTPS on", address)
 	} else {
-		log.Fatalln("Could not use https certs: ", err)
+		if testMode {
+			log.Println("Could not use https certs: ", err, " (proceeding anyway due to test mode)")
+		} else {
+			log.Fatalln("Could not use https certs: ", err)
+		}
 	}
 	return nil
 }
