@@ -2,7 +2,7 @@
 
 	<!-- Left -->
 	<!-- <div id="mm-left" class="no-padding" ng-class='hover ? "col-md-2" : "col-md-12"'> -->
-	<div id="mm-left" class="no-padding anim" ng-class='{"full": !hover}'>
+	<div id="mm-left" class="anim" ng-class='{"full": localUser.characters.length == 0}'>
 		<div class='svg'>
 			<svg height='218' width='30'>
   				<path d="M0 0 L0 218 L30 0 Z" />
@@ -10,13 +10,14 @@
 		</div>
 		<div class='player'>
 			<div id='user-username' ng-bind='localUser.username'></div>
-			<span id='user-division' ng-bind='localUser.stats.division'></span>
-			<span id='user-rank' ng-bind='localUser.stats.divisionRank' ng-hide="localUser.stats.placementsRemaining > 0"></span>
-			<div id='user-points' ng-bind='localUser.stats.points' ng-hide="localUser.stats.placementsRemaining > 0"></div>
+			<span id='user-division' ng-bind='localUser.stats.division' ng-show='localUser.characters.length > 0'></span>
+			<span id='user-rank' ng-bind='localUser.stats.divisionRank' ng-hide='localUser.stats.placementsRemaining != 0 || localUser.characters.length == 0'></span>
+			<div id='user-points' ng-bind='localUser.stats.points' ng-hide="localUser.stats.placementsRemaining > 0 || localUser.characters.length == 0"></div>
 			<div id='user-placement' ng-show="localUser.stats.placementsRemaining > 0 && localUser.characters.length > 0">{{ 'PLACEMENT_MATCHES' | translate }} {{localUser.stats.placementsRemaining}}</div>
-			<div id='user-placement' ng-hide="localUser.characters.length > 0" ng-init='showProfileRegions=false'>
-				<span style="color:white; cursor: pointer" ng-click='showProfileRegions=true' ng-hide='showProfileRegions'>+ {{ 'ADD_PROFILE' | translate }}</span>
-				<span ng-click='showProfileRegions=false' ng-show='showProfileRegions'><span ng-repeat="region in bnet_regions"> <a ng-click="RequestVerification(region)" style="color:white; cursor:pointer">{{region}}</a></span>
+			<div id='user-placement' style="margin-top: 1.5em; line-height: 1.5em;" ng-show="localUser.characters.length == 0">
+			  <span style="color:white; cursor: pointer">{{ 'ADD_PROFILE' | translate }}</span>
+              <br/>
+			  <span ng-click='showProfileRegions=true'><span ng-repeat="region in bnet_regions"> <a ng-click="RequestVerification(region)" style="color:white; cursor:pointer">{{region}}</a> {{ matchmaking.match.channel }}</span>
 			</div>	
 			<!-- <div id='user-mmr' ng-bind='localUser.stats.mmr'></div> -->
 		</div>
@@ -24,7 +25,7 @@
 	</div>
 
 	<!-- Center -->
-	<div id="mm-center" class="anim" ng-class='hover ? "min" : "full"'>
+	<div id="mm-center" class="anim" ng-class='localUser.characters.length > 0 ? "min" : "full"'>
 		<div class='pre' ng-show='matchmaking.status == "IDLE"'>
 			<div style="display:inline-block; margin-top:15px; padding: 3px 4px; background-color:#fff; color:#AB3E3E; border-radius: 3px; cursor: pointer" ng-click="vetoModal()"><span class="glyphicon glyphicon-ban-circle"></span> {{ 'MAP_VETOES' | translate }}</div>
 			<div class='matchtypes' style='display:none'>
@@ -37,7 +38,7 @@
 				<button id='ranked' type='button' class='btn' ng-class="ranked ? 'btn-primary' : 'btn-default'" ng-click="ranked = !ranked" >RANKED</button>
 			</div>
 			<div class='queue' ng-show="selected_regions.NA || selected_regions.EU || selected_regions.KR">
-				<div class='search-radius' style=''>{{ 'SEARCH_RADIUS' | translate }} <select style='color:black' ng-model='search_radius' ng-options='radius for radius in radius_options' ng-change='updateSearchRadius'/><!-- <input ng-model="search_radius" ng-change='updateSearchRadius'/> --></div>
+				<div class='search-radius' style=''><abbr title="{{ 'SEARCH_RADIUS_HINT' | translate }}">{{ 'SEARCH_RADIUS' | translate }}</abbr> <select style='color:black' ng-model='search_radius' ng-options='radius for radius in radius_options' ng-change='updateSearchRadius'/><!-- <input ng-model="search_radius" ng-change='updateSearchRadius'/> --></div>
 
 				<button id='queue' type='button' class='btn btn-default rounded' ng-click="queue()">
 					{{ 'QUEUE' | translate }} <span class="icon-bowstarbow" display="font-size:120%"></span>
@@ -69,7 +70,7 @@
 					<div>{{matchmaking.match.map.region | region}}</div>
 				</div>
 				<div id='gotomap' class='button' ng-click="goToMap()" style='margin-left: 22px'><div><span class="glyphicon glyphicon-link" aria-hidden="true"></span> {{ 'GO_TO_MAP' | translate }}</div></div>
-				<div id='copychat' class='button' ng-click='copyChat()' style='margin-left: 18px'><div><span class=" glyphicon glyphicon-comment" aria-hidden="true"></span> {{ 'COPY_CHAT_NAME' | translate }}</div></div>
+				<div id='copychat' class='button' ng-click='copyChat()' style='margin-left: 18px'><div><span class=" glyphicon glyphicon-comment" aria-hidden="true"></span> <abbr title='{{ "CHAT_CHANNEL_HINT" | translate }}'>{{ 'COPY_CHAT_NAME' | translate }}</abbr></div></div>
 			</div>
 
 			<div class='bottom'>
@@ -103,7 +104,7 @@
 	</div>
 
 	<!-- Right -->
-	<div id="mm-right" class="anim no-padding" ng-class='{"full": !hover}'>
+	<div id="mm-right" class="anim no-padding" ng-class='{"full": localUser.characters.length == 0}'>
 
 		<div class='pre' ng-show='matchmaking.status == "IDLE"' ng-init="localUser.char_per_region = toRegions(localUser.characters)">
 			<!-- <div class="region kr" value='KR' disabled/> -->

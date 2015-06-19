@@ -2,6 +2,7 @@
 	if (!global["starbow"]["locale"]) global["starbow"]["locale"] = {};
 
 	global["starbow"]["locale"]["en"] = {
+        HOW_TO_PLAY: "How to play",
 		USERNAME: "Username",
 		YES: "Yes",
 		NO: "No",
@@ -16,16 +17,18 @@
 	    MESSAGE: "Message",
 	    JOIN_ROOM: "Join room",
 
-	    ADD_PROFILE: "Add profile",
+		ADD_PROFILE: "To start playing, please add a Battle.net profile:",
 	    PLACEMENT_MATCHES: "Placement matches:",
 	    SELECT_REGION: "Select a region",
 	    ADD_BNET_PROFILE: "Add Bnet profile:",
 	    RANKED: "RANKED",
 	    QUEUE: "Queue",
 	    SEARCH_RADIUS: "Search Radius:",
+        SEARCH_RADIUS_HINT: "You will get matched with players that are at most this number of divisions from you. Choose 5 if you'd like to play with players of all skill levels.",
 	    CANCEL: "Cancel",
-	    GO_TO_MAP: "Go to map",
-	    COPY_CHAT_NAME: "Copy chat name",
+	    GO_TO_MAP: "Open map in StarCraft 2",
+	    COPY_CHAT_NAME: "Show suggested chat channel name",
+        CHAT_CHANNEL_HINT: "Join this chat channel in-game to find your opponent.",
 	    NO_SHOW_REPORTED: "No-show reported:",
 	    I_AM_HERE: "I'm here!",
 	    DRAW_REQUESTED: "Draw requested",

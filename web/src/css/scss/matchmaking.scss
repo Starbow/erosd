@@ -172,7 +172,7 @@ $mmHeight: 218px;
 		z-index: 50;
 
 		left: 15px;
-		&.anim { transition: 0.12s ease-in right; right:83%; background: rgba(171, 62, 62, 0);}
+		&.anim { transition: 0.12s ease-in right; right:80%; background: rgba(171, 62, 62, 0);}
 		&.anim.full { right:15px; background: rgba(171, 62, 62, 1); }
 
 		/*&.anim > .svg {

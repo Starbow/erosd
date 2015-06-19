@@ -6,6 +6,7 @@ module.config(['$translateProvider', function ($translateProvider) {
     $translateProvider.translations('en', starbow.locale["en"]);
 	$translateProvider.translations('kr', starbow.locale["kr"]);
 	$translateProvider.translations('es', starbow.locale["es"]);
+	$translateProvider.translations('ru', starbow.locale["ru"]);
 
     $translateProvider.preferredLanguage('en');
     // console.log($translateProvider.preferredLanguage())
