@@ -62,3 +62,6 @@ erosd
 *.key
 *.cert
 *.crt
+
+# intellij crap
+.idea
