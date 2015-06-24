@@ -1003,7 +1003,7 @@ func (conn *ClientConnection) OnAddCharacter(txid int, data []byte) {
 		return
 	}
 
-	count, err := dbMap.SelectInt("SELECT COUNT(*) FROM battle_net_characters WHERE Region=? and SubRegion=? and ProfileId=?", region, subregion, id)
+	count, err := dbMap.SelectInt("SELECT COUNT(*) FROM battle_net_characters WHERE Region=? and SubRegion=? and ProfileId=? and Enabled=?", region, subregion, id, true)
 	if err != nil {
 		conn.SendResponseMessage("101", txid, []byte{})
 		return
@@ -1025,10 +1025,22 @@ func (conn *ClientConnection) OnAddCharacter(txid int, data []byte) {
 		return
 	}
 
-	err = dbMap.Insert(character)
+	count, err = dbMap.SelectInt("SELECT COUNT(*) FROM battle_net_characters WHERE Region=? and SubRegion=? and ProfileId=? and Enabled=?", region, subregion, id, false)
+	if err != nil {
+		conn.SendResponseMessage("101", txid, []byte{})
+		return
+	}
+
+	if count > 0 {
+		conn.logger.Println("Reenabling character.")
+		_, err = dbMap.Exec("UPDATE battle_net_characters SET Enabled=?, IsVerified=?, CharacterName=?, ClientId=? WHERE Region=? and SubRegion=? and ProfileId=?",
+			true, testMode, name, conn.client.Id, region, subregion, id)
+	} else {
+		err = dbMap.Insert(character)
+	}
 	if err != nil {
 		conn.SendResponseMessage("102", txid, []byte{})
-		log.Println("Error inserting character", err)
+		log.Println("Error inserting or reenabling character", err)
 		return
 	}
 
