@@ -45,16 +45,17 @@ angular.module('erosApp.chat')
 	return {
 		restrict: 'A',
 		link: function($scope, $elem, $attrs, $controller){
-			$elem.html($scope.message.message
-				.replace(/@\w+/g, '<span username>'+'$&'+'</span>')
-				.replace(/http\S*/g, function(match){
-					var rep = '<a href="'+match+'" target="_blank">';
-					rep += match.length > 40 ? match.slice(0,30)+'...'+match.slice(-6) : match;
-					rep += '</a>'
+			// $elem.html($scope.message.message
+			// 	.replace(/@\w+/g, '<span username>'+'$&'+'</span>')
+			// 	.replace(/http\S*/g, function(match){
+			// 		var rep = '<a href="'+match+'" target="_blank">';
+			// 		rep += match.length > 40 ? match.slice(0,30)+'...'+match.slice(-6) : match;
+			// 		rep += '</a>'
 
-					return rep;
-				})
-			);
+			// 		return rep;
+			// 	})
+			// );
+			$elem.text($scope.message.message)
 		}
 	};
 })
