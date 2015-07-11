@@ -166,9 +166,12 @@ func (this *Division) GetDifference(other *Division) int64 {
 // TODO: add to Ladderer interface
 func (d Divisions) GetDivision(points int64) (division *Division, position int64) {
 	i := int64(len(d))
+
+	division = nil
+	position = 0
+
 	for {
 		i--
-
 		if float64(points) >= float64(d[i].PromotionThreshold) {
 			division = d[i]
 			position = i
@@ -180,9 +183,7 @@ func (d Divisions) GetDivision(points int64) (division *Division, position int64
 		}
 	}
 
-	log.Println("GetDivision:", division)
-
-	return nil, 0
+	return
 }
 
 // Get the difference in ranks

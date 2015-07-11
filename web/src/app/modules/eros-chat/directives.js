@@ -102,6 +102,7 @@ angular.module('erosApp.chat')
 })
 .filter('divisionColor', function(){
 	return function(division){
+		division = division.charAt(0)
 		switch(division) {
 		case 'E':
 			return "#9966cc";

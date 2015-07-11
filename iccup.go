@@ -3,31 +3,55 @@ package main
 import (
 	"log"
 	"math"
+	// "fmt"
 )
+
 
 type Ladderer interface {
 	CalculateNewPoints(winnerPoints, loserPoints int64, winnerDivision, loserDivision *Division) (winnerNew, loserNew int64)
 	InitDivisions()
 	GetDifference(div1, div2 *Division) int64
+	getInitialPlacementMatches() int64
 	// GetDivision(float64) (division *Division, position int64)
 }
 
 type Iccup struct {
 }
 
+var (
+	// If difference > maxDiff, use loseX[0] or loseX[8]
+	maxDiff = int64(4);
+	losePoints = [5][9]int64{
+		[9]int64{0, 13, 25, 37, 50, 63, 75, 100, 150}, // E
+		[9]int64{0, 13, 25, 37, 50, 63, 75, 100, 150}, // D
+		[9]int64{10, 19, 37, 56, 75, 93, 112, 131, 150}, // C
+		[9]int64{10, 25, 50, 75, 100, 125, 150, 175, 200}, // B
+		[9]int64{20, 50, 80, 110, 140, 170, 200, 230, 260}, // A
+	}
+
+	base = int64(100) // From diff = 0
+	win_step = int64(25)
+	win_min = float64(10)
+
+	initialPlacementMatches = int64(0);
+)
+
 func (iccup *Iccup) InitDivisions() {
 
-	log.Println("Initializing division")
+	log.Println("Initializing divisions")
+	divisionCount,err := dbMap.SelectInt("SELECT COUNT(*) FROM divisions WHERE system='iccup'");
+	divisions = make(Divisions, 0, divisionCount)
 
-	div, err := dbMap.Select(Division{}, "SELECT * FROM divisions WHERE system='iccup' ORDER BY promotion_threshold")
+	divs, err := dbMap.Select(Division{}, "SELECT * FROM divisions WHERE system='iccup' ORDER BY promotion_threshold")
 	if err != nil {
 		panic(err)
 	}
 
-	if len(div) > 0 {
-		for x := range div {
-			divisions = append(divisions, div[x].(*Division))
-			log.Println(div[x].(*Division))
+	if len(divs) > 0 {
+		for x := range divs {
+			div := divs[x].(*Division);
+			div.Id = int64(x);  // Assign useful Id
+			divisions = append(divisions, div)
 		}
 	} else {
 		i := int64(0)
@@ -65,20 +89,31 @@ func (iccup *Iccup) InitDivisions() {
 }
 
 func (iccup *Iccup) CalculateNewPoints(winnerPoints, loserPoints int64, winnerDivision, loserDivision *Division) (winnerNew, loserNew int64) {
-	// Right now win is calculated from diff = 0 and lose from diff = 4,
-	// consider calculating all from diff = 4 or diff = 0
 
-	base := int64(100) // From diff = 0
-	win_step := int64(25)
-	win_min := float64(0)
-	// lose_base := int64(0) // From diff = 4
-	// lose_step := int64(5) // From E
-	lose_max := float64(0)
-
+	// We should make sure that we're using the right divisions and not the ones provided, which might not be updated correctly
+	winnerDivision,_ = divisions.GetDivision(winnerPoints);
+	loserDivision,_ = divisions.GetDivision(loserPoints);
+	
 	difference := iccup.GetDifference(winnerDivision, loserDivision) // from E=0 to A+=12
-
+	// group_diff := winnerDivision.LadderGroup - loserDivision.LadderGroup
+	
 	winnerNew = winnerPoints + int64(math.Max(win_min, float64(base+difference*win_step)))
-	loserNew = loserPoints + int64(math.Min(lose_max, float64(-(10+loserDivision.LadderGroup)+(difference-3)*(10+loserDivision.LadderGroup))))
+	// fmt.Println("winnerpoints", math.Max(win_min, float64(base+difference*win_step)))
+	// fmt.Println("difference", difference, "maxDiff", maxDiff)
+
+	// Losing 
+	losingDiffIndex := difference
+	if(losingDiffIndex > maxDiff){
+		losingDiffIndex = maxDiff + 1; // Last element
+	}else if(losingDiffIndex < -maxDiff){
+		losingDiffIndex = -maxDiff; // First element
+	}
+	losingDiffIndex = losingDiffIndex + maxDiff;
+
+	// fmt.Println("LadderGroup", loserDivision.LadderGroup)
+	// fmt.Println("losingDiffIndex",losingDiffIndex)
+	// fmt.Println("points", losePoints[loserDivision.LadderGroup][losingDiffIndex])
+	loserNew = loserPoints - losePoints[loserDivision.LadderGroup][losingDiffIndex]
 
 	return
 }
@@ -97,7 +132,8 @@ func (iccup *Iccup) GetDifference(div1, div2 *Division) int64 {
 
 		if divisions[i] == div1 {
 			p1 = i
-		} else if divisions[i] == div2 {
+		}
+		if divisions[i] == div2 {
 			p2 = i
 		}
 
@@ -107,6 +143,10 @@ func (iccup *Iccup) GetDifference(div1, div2 *Division) int64 {
 	}
 
 	return p2 - p1
+}
+
+func (d *Iccup) getInitialPlacementMatches() int64 {
+	return initialPlacementMatches;
 }
 
 // func (d Divisions) GetDivision(points float64) (division *Division, position int64) {

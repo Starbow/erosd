@@ -41,6 +41,7 @@
 	    MAP_VETOES: "Map vetoes",
 
 	    CONFIRM_REMOVE_CHAR: "Are you sure you want to delete this profile?",
+	    CONFIRM_FORFEIT: "Are you sure you want to forfeit?",
 
 	    DISCLAIMER_ALPHA: "This is an <b>alpha</b> version of ErosJS",
 	    DISCLAIMER_FEEDBACK: "Please feel free to provide feedback <a href='http://starbowmod.com/forum/showthread.php?tid=585'>here</a>.",

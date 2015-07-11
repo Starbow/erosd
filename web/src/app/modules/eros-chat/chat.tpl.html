@@ -87,7 +87,9 @@
 			<div ng-repeat="user in roomusers | orderBy:'stats'" class="animate-fade">
 				<div class="room-user" ng-dblclick="openPrivUser(user.username)"> <!-- ng-click="addUserMsg(user.username)" -->
 					<div class="user-rank-block" style="background-color: {{user.stats.division | divisionColor}}">
-						<span ng-bind="user.stats.division" class="user-division"></span><span ng-hide="user.stats.division == 'P'" ng-bind="user.stats.divisionRank" class="user-rank" ></span>
+						<span ng-bind="user.stats.division" class="user-division"></span>
+						<!-- No division rank in ICCUP -->
+						<!-- <span ng-hide="user.stats.division == 'P'" ng-bind="user.stats.divisionRank" class="user-rank" ></span> -->
 					</div>
 					<span ng-bind="user.username" class="user-username" style='color: {{user.stats.division | divisionColor}}'></span>
 				</div>
@@ -97,10 +99,23 @@
 
 	<!-- Private chat -->
 	<div class="user-details" eros-user="{{selectedRoom.priv.name}}" ng-show="selectedRoom.priv" >
-		<div class="user-username">{{user.username}}</div>
-		<div class='user-rank-block'>
-			<span class="user-division">{{user.stats.division}}</span>
-			<span ng-hide="user.stats.division == 'P'" class="user-rank">{{user.stats.divisionRank}}</span>
+		<div class='user-info'>
+			<h4 class="user-username">{{user.username}}</h4>
+			<div class='user-rank-block' style="width: 60px;">
+				<span class="user-division large">{{user.stats.division}}</span>
+				<!-- No division rank in ICCUP -->
+				<!-- <span ng-hide="user.stats.division == 'P'" class="user-rank">{{user.stats.divisionRank}}</span> -->
+
+			</div>
+		</div>
+		<hr />
+		<div class="user-points global">
+			Global
+			{{user.stats.points}}
+		</div>
+		<div class="user-points" ng-class='region' ng-repeat="(region, stats) in user.regions track by region" ng-if='stats.wins > 0 && stats.losses > 0 && stats.forfeits > 0 && stats.walkovers > 0'>
+			{{region}}
+			{{stats.points}}
 		</div>
 	</div>
 

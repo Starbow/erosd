@@ -3,6 +3,10 @@
 ### Unresolved
 - Refactor matchmaking regions to include just the available ones.
 
+## 0.4.O
+### Added
+- ICCUP point system
+- Modal to confirm forfeit (with locale)
 
 ## 0.3.0
 ### Added

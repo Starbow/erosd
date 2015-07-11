@@ -1510,6 +1510,7 @@ func (conn *ClientConnection) OnHandshake(txid int, data []byte) bool {
 	resp.Division = make([]*protobufs.Division, 0, len(divisions))
 	resp.ActiveRegion = make([]protobufs.Region, 0, len(ladderActiveRegions))
 	resp.MapPool = maps.MapPoolMessage()
+
 	for x := range divisions {
 		resp.Division = append(resp.Division, divisions[x].DivisionMessage())
 	}

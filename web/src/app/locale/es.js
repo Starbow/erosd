@@ -2,6 +2,7 @@
 	if (!global["starbow"]["locale"]) global["starbow"]["locale"] = {};
  
 	global["starbow"]["locale"]["es"] = {
+		HOW_TO_PLAY: "Cómo jugar",
 		USERNAME: "Usuario",
 		YES: "Sí",
 		NO: "No",
@@ -29,7 +30,7 @@
 		NO_SHOW_REPORTED: "Ausencia reportada:",
 		I_AM_HERE: "¡Estoy aquí!",
 		DRAW_REQUESTED: "Empate solicitado",
-		FORFEIT: "Perder",
+		FORFEIT: "Rendirse",
 		REQUEST_DRAW: "Solicitar Empate",
 		REPORT_NO_SHOW: "Reportar Ausencia",
 		UPLOAD_REPLAY: "Subir Replay",
@@ -38,6 +39,7 @@
 		MAP_VETOES: "Vetos de Mapa",
 		
 		CONFIRM_REMOVE_CHAR: "¿Estás seguro que deseas eliminar este perfil?",
+		CONFIRM_FORFEIT: "¿Estás seguro que quieres rendirte?",
 		
 		DISCLAIMER_ALPHA: "Esta es la versión <b>alpha</b> de ErosJS",
 		DISCLAIMER_FEEDBACK: "Siéntase libre de enviarnos sus recomendaciones <a href='http://starbowmod.com/forum/showthread.php?tid=585'>aquí</a>.",

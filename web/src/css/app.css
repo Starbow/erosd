@@ -112,7 +112,10 @@
   float: left; }
 
 .small {
-  font-size: 0.8em; }
+  font-size: 0.8em !important; }
+
+.large {
+  font-size: 1.4em !important; }
 
 .align-right {
   text-align: right; }
@@ -162,6 +165,10 @@
   -o-transform: rotate(270deg);
   -ms-transform: rotate(270deg);
   transform: rotate(270deg); }
+
+abbr[title] {
+  cursor: help;
+  border-bottom: 1px dotted white !important; }
 
 [eros-chat] {
   background-color: #fff;
@@ -344,43 +351,52 @@
     color: #666;
     font-size: 12px; }
     [eros-chat] #chat-right-nav .user-details {
-      text-align: center;
-      padding-top: 30px; }
-      [eros-chat] #chat-right-nav .user-details .user-rank-block {
-        font-family: 'noto_sansregular'; }
+      text-align: center; }
+      [eros-chat] #chat-right-nav .user-details .user-info {
+        padding: 20px 0; }
+        [eros-chat] #chat-right-nav .user-details .user-info .user-rank-block {
+          font-family: 'noto_sansregular'; }
   [eros-chat] .room-user {
     width: auto;
     cursor: pointer;
     padding: 1px 2px; }
-    [eros-chat] .room-user .user-rank-block {
-      font-family: 'noto_sansregular';
-      display: inline-block;
-      /*width: $chat-users-rank-width;*/
-      border-radius: 3px;
-      padding: 0px 3px;
-      background: none repeat scroll 0% 0% #ab3e3e;
-      margin-right: 3px;
-      height: 18px;
-      vertical-align: bottom;
-      border: medium none;
-      width: 24px;
-      text-align: center; }
-      [eros-chat] .room-user .user-rank-block .user-division {
-        /*color: $lightRedColor;*/
-        color: #fff;
-        /*font-size: 13px;*/
-        font-size: 11px;
-        font-weight: bold; }
-      [eros-chat] .room-user .user-rank-block .user-rank {
-        font-family: 'noto_sansregular';
-        font-size: 9px;
-        color: #eee; }
     [eros-chat] .room-user .user-username {
       position: absolute;
       overflow: hidden;
       width: 116px; }
     [eros-chat] .room-user:hover {
       background-color: #e3e3e3; }
+  [eros-chat] hr {
+    margin: 16px 10px;
+    margin-bottom: 25px;
+    border-top: 1px solid #d6d6d6; }
+  [eros-chat] .user-points {
+    font-size: 1.2em;
+    padding: 5px 0;
+    /*
+		&.EU {
+			background-image: url(../img/mm-eu.png);
+			background-repeat: no-repeat;
+			background-position: right 52%;
+			background-size: 30%;
+		}
+
+		&.NA {
+			background-image: url(../img/mm-na.png);
+			background-repeat: no-repeat;
+			background-position: right center;
+			background-size: 26%;
+		}
+
+		&.KR{
+			background-image: url(../img/svg_korea.svg);
+			background-repeat: no-repeat;
+			background-position: right -15px;
+			background-size: 37px;
+		}
+		*/ }
+    [eros-chat] .user-points.global, [eros-chat] .user-points.global h5 {
+      font-weight: bold !important; }
 
 #notification-settings {
   position: absolute;
@@ -400,6 +416,30 @@
       color: #bbb; }
       #notification-settings > div .btn.active {
         color: #444; }
+
+.user-rank-block {
+  font-family: 'noto_sansregular';
+  display: inline-block;
+  /*width: $chat-users-rank-width;*/
+  border-radius: 3px;
+  padding: 0px 6px;
+  background: none repeat scroll 0% 0% #ab3e3e;
+  margin-right: 3px;
+  min-height: 18px;
+  vertical-align: bottom;
+  border: medium none;
+  min-width: 27px;
+  text-align: center; }
+  .user-rank-block .user-division {
+    /*color: $lightRedColor;*/
+    color: #fff;
+    /*font-size: 13px;*/
+    font-size: 11px;
+    font-weight: bold; }
+  .user-rank-block .user-rank {
+    font-family: 'noto_sansregular';
+    font-size: 9px;
+    color: #eee; }
 
 /*
  * Growls
@@ -549,7 +589,7 @@
 		}*/ }
     #eros-mm #mm-left.anim {
       transition: 0.12s ease-in right;
-      right: 83%;
+      right: 80%;
       background: rgba(171, 62, 62, 0); }
     #eros-mm #mm-left.anim.full {
       right: 15px;
@@ -565,7 +605,6 @@
       fill: #fff;
       overflow: hidden; }
   #eros-mm #mm-center {
-    z-index: 45 !important;
     position: absolute;
     left: 17%;
     right: 240px; }
@@ -645,7 +684,8 @@
     max-width: 180px;
     width: 180px;
     height: 180px;
-    background: #eee; }
+    background: #eee;
+    border-radius: 5px; }
     #vetoesDialog .veto-box .map-img > img {
       border-radius: 5px; }
     #vetoesDialog .veto-box .map-img.vetoed {

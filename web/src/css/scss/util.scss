@@ -16,7 +16,11 @@
 }
 
 .small {
-	font-size: 0.8em;
+	font-size: 0.8em !important;
+}
+
+.large {
+    font-size: 1.4em !important;
 }
 
 .align-right{

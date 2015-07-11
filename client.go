@@ -262,7 +262,7 @@ func NewClient(id int64) *Client {
 		LadderPoints:              ladderStartingPoints,
 		chatLastMessageTime:       time.Now(),
 		chatDelayScale:            1,
-		PlacementMatchesRemaining: 5,
+		PlacementMatchesRemaining: ladder.getInitialPlacementMatches(),
 	}
 
 	return client
@@ -428,10 +428,10 @@ func (client *Client) Defeat(opponent *Client, region BattleNetRegion) float64 {
 	client.RatingMean, client.RatingStdDev, opponent.RatingMean, opponent.RatingStdDev, quality = calculateNewRating(client.Id, opponent.Id, client.RatingMean, client.RatingStdDev, opponent.RatingMean, opponent.RatingStdDev)
 
 	regionStats, err := client.RegionStats(region)
-
 	if err != nil {
 		return quality
 	}
+
 	opponentRegionStats, err := opponent.RegionStats(region)
 	if err != nil {
 		return quality
@@ -517,9 +517,10 @@ func (c *Client) UserStatsMessage() *protobufs.UserStats {
 	user.Region = make([]*protobufs.UserRegionStats, 0, len(ladderActiveRegions))
 	user.Vetoes = make([]*protobufs.Map, 0, len(vetoes))
 	divisionId := int64(0)
-	if c.Division != nil {
-		divisionId = c.Division.Id
+	if c.Division == nil {
+		c.Division, c.DivisionRank = divisions.GetDivision(c.LadderPoints);
 	}
+	divisionId = c.Division.Id
 	user.PlacementsRemaining = &c.PlacementMatchesRemaining
 	user.Division = &divisionId
 	user.DivisionRank = &c.DivisionRank

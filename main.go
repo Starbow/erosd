@@ -267,6 +267,7 @@ func main() {
 
 	loadMaps()
 	ladder.InitDivisions()
+	// initDivisions()
 	initClientCaches()
 	initBattleNet()
 	initMatchmaking()

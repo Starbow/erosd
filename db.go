@@ -104,9 +104,9 @@ func initDb() (err error) {
 
 	// dbMap.AddTableWithName(ChatMessage{}, "chat_messages").SetKeys(true, "Id")
 
-	if testMode {
+	// if testMode {
 		dbMap.AddTableWithName(RealUser{}, "user_user").SetKeys(true, "Id")
-	}
+	// }
 
 	// create the tables.
 	err = dbMap.CreateTablesIfNotExists()
