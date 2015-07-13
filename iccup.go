@@ -95,9 +95,12 @@ func (iccup *Iccup) CalculateNewPoints(winnerPoints, loserPoints int64, winnerDi
 	loserDivision,_ = divisions.GetDivision(loserPoints);
 	
 	difference := iccup.GetDifference(winnerDivision, loserDivision) // from E=0 to A+=12
-	// group_diff := winnerDivision.LadderGroup - loserDivision.LadderGroup
+	// group_diff := winnerDivision.LadderGroup - loserDivision.LadderGroup // For new ICCUP system
 	
 	winnerNew = winnerPoints + int64(math.Max(win_min, float64(base+difference*win_step)))
+	if(winnerNew > divisions[len(divisions)-1].PromotionThreshold){
+		winnerNew = divisions[len(divisions)-1].PromotionThreshold
+	}
 	// fmt.Println("winnerpoints", math.Max(win_min, float64(base+difference*win_step)))
 	// fmt.Println("difference", difference, "maxDiff", maxDiff)
 
@@ -114,6 +117,9 @@ func (iccup *Iccup) CalculateNewPoints(winnerPoints, loserPoints int64, winnerDi
 	// fmt.Println("losingDiffIndex",losingDiffIndex)
 	// fmt.Println("points", losePoints[loserDivision.LadderGroup][losingDiffIndex])
 	loserNew = loserPoints - losePoints[loserDivision.LadderGroup][losingDiffIndex]
+	if(loserNew < 0){
+		loserNew = 0;
+	}
 
 	return
 }
