@@ -372,24 +372,24 @@ func (client *Client) PostGame(region BattleNetRegion) {
 
 	if client.PlacementMatchesRemaining > 0 {
 		client.PlacementMatchesRemaining -= 1
-
 	}
 
 	// division, _ := divisions.GetDivision(client.RatingMean)
 	division, _ := divisions.GetDivision(client.LadderPoints)
-	if client.PlacementMatchesRemaining == 0 && client.Division == nil {
+	// if client.PlacementMatchesRemaining == 0 && client.Division == nil {
+	if client.PlacementMatchesRemaining == 0 {
 		client.Division = division
 	}
 
-	if client.Division != nil {
-		if client.RatingMean < client.Division.PromotionThreshold {
-			if client.RatingMean < client.Division.DemotionThreshold {
-				client.Division = division
-			}
-		} else if client.Division != division {
-			client.Division = division
-		}
-	}
+	// if client.Division != nil {
+	// 	if client.RatingMean < client.Division.PromotionThreshold {
+	// 		if client.RatingMean < client.Division.DemotionThreshold {
+	// 			client.Division = division
+	// 		}
+	// 	} else if client.Division != division {
+	// 		client.Division = division
+	// 	}
+	// }
 
 	if regionStats.PlacementMatchesRemaining > 0 {
 		regionStats.PlacementMatchesRemaining -= 1
@@ -398,20 +398,19 @@ func (client *Client) PostGame(region BattleNetRegion) {
 
 	// division, _ = divisions.GetDivision(regionStats.RatingMean)
 	division, _ = divisions.GetDivision(regionStats.LadderPoints)
-	if regionStats.PlacementMatchesRemaining == 0 && regionStats.Division == nil {
-
+	if regionStats.PlacementMatchesRemaining == 0 {
 		regionStats.Division = division
 	}
 
-	if regionStats.Division != nil {
-		if regionStats.RatingMean < regionStats.Division.PromotionThreshold {
-			if regionStats.RatingMean < regionStats.Division.DemotionThreshold {
-				client.Division = division
-			}
-		} else if regionStats.Division != division {
-			regionStats.Division = division
-		}
-	}
+	// if regionStats.Division != nil {
+	// 	if regionStats.RatingMean < regionStats.Division.PromotionThreshold {
+	// 		if regionStats.RatingMean < regionStats.Division.DemotionThreshold {
+	// 			client.Division = division
+	// 		}
+	// 	} else if regionStats.Division != division {
+	// 		regionStats.Division = division
+	// 	}
+	// }
 
 }
 

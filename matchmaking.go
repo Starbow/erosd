@@ -153,7 +153,8 @@ func NewMatchmakerParticipant(connection *ClientConnection) *MatchmakerParticipa
 		team:       team,
 		points:     connection.client.LadderPoints,
 		rating:     connection.client.RatingMean,
-		radius:     connection.client.LadderSearchRadius,
+		// radius:     connection.client.LadderSearchRadius,
+		radius:		0, // Fast fix for new radius
 		regions:    connection.client.LadderSearchRegions,
 		matching:   false,
 		abort:      make(chan bool),
