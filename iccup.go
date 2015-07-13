@@ -113,8 +113,8 @@ func (iccup *Iccup) CalculateNewPoints(winnerPoints, loserPoints int64, winnerDi
 	}
 	losingDiffIndex = losingDiffIndex + maxDiff;
 
-	// fmt.Println("LadderGroup", loserDivision.LadderGroup)
-	// fmt.Println("losingDiffIndex",losingDiffIndex)
+	fmt.Println("LadderGroup", loserDivision.LadderGroup)
+	fmt.Println("losingDiffIndex",losingDiffIndex)
 	// fmt.Println("points", losePoints[loserDivision.LadderGroup][losingDiffIndex])
 	loserNew = loserPoints - losePoints[loserDivision.LadderGroup][losingDiffIndex]
 	if(loserNew < 0){
