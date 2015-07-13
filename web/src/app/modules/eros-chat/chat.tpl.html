@@ -101,7 +101,7 @@
 	<div class="user-details" eros-user="{{selectedRoom.priv.name}}" ng-show="selectedRoom.priv" >
 		<div class='user-info'>
 			<h4 class="user-username">{{user.username}}</h4>
-			<div class='user-rank-block' style="width: 60px;">
+			<div class='user-rank-block' style="width: 60px;" style="background-color: {{user.stats.division | divisionColor}}">
 				<span class="user-division large">{{user.stats.division}}</span>
 				<!-- No division rank in ICCUP -->
 				<!-- <span ng-hide="user.stats.division == 'P'" class="user-rank">{{user.stats.divisionRank}}</span> -->

@@ -38,7 +38,8 @@
 				<button id='ranked' type='button' class='btn' ng-class="ranked ? 'btn-primary' : 'btn-default'" ng-click="ranked = !ranked" >RANKED</button>
 			</div>
 			<div class='queue' ng-show="selected_regions.NA || selected_regions.EU || selected_regions.KR">
-				<div class='search-radius' style=''><abbr title="{{ 'SEARCH_RADIUS_HINT' | translate }}">{{ 'SEARCH_RADIUS' | translate }}</abbr> <select style='color:black' ng-model='search_radius' ng-options='radius for radius in radius_options' ng-change='updateSearchRadius'/><!-- <input ng-model="search_radius" ng-change='updateSearchRadius'/> --></div>
+				<!-- <div class='search-radius' style=''><abbr title="{{ 'SEARCH_RADIUS_HINT' | translate }}">{{ 'SEARCH_RADIUS' | translate }}</abbr> <select style='color:black' ng-model='search_radius' ng-options='radius for radius in radius_options' ng-change='updateSearchRadius'/></div> -->
+				<input ng-model='search_radius' value='0' hidden />
 
 				<button id='queue' type='button' class='btn btn-default rounded' ng-click="queue()">
 					{{ 'QUEUE' | translate }} <span class="icon-bowstarbow" display="font-size:120%"></span>
