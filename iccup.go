@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 	"math"
-	"fmt"
+	// "fmt"
 )
 
 
@@ -107,14 +107,14 @@ func (iccup *Iccup) CalculateNewPoints(winnerPoints, loserPoints int64, winnerDi
 	// Losing 
 	losingDiffIndex := difference
 	if(losingDiffIndex > maxDiff){
-		losingDiffIndex = maxDiff + 1; // Last element
+		losingDiffIndex = maxDiff; // Last element
 	}else if(losingDiffIndex < -maxDiff){
 		losingDiffIndex = -maxDiff; // First element
 	}
 	losingDiffIndex = losingDiffIndex + maxDiff;
 
-	fmt.Println("LadderGroup", loserDivision.LadderGroup)
-	fmt.Println("losingDiffIndex",losingDiffIndex)
+	// fmt.Println("LadderGroup", loserDivision.LadderGroup)
+	// fmt.Println("losingDiffIndex",losingDiffIndex)
 	// fmt.Println("points", losePoints[loserDivision.LadderGroup][losingDiffIndex])
 	loserNew = loserPoints - losePoints[loserDivision.LadderGroup][losingDiffIndex]
 	if(loserNew < 0){
