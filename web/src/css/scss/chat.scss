@@ -274,10 +274,13 @@ $chat-users-width: 150px;
 
 		.user-details{
 			text-align: center;
-			padding-top: 30px;
 
-			.user-rank-block{
-				font-family: $bodyFont;
+			.user-info {	
+				padding: 20px 0;
+
+				.user-rank-block{
+					font-family: $bodyFont;
+				}
 			}
 		}
 	}
@@ -290,34 +293,6 @@ $chat-users-width: 150px;
 		cursor:pointer;
 		padding:1px 2px;
 
-		.user-rank-block{
-			font-family: $bodyFont;
-			display: inline-block;
-			/*width: $chat-users-rank-width;*/
-
-			border-radius: 3px;
-			padding: 0px 3px;
-			background: none repeat scroll 0% 0% rgb(171, 62, 62);
-			margin-right: 3px;
-			height: 18px;
-			vertical-align: bottom;
-			border: medium none;
-			width: 24px;
-			text-align: center;
-		
-			.user-division{
-				/*color: $lightRedColor;*/
-				color: #fff;
-				/*font-size: 13px;*/
-				font-size: 11px;
-				font-weight: bold;
-			}
-			.user-rank{
-				font-family: $bodyFont;
-				font-size: 9px;
-				color: #eee;
-			}
-		}
 		.user-username{
 			position:absolute;
 			overflow: hidden;
@@ -326,6 +301,44 @@ $chat-users-width: 150px;
 		&:hover{
 			background-color:#e3e3e3;
 		}
+	}
+
+	hr { 
+		margin: 16px 10px;
+		margin-bottom: 25px;
+		border-top: 1px solid #d6d6d6;
+	}
+
+	.user-points {
+		font-size: 1.2em;
+		padding: 5px 0;
+
+		&.global, &.global h5 {
+			font-weight: bold !important;
+		}
+
+		/*
+		&.EU {
+			background-image: url(../img/mm-eu.png);
+			background-repeat: no-repeat;
+			background-position: right 52%;
+			background-size: 30%;
+		}
+
+		&.NA {
+			background-image: url(../img/mm-na.png);
+			background-repeat: no-repeat;
+			background-position: right center;
+			background-size: 26%;
+		}
+
+		&.KR{
+			background-image: url(../img/svg_korea.svg);
+			background-repeat: no-repeat;
+			background-position: right -15px;
+			background-size: 37px;
+		}
+		*/
 	}
 	
 
@@ -366,5 +379,34 @@ $chat-users-width: 150px;
 	    		color: #444;
 	    	}
 	    }
+	}
+}
+
+.user-rank-block{
+	font-family: $bodyFont;
+	display: inline-block;
+	/*width: $chat-users-rank-width;*/
+
+	border-radius: 3px;
+	padding: 0px 6px;
+	background: none repeat scroll 0% 0% rgb(171, 62, 62);
+	margin-right: 3px;
+	min-height: 18px;
+	vertical-align: bottom;
+	border: medium none;
+	min-width: 27px;
+	text-align: center;
+
+	.user-division{
+		/*color: $lightRedColor;*/
+		color: #fff;
+		/*font-size: 13px;*/
+		font-size: 11px;
+		font-weight: bold;
+	}
+	.user-rank{
+		font-family: $bodyFont;
+		font-size: 9px;
+		color: #eee;
 	}
 }

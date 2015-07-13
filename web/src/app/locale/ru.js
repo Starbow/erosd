@@ -42,6 +42,7 @@
 		MAP_VETOES: "Вето карт",
 
 		CONFIRM_REMOVE_CHAR: "Точно хотите удалить этого персонажа с ладдера Starbow?",
+		CONFIRM_FORFEIT: "Вы уверены, что хотите сдаться?",
 
 		DISCLAIMER_ALPHA: "Это <b>альфа-версия</b> ErosJS",
 		DISCLAIMER_FEEDBACK: "Пожалуйста, не стесняйтесь <a href='http://starbowmod.com/forum/showthread.php?tid=585'>писать предложения и замечания</a>.",

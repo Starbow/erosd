@@ -11,7 +11,7 @@
 		<div class='player'>
 			<div id='user-username' ng-bind='localUser.username'></div>
 			<span id='user-division' ng-bind='localUser.stats.division' ng-show='localUser.characters.length > 0'></span>
-			<span id='user-rank' ng-bind='localUser.stats.divisionRank' ng-hide='localUser.stats.placementsRemaining != 0 || localUser.characters.length == 0'></span>
+			<!-- <span id='user-rank' ng-bind='localUser.stats.divisionRank' ng-hide='localUser.stats.placementsRemaining != 0 || localUser.characters.length == 0'></span> -->
 			<div id='user-points' ng-bind='localUser.stats.points' ng-hide="localUser.stats.placementsRemaining > 0 || localUser.characters.length == 0"></div>
 			<div id='user-placement' ng-show="localUser.stats.placementsRemaining > 0 && localUser.characters.length > 0">{{ 'PLACEMENT_MATCHES' | translate }} {{localUser.stats.placementsRemaining}}</div>
 			<div id='user-placement' style="margin-top: 1.5em; line-height: 1.5em;" ng-show="localUser.characters.length == 0">
@@ -27,7 +27,7 @@
 	<!-- Center -->
 	<div id="mm-center" class="anim" ng-class='localUser.characters.length > 0 ? "min" : "full"'>
 		<div class='pre' ng-show='matchmaking.status == "IDLE"'>
-			<div style="display:inline-block; margin-top:15px; padding: 3px 4px; background-color:#fff; color:#AB3E3E; border-radius: 3px; cursor: pointer" ng-click="vetoModal()"><span class="glyphicon glyphicon-ban-circle"></span> {{ 'MAP_VETOES' | translate }}</div>
+			<div style="display:inline-block; margin-top:15px; padding: 3px 8px; background-color:#fff; color:#AB3E3E; border-radius: 3px; cursor: pointer" ng-click="vetoModal()"><span class="glyphicon glyphicon-ban-circle"></span> {{ 'MAP_VETOES' | translate }}</div>
 			<div class='matchtypes' style='display:none'>
 				<button id='1v1' type='button' class='btn' ng-class="matchtypes.one ? 'btn-primary' : 'btn-default'" ng-click="matchtypes.one = !matchtypes.one">1v1</button>
 				<button id='2v2' type='button' class='btn' ng-class="matchtypes.two ? 'btn-primary' : 'btn-default'" ng-click="matchtypes.two = !matchtypes.two">2v2</button>
@@ -193,14 +193,14 @@
 			<div class='player' style="float:right">
 				<div id='user-username' ng-bind='matchmaking.match.opponent.username'></div>
 				<span id='user-division' ng-bind='matchmaking.match.opponent.stats.division'></span>
-				<span id='user-rank' ng-bind='matchmaking.match.opponent.stats.divisionRank' ng-hide="matchmaking.match.opponent.stats.placementsRemaining > 0"></span>
+				<!-- <span id='user-rank' ng-bind='matchmaking.match.opponent.stats.divisionRank' ng-hide="matchmaking.match.opponent.stats.placementsRemaining > 0"></span> -->
 				<div id='user-points' ng-bind='matchmaking.match.opponent.stats.points' ng-hide="matchmaking.match.opponent.stats.placementsRemaining > 0"></div>
 				<!-- <div ng-bind='matchmaking.match.opponent.stats.mmr'></div> -->
 			</div>
 			</div>
 	</div>
 
-	<!-- Modal -->
+	<!-- Remove char Modal -->
 	<div class="modal fade" id="confirmRemoveChar" tabindex="-1" role="dialog" aria-labelledby="confirmRemoveChar" aria-hidden="true" style='text-align:left; color: black; margin:0 auto; top:20%;'>
 	  	<div class="modal-dialog modal-sm">
 	    	<div class="modal-content">
@@ -220,7 +220,7 @@
 	 	</div>
 	</div>
 
-	<!-- Vetoes Dialog -->
+	<!-- Vetoes Modal -->
 	<div class="modal fade" id="vetoesDialog" tabindex="-1" role="dialog" aria-labelledby="vetoesDialog" aria-hidden="true" style='text-align:center; color: black; margin:0 auto;'>
 	  	<div class="modal-dialog modal-lg">
 	    	<div class="modal-content" ng-init="veto_region='NA'">
@@ -249,6 +249,25 @@
 			    <div class="modal-footer" style="border: none; padding:10px; text-align:center">
 			        <!-- <button type="button" class="btn round" data-dismiss="modal" ng-hide="char_remove_status">No</button>
 			        <button type="button" class="btn round" ng-click="requestCharRemove()" ng-hide="char_remove_status">Yes</button> -->
+	      		</div>
+	    	</div>
+	 	</div>
+	</div>
+
+	<!-- Forefeit Modal -->
+	<div class="modal fade" id="confirmForfeit" tabindex="-1" role="dialog" aria-labelledby="confirmForfeit" aria-hidden="true" style='text-align:left; color: black; margin:0 auto; top:20%;'>
+	  	<div class="modal-dialog modal-sm">
+	    	<div class="modal-content">
+	     		<div class="modal-header" style="border:none; padding:10px; text-align:center;">
+			        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+			        <h4 class="modal-title" id="confirmForfeitLabel" ng-hide="char_remove_status">{{ 'CONFIRM_FORFEIT' | translate }}</h4>
+	      		</div>
+<!-- 	      		<div class="modal-body" style="text-align:center; padding: 10px;">
+	        		<span class="small-region" style="color:white; background: #AB3E3E; border-radius: 3px; padding: 1px 5px; margin-right: 5px;"> {{char_to_remove.region | region_short}}</span>{{char_to_remove.character_name}}
+			    </div> -->
+			    <div class="modal-footer" style="border: none; padding:10px; text-align:center">
+			        <button type="button" class="btn round" ng-click="cancelForfeit()">{{ 'NO' | translate }}</button>
+			        <button type="button" class="btn round" ng-click="confirmForfeit()">{{ 'YES' | translate }}</button>
 	      		</div>
 	    	</div>
 	 	</div>

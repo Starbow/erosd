@@ -59,9 +59,9 @@
         }
 
         function getDivision(division){
-            var divisions = ["P", "E", "D", "C", "B", "A"];
+            var divisions = ["E", "D-", "D", "D+", "C-", "C", "C+", "B-", "B", "B+", "B-", "A-", "A", "A+"];
 
-            return divisions[division]
+            return eros.divisions ? eros.divisions[division].name : divisions[division];
         }
 
         function getRank(rank){
@@ -367,6 +367,7 @@
 
         	if (authenticated) {
                 eros.activeRegions = request.result.active_region;
+                eros.divisions = request.result.division;
                 for (var i = 0; i < request.result.active_region.length; i++) {
                 	var name = eros.regionFromCode(request.result.active_region[i]);
 

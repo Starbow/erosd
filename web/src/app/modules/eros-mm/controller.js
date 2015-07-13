@@ -190,7 +190,21 @@ angular.module('erosApp.mm', [])
 	};
 
 	$scope.forfeit = function(){
-		$scope.eros.matchmaking.request_forfeit();
+		$('#confirmForfeit').modal('show');
+
+		$scope.confirmForfeit = function(){
+			$scope.eros.matchmaking.request_forfeit();
+			$('#confirmForfeit').modal('hide');
+			delete $scope.confirmForfeit;
+			delete $scope.cancelForfeit;
+		}
+
+		$scope.cancelForfeit = function(){
+			$('#confirmForfeit').modal('hide');
+			delete $scope.confirmForfeit;
+			delete $scope.cancelForfeit;
+		}
+		
 	};
 
 	$scope.reportNoShow=function(){

@@ -266,7 +266,8 @@ func main() {
 	go broadcastRunner()
 
 	loadMaps()
-	initDivisions()
+	ladder.InitDivisions()
+	// initDivisions()
 	initClientCaches()
 	initBattleNet()
 	initMatchmaking()

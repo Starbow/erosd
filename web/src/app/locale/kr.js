@@ -2,6 +2,7 @@
      if (!global["starbow"]["locale"]) global["starbow"]["locale"] = {};
 
      global["starbow"]["locale"]["kr"] = {
+          HOW_TO_PLAY: "게임 방법",
           USERNAME: "사용자명",
           YES: "네",
           NO: "아니요",
@@ -38,6 +39,7 @@
           MAP_VETOES: "거절하는 맵",
 
           CONFIRM_REMOVE_CHAR: "이 프로필을 삭제하시겠습니까?",
+          CONFIRM_FORFEIT: "정말로 항복하시겠습니까?",
 
           DISCLAIMER_ALPHA: "이 프로그램은 ErosJS의 <b>알파 </b> 버젼입니다",
           DISCLAIMER_FEEDBACK: "피드백은 <a href='http://starbowmod.com/forum/showthread.php?tid=585'>여기로</a> 부탁합니다",
