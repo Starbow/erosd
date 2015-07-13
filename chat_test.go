@@ -21,7 +21,7 @@ func init() {
 }
 
 func createTestRoom(fixed bool) *ChatRoom {
-	room, _ := createChatRoom("test", "test", "test", true, fixed)
+	room := createChatRoom("test", "test", "test", true, fixed)
 	room.logger = log.New(os.Stdout, fmt.Sprintf("chat-%d:", room.id), log.Ldate|log.Ltime|log.Lshortfile)
 	return room
 }

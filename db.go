@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"errors"
 	"github.com/coopernurse/gorp"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/mattn/go-sqlite3"
@@ -13,7 +12,6 @@ var (
 	dbMap              *gorp.DbMap
 	dbType             string
 	dbConnectionString string
-	ErrDbInsert        error = errors.New("An error occured while writing to the database.")
 )
 
 // Website user in the database
