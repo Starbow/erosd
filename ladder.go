@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"github.com/ChrisHines/GoSkills/skills"
 	"github.com/ChrisHines/GoSkills/skills/trueskill"
 	"github.com/Starbow/erosd/buffers"
@@ -11,21 +10,8 @@ import (
 )
 
 var _ = log.Ldate
-var (
-	ErrLadderPlayerNotFound           = errors.New("The player was not found in the database.")
-	ErrLadderClientNotInvolved        = errors.New("None of the client's registered characters were found in the replay participant list.")
-	ErrLadderInvalidMatchParticipents = errors.New("All participents of a game must be registered.")
-	ErrLadderInvalidMap               = errors.New("Matches must be on a valid map in the map pool.")
-	ErrLadderInvalidFormat            = errors.New("Matches must be a 1v1 with no observers.")
-	ErrLadderDuplicateReplay          = errors.New("The provided has been processed previously.")
-	ErrLadderGameTooShort             = errors.New("The provided game was too short.")
-	ErrLadderWrongOpponent            = errors.New("The provided game was not against your matchmade opponent. You have been forfeited.")
-	ErrLadderWrongMap                 = errors.New("The provided game was not on the correct map.")
-	ErrLadderWrongSpeed               = errors.New("The provided game was not on the Faster speed setting.")
-	ErrLadderGameNotPrearranged       = errors.New("The provided game was not arranged by the Eros matchmaker.")
+var ladder = Iccup{}
 
-	ladder = Iccup{}
-)
 
 type Division struct {
 	Id                 int64   `db:"id"`
@@ -335,7 +321,7 @@ type MatchResultSource struct {
 	ReplayHash string
 }
 
-func NewMatchResult(replay *Replay, client *Client) (result *MatchResult, players []*MatchResultPlayer, err error) {
+func NewMatchResult(replay *Replay, client *Client) (result *MatchResult, players []*MatchResultPlayer, err ErosError) {
 	// Find the local character
 	// Find the opponent
 	matchmaker.logger.Println("New replay from", client.Id, client.Username, *replay)
@@ -376,8 +362,8 @@ func NewMatchResult(replay *Replay, client *Client) (result *MatchResult, player
 		return
 	}
 
-	count, err := dbMap.SelectInt("SELECT COUNT(*) FROM match_result_sources WHERE ReplayHash=?", replay.Filehash)
-	if err == nil && count > 0 {
+	count, dberr := dbMap.SelectInt("SELECT COUNT(*) FROM match_result_sources WHERE ReplayHash=?", replay.Filehash)
+	if dberr == nil && count > 0 {
 		matchmaker.logger.Println("Duplicate replay")
 		err = ErrLadderDuplicateReplay
 		return
@@ -471,8 +457,8 @@ func NewMatchResult(replay *Replay, client *Client) (result *MatchResult, player
 
 		res.Region = region
 
-		err = dbMap.Insert(&res)
-		if err != nil {
+		dberr := dbMap.Insert(&res)
+		if dberr != nil {
 			matchmaker.logger.Println(err)
 			err = ErrDbInsert
 			return

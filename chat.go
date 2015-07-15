@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"github.com/Starbow/erosd/buffers"
 	"github.com/golang/protobuf/proto"
@@ -30,9 +29,6 @@ var (
 	chatDelay                      = 250 * time.Millisecond
 	chatMaxThrottleTime            = time.Duration(5 * time.Minute)
 	chatMaxMessageLength     int64 = 256
-	ErrChatRoomAlreadyExists error = errors.New("The chat room name specified already exists.")
-	ErrChatRoomReserved      error = errors.New("The chat room name is reserved.")
-	ErrChatRoomNameTooShort  error = errors.New("The chat room name is too short")
 	_                              = log.Ldate
 	maxMessageCache          int   = 2
 )
@@ -75,7 +71,7 @@ type ChatRoom struct {
 func GetChatRoom(name string, password string, joinable, fixed bool) (room *ChatRoom) {
 	name = cleanChatRoomName(name)
 	room, ok := chatRooms[name]
-	var err error
+	var err ErosError
 	if !ok {
 		room, err = NewChatRoom(name, password, joinable, fixed)
 		if err != nil {
@@ -146,7 +142,7 @@ parent:
 	return nil
 }
 
-func createChatRoom(key, name, password string, joinable, fixed bool) (cr *ChatRoom, err error) {
+func createChatRoom(key, name, password string, joinable, fixed bool) (cr *ChatRoom) {
 	cr = &ChatRoom{
 		id:       atomic.AddInt64(&chatIdBase, 1),
 		members:  make(map[int64]*ClientConnection),
@@ -160,28 +156,28 @@ func createChatRoom(key, name, password string, joinable, fixed bool) (cr *ChatR
 		fixed:    fixed,
 		password: strings.TrimSpace(password),
 	}
-	return cr, nil
+	return cr
 }
 
-func NewChatRoom(name, password string, joinable, fixed bool) (cr *ChatRoom, err error) {
+func NewChatRoom(name, password string, joinable, fixed bool) (cr *ChatRoom, eros_err ErosError) {
 	key := cleanChatRoomName(name)
 	if len(key) < 3 {
-		err = ErrChatRoomNameTooShort
+		eros_err = ErrChatRoomNameTooShort
 		return
 	}
 
 	if joinable && key[:2] == "mm" {
-		err = ErrChatRoomReserved
+		eros_err = ErrChatRoomReserved
 		return
 	}
 
-	_, ok := chatRooms[key]
-	if ok {
-		err = ErrChatRoomAlreadyExists
+	_, exists := chatRooms[key]
+	if exists {
+		eros_err = ErrChatRoomAlreadyExists
 		return
 	}
 
-	cr, err = createChatRoom(key, name, password, joinable, fixed)
+	cr = createChatRoom(key, name, password, joinable, fixed)
 
 	var logfile string = path.Join(logPath, fmt.Sprintf("%d-chat-%d.log", os.Getpid(), cr.id))
 	file, err := os.Create(logfile)

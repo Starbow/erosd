@@ -22,6 +22,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+	proto "github.com/golang/protobuf/proto"
 )
 
 var (
@@ -33,6 +34,17 @@ var (
 )
 
 type ClientConnectionType int
+
+func findClientsByName(connections map[int64]*ClientConnection, name string) []*ClientConnection {
+	var result []*ClientConnection
+	var lowerName = strings.ToLower(name)
+	for _, cc := range clientConnections {
+		if cc.client != nil && strings.ToLower(cc.client.Username) == lowerName {
+			result = append(result, cc)
+		}
+	}
+	return result
+}
 
 func (this ClientConnectionType) String() string {
 	switch this {
@@ -143,7 +155,7 @@ func (conn *ClientConnection) panicRecovery(txid int) {
 		fmt.Println("Recovered from a panic", r)
 		debug.PrintStack()
 
-		conn.SendResponseMessage("106", txid, []byte{})
+		conn.SendError(ErrGeneric, txid)
 		// Do we want to disconnect the client here? Might be safer.
 	}
 }
@@ -335,10 +347,7 @@ func (conn *ClientConnection) read() {
 					return
 				} else {
 					stats := NewServerStats()
-					data, err := Marshal(stats)
-					if err == nil {
-						conn.SendServerMessage("SSU", data)
-					}
+					conn.SendMarshalledServerMessage("SSU", txid, stats)
 
 					conn.handlePendingMatchmaking(-1)
 
@@ -447,39 +456,6 @@ func (conn *ClientConnection) read() {
 // 510 - Can't send message. Rate limit.
 // 511 - Can't send message. Message too long.
 // 512 - Room not found.
-func ErrorCode(err error) string {
-	if err == ErrLadderClientNotInvolved {
-		return "304"
-	} else if err == ErrLadderDuplicateReplay {
-		return "303"
-	} else if err == ErrDbInsert {
-		return "102"
-	} else if err == ErrLadderGameTooShort {
-		return "305"
-	} else if err == ErrLadderInvalidFormat {
-		return "306"
-	} else if err == ErrLadderInvalidMap {
-		return "307"
-	} else if err == ErrLadderInvalidMatchParticipents {
-		return "308"
-	} else if err == ErrLadderPlayerNotFound {
-		return "309"
-	} else if err == ErrLadderWrongOpponent {
-		return "310"
-	} else if err == ErrLadderWrongSpeed {
-		return "311"
-	} else if err == ErrChatRoomAlreadyExists {
-		return "503"
-	} else if err == ErrChatRoomReserved {
-		return "504"
-	} else if err == ErrChatRoomNameTooShort {
-		return "509"
-	} else if err == ErrLadderGameNotPrearranged {
-		return "314"
-	} else { // Generic
-		return "106"
-	}
-}
 
 func (this *ClientConnection) Close() error {
 	switch this.conn.(type) {
@@ -496,7 +472,7 @@ func (this *ClientConnection) Close() error {
 
 func (conn *ClientConnection) OnToggleVeto(txid int, data []byte) {
 	if len(data) == 0 {
-		conn.SendResponseMessage("106", txid, []byte{})
+		conn.SendError(ErrGeneric, txid)
 		return
 	}
 
@@ -505,20 +481,20 @@ func (conn *ClientConnection) OnToggleVeto(txid int, data []byte) {
 
 	if err != nil {
 		log.Println(err)
-		conn.SendResponseMessage("106", txid, []byte{})
+		conn.SendError(ErrGeneric, txid)
 		return
 	}
 
 	mapObj := maps.GetId(BattleNetRegion(mapMessage.GetRegion()), int(mapMessage.GetBattleNetId()))
 	if mapObj == nil || !mapObj.InRankedPool {
-		conn.SendResponseMessage("312", txid, []byte{})
+		conn.SendError(ErrLadderVetoNotInRankedPool, txid)
 		return
 	}
 
 	vetoes, err := conn.client.Vetoes()
 	if err != nil {
 		log.Println(err)
-		conn.SendResponseMessage("101", txid, []byte{})
+		conn.SendError(ErrDatabaseRead, txid)
 		return
 	}
 	existing := false
@@ -534,7 +510,7 @@ func (conn *ClientConnection) OnToggleVeto(txid int, data []byte) {
 
 	if !existing {
 		if regionVetoes >= ladderMaxMapVetos {
-			conn.SendResponseMessage("313", txid, []byte{})
+			conn.SendError(ErrLadderAllVetoesUsed, txid)
 			return
 		}
 
@@ -544,14 +520,14 @@ func (conn *ClientConnection) OnToggleVeto(txid int, data []byte) {
 		err := dbMap.Insert(&veto)
 		if err != nil {
 			log.Println(err)
-			conn.SendResponseMessage("102", txid, []byte{})
+			conn.SendError(ErrDatabaseWrite, txid)
 			return
 		}
 	} else {
 		_, err := dbMap.Exec("DELETE FROM map_vetoes WHERE ClientId=? and MapId=?", conn.client.Id, mapObj.Id)
 		if err != nil {
 			log.Println(err)
-			conn.SendResponseMessage("102", txid, []byte{})
+			conn.SendError(ErrDatabaseWrite, txid)
 			return
 		}
 	}
@@ -572,7 +548,7 @@ func (conn *ClientConnection) OnToggleVeto(txid int, data []byte) {
 	data, err = Marshal(mapPoolMessage)
 	if err != nil {
 		log.Println(err)
-		conn.SendResponseMessage("106", txid, []byte{})
+		conn.SendError(ErrGeneric, txid)
 		return
 	}
 	conn.SendResponseMessage("VET", txid, data)
@@ -584,7 +560,7 @@ func (conn *ClientConnection) OnLongProcessRequest(txid int, data []byte) {
 
 	if conn.client.PendingMatchmakingId == nil || len(data) == 0 {
 		conn.logger.Println("Bad command", conn.client.PendingMatchmakingId, len(data))
-		conn.SendResponseMessage("403", txid, []byte{})
+		conn.SendError(ErrLongProcessUnavailable, txid)
 		return
 	}
 
@@ -592,14 +568,14 @@ func (conn *ClientConnection) OnLongProcessRequest(txid int, data []byte) {
 
 	if process != MATCHMAKING_LONG_PROCESS_DRAW && process != MATCHMAKING_LONG_PROCESS_NOSHOW {
 		conn.logger.Println("Bad data")
-		conn.SendResponseMessage("403", txid, []byte{})
+		conn.SendError(ErrLongProcessUnavailable, txid)
 		return
 	}
 
 	match := matchmaker.Match(*conn.client.PendingMatchmakingId)
 	if match == nil {
 		conn.logger.Println("Bad match")
-		conn.SendResponseMessage("403", txid, []byte{})
+		conn.SendError(ErrLongProcessUnavailable, txid)
 		return
 	}
 	var opponent *Client = nil
@@ -626,7 +602,7 @@ func (conn *ClientConnection) OnLongProcessRequest(txid int, data []byte) {
 
 	if !match.CanLongProcess() || !match.StartLongProcess(conn.client, process) {
 		conn.logger.Println("Failed to start")
-		conn.SendResponseMessage("403", txid, []byte{})
+		conn.SendError(ErrLongProcessUnavailable, txid)
 		return
 	}
 
@@ -647,7 +623,7 @@ func (conn *ClientConnection) OnLongProcessResponse(txid int, data []byte) {
 
 	if conn.client.PendingMatchmakingId == nil || len(data) == 0 {
 		conn.logger.Println("Bad command", conn.client.PendingMatchmakingId, len(data))
-		conn.SendResponseMessage("403", txid, []byte{})
+		conn.SendError(ErrLongProcessUnavailable, txid)
 		return
 	}
 
@@ -657,19 +633,19 @@ func (conn *ClientConnection) OnLongProcessResponse(txid int, data []byte) {
 	match := matchmaker.Match(*conn.client.PendingMatchmakingId)
 	if match == nil {
 		conn.logger.Println("Bad match")
-		conn.SendResponseMessage("403", txid, []byte{})
+		conn.SendError(ErrLongProcessUnavailable, txid)
 		return
 	}
 
 	if !match.longProcessActive {
 		conn.logger.Println("Long process not active")
-		conn.SendResponseMessage("403", txid, []byte{})
+		conn.SendError(ErrLongProcessUnavailable, txid)
 		return
 	}
 
 	if match.longProcessInitiator.Id == conn.client.Id {
 		conn.logger.Println("Response is from initiator", match.Id)
-		conn.SendResponseMessage("403", txid, []byte{})
+		conn.SendError(ErrLongProcessUnavailable, txid)
 		return
 	}
 
@@ -694,12 +670,12 @@ func (conn *ClientConnection) OnChatJoin(txid int, data []byte) {
 	defer conn.panicRecovery(txid)
 
 	if int64(len(conn.chatRooms)) >= maxChatRooms {
-		conn.SendResponseMessage("505", txid, []byte{})
+		conn.SendError(ErrChatMaxChannelLimit, txid)
 		return
 	}
 	var join protobufs.ChatRoomRequest
-	err := Unmarshal(data, &join)
-	if err != nil {
+	err_marshal := Unmarshal(data, &join)
+	if err_marshal != nil {
 		conn.Close()
 	}
 
@@ -707,12 +683,12 @@ func (conn *ClientConnection) OnChatJoin(txid int, data []byte) {
 	room, ok := chatRooms[key]
 	if ok {
 		if !room.joinable {
-			conn.SendResponseMessage("501", txid, []byte{})
+			conn.SendError(ErrChatBadPassword, txid)
 			return
 		}
 
 		if room.password != "" && room.password != join.GetPassword() {
-			conn.SendResponseMessage("502", txid, []byte{})
+			conn.SendError(ErrChatBadPassword, txid)
 			return
 		}
 
@@ -723,9 +699,9 @@ func (conn *ClientConnection) OnChatJoin(txid int, data []byte) {
 
 		room.join <- conn
 	} else {
-		room, err = NewChatRoom(join.GetRoom(), join.GetPassword(), true, false)
+		room, err := NewChatRoom(join.GetRoom(), join.GetPassword(), true, false)
 		if err != nil {
-			conn.SendResponseMessage(ErrorCode(err), txid, []byte(err.Error()))
+			conn.SendError(err, txid)
 			return
 		}
 		room.join <- conn
@@ -768,7 +744,7 @@ func (conn *ClientConnection) OnPrivateMessage(txid int, data []byte) {
 	target := strings.ToLower(strings.TrimSpace(message.GetTarget()))
 
 	if text == "" || target == "" {
-		conn.SendResponseMessage("508", txid, []byte{})
+		conn.SendError(ErrChatMissingFields, txid)
 		return
 	}
 
@@ -781,20 +757,18 @@ func (conn *ClientConnection) OnPrivateMessage(txid int, data []byte) {
 	data, err = Marshal(&outMessage)
 
 	if err != nil {
-		conn.SendResponseMessage(ErrorCode(err), txid, []byte{})
+		conn.SendError(ErrGeneric, txid)
 		return
 	}
 
 	sent := false
-	for x := range clientConnections {
-		if clientConnections[x].client != nil && strings.ToLower(clientConnections[x].client.Username) == target {
-			go clientConnections[x].SendServerMessage("CHP", data)
+	for _, _conn := range findClientsByName(clientConnections, target) {
+		go _conn.SendServerMessage("CHP", data)
 			sent = true
 		}
-	}
 
 	if !sent {
-		conn.SendResponseMessage("507", txid, []byte{})
+		conn.SendError(ErrChatUserOffline, txid)
 	} else {
 		conn.logger.Println("Send private message to", message.GetTarget(), ":", message.GetMessage())
 		conn.SendResponseMessage("UPM", txid, []byte{})
@@ -815,7 +789,7 @@ func (conn *ClientConnection) OnChatMessage(txid int, data []byte) {
 
 	sendtime := conn.client.chatLastMessageTime.Add(time.Duration(conn.client.chatDelayScale) * chatDelay)
 	if sendtime.After(now) {
-		conn.SendResponseMessage("510", txid, []byte{})
+		conn.SendError(ErrChatRateLimit, txid)
 		return
 	}
 
@@ -828,7 +802,7 @@ func (conn *ClientConnection) OnChatMessage(txid int, data []byte) {
 	}
 
 	if int64(len(message.GetMessage())) > chatMaxMessageLength {
-		conn.SendResponseMessage("511", txid, []byte{})
+		conn.SendError(ErrChatMessageTooLong, txid)
 		return
 	}
 
@@ -841,7 +815,7 @@ func (conn *ClientConnection) OnChatMessage(txid int, data []byte) {
 		room.message <- &msg
 		conn.SendResponseMessage("UCM", txid, []byte{})
 	} else {
-		conn.SendResponseMessage("506", txid, []byte{})
+		conn.SendError(ErrChatNotOnChannel, txid)
 	}
 }
 func (conn *ClientConnection) OnChatIndex(txid int, data []byte) {
@@ -883,7 +857,7 @@ parent:
 	if err == nil {
 		conn.SendResponseMessage("UCI", txid, data)
 	} else {
-		conn.SendResponseMessage("106", txid, []byte{})
+		conn.SendError(ErrGeneric, txid)
 	}
 }
 
@@ -897,7 +871,7 @@ func (conn *ClientConnection) OnChatHistory(txid int, data []byte) {
 	room := conn.chatRooms[cleanChatRoomName(from.GetRoom())]
 
 	if room == nil {
-		conn.SendResponseMessage("512", txid, []byte{})
+		conn.SendError(ErrChatRoomNotFound, txid)
 	} else {
 		messages.Message = room.messageCache
 
@@ -905,7 +879,7 @@ func (conn *ClientConnection) OnChatHistory(txid int, data []byte) {
 		if err == nil {
 			conn.SendResponseMessage("UCH", txid, data)
 		} else {
-			conn.SendResponseMessage("106", txid, []byte{})
+			conn.SendError(ErrGeneric, txid)
 		}
 	}
 }
@@ -929,7 +903,7 @@ func (conn *ClientConnection) OnReplay(txid int, data []byte) {
 
 	file, err := ioutil.TempFile("", "erosreplay")
 	if err != nil {
-		conn.SendResponseMessage("104", txid, []byte{})
+		conn.SendError(ErrDiskWrite, txid)
 		conn.logger.Println(err)
 		return
 	}
@@ -938,7 +912,7 @@ func (conn *ClientConnection) OnReplay(txid int, data []byte) {
 
 	_, err = file.Write(data)
 	if err != nil {
-		conn.SendResponseMessage("104", txid, []byte{})
+		conn.SendError(ErrDiskWrite, txid)
 		conn.logger.Println(err)
 		os.Remove(file.Name())
 		return
@@ -948,22 +922,22 @@ func (conn *ClientConnection) OnReplay(txid int, data []byte) {
 
 	replay, err := NewReplay(file.Name())
 	if err != nil {
-		conn.SendResponseMessage("301", txid, []byte{})
+		conn.SendError(ErrLadderErrorProcesingReplay, txid)
 		conn.logger.Println(err)
 		os.Remove(file.Name())
 		return
 	}
 
-	result, players, err := NewMatchResult(replay, conn.client)
-	if err != nil {
-		conn.SendResponseMessage(ErrorCode(err), txid, []byte(err.Error()))
+	result, players, eros_err := NewMatchResult(replay, conn.client)
+	if eros_err != nil {
+		conn.SendError(err, txid)
 		conn.logger.Println(err)
 		os.Remove(file.Name())
 		return
 	}
 
 	if result == nil {
-		conn.SendResponseMessage("301", txid, []byte{})
+		conn.SendError(ErrLadderErrorProcesingReplay, txid)
 		os.Remove(file.Name())
 		return
 	}
@@ -992,25 +966,25 @@ func (conn *ClientConnection) OnAddCharacter(txid int, data []byte) {
 	defer conn.panicRecovery(txid)
 
 	if len(data) == 0 {
-		conn.SendResponseMessage("201", txid, []byte{})
+		conn.SendError(ErrBadCharacterInfo, txid)
 		return
 	}
 
 	region, subregion, id, name := ParseBattleNetProfileUrl(string(data))
 
 	if region == BATTLENET_REGION_UNKNOWN {
-		conn.SendResponseMessage("201", txid, []byte{})
+		conn.SendError(ErrBadCharacterInfo, txid)
 		return
 	}
 
-	count, err := dbMap.SelectInt("SELECT COUNT(*) FROM battle_net_characters WHERE Region=? and SubRegion=? and ProfileId=?", region, subregion, id)
+	count, err := dbMap.SelectInt("SELECT COUNT(*) FROM battle_net_characters WHERE Region=? and SubRegion=? and ProfileId=? and Enabled=?", region, subregion, id, true)
 	if err != nil {
-		conn.SendResponseMessage("101", txid, []byte{})
+		conn.SendError(ErrDatabaseRead, txid)
 		return
 	}
 
 	if count > 0 {
-		conn.SendResponseMessage("202", txid, []byte{})
+		conn.SendError(ErrCharacterAlreadyExists, txid)
 		return
 	}
 
@@ -1021,14 +995,26 @@ func (conn *ClientConnection) OnAddCharacter(txid int, data []byte) {
 
 	if err != nil {
 		conn.logger.Println(err)
-		conn.SendResponseMessage("203", txid, []byte{})
+		conn.SendError(ErrCommunicatingWithBattleNet, txid)
 		return
 	}
 
-	err = dbMap.Insert(character)
+	count, err = dbMap.SelectInt("SELECT COUNT(*) FROM battle_net_characters WHERE Region=? and SubRegion=? and ProfileId=? and Enabled=?", region, subregion, id, false)
 	if err != nil {
-		conn.SendResponseMessage("102", txid, []byte{})
-		log.Println("Error inserting character", err)
+		conn.SendError(ErrDatabaseRead, txid)
+		return
+	}
+
+	if count > 0 {
+		conn.logger.Println("Reenabling character.")
+		_, err = dbMap.Exec("UPDATE battle_net_characters SET Enabled=?, IsVerified=?, CharacterName=?, ClientId=? WHERE Region=? and SubRegion=? and ProfileId=?",
+			true, testMode, name, conn.client.Id, region, subregion, id)
+	} else {
+		err = dbMap.Insert(character)
+	}
+	if err != nil {
+		conn.SendError(ErrDatabaseWrite, txid)
+		log.Println("Error inserting or reenabling character", err)
 		return
 	}
 
@@ -1054,7 +1040,7 @@ func (conn *ClientConnection) OnAuthCharacter(txid int, data []byte) {
 	defer conn.panicRecovery(txid)
 
 	if len(data) == 0 {
-		conn.SendResponseMessage("201", txid, []byte("Payload too short"))
+		conn.SendErrorWithCustomMessage(ErrBadCharacterInfo, txid, "Payload too short")
 		return
 	}
 
@@ -1062,7 +1048,7 @@ func (conn *ClientConnection) OnAuthCharacter(txid int, data []byte) {
 	err := Unmarshal(data, &request)
 
 	if err != nil {
-		conn.SendResponseMessage("201", txid, []byte("Error unmarshalling payload"))
+		conn.SendErrorWithCustomMessage(ErrBadCharacterInfo, txid, "Error unmarshalling payload")
 		return
 	}
 
@@ -1096,7 +1082,7 @@ func (conn *ClientConnection) OnUpdateCharacter(txid int, data []byte) {
 	defer conn.panicRecovery(txid)
 
 	if len(data) == 0 {
-		conn.SendResponseMessage("201", txid, []byte{})
+		conn.SendError(ErrBadCharacterInfo, txid)
 		return
 	}
 
@@ -1105,18 +1091,18 @@ func (conn *ClientConnection) OnUpdateCharacter(txid int, data []byte) {
 	err := Unmarshal(data, &character_message)
 
 	if err != nil {
-		conn.SendResponseMessage("201", txid, []byte{})
+		conn.SendError(ErrBadCharacterInfo, txid)
 		return
 	}
 
 	character := characterCache.Get(BattleNetRegion(character_message.GetRegion()), int(character_message.GetSubregion()), int(character_message.GetProfileId()))
 	if character == nil {
-		conn.SendResponseMessage("201", txid, []byte{})
+		conn.SendError(ErrBadCharacterInfo, txid)
 		return
 	}
 
 	if character.ClientId == nil || *character.ClientId != conn.client.Id {
-		conn.SendResponseMessage("201", txid, []byte{})
+		conn.SendError(ErrBadCharacterInfo, txid)
 		return
 	}
 
@@ -1125,12 +1111,12 @@ func (conn *ClientConnection) OnUpdateCharacter(txid int, data []byte) {
 		ok, err := character.CheckVerificationPortrait()
 		if err != nil {
 			conn.logger.Println(err)
-			conn.SendResponseMessage("203", txid, []byte{})
+			conn.SendError(ErrCommunicatingWithBattleNet, txid)
 			return
 		}
 
 		if !ok {
-			conn.SendResponseMessage("204", txid, []byte{})
+			conn.SendError(ErrVerificationFailed, txid)
 			return
 		} else {
 			character.IsVerified = true
@@ -1153,7 +1139,7 @@ func (conn *ClientConnection) OnUpdateCharacter(txid int, data []byte) {
 	if updated {
 		_, err = dbMap.Update(character)
 		if err != nil {
-			conn.SendResponseMessage("102", txid, []byte{})
+			conn.SendError(ErrDatabaseWrite, txid)
 			conn.logger.Println(err)
 			return
 		}
@@ -1169,12 +1155,12 @@ func (conn *ClientConnection) OnRemoveCharacter(txid int, data []byte) {
 
 	// Preventing removing characters while we're matched.
 	if conn.client.PendingMatchmakingId != nil {
-		conn.SendResponseMessage("109", txid, []byte{})
+		conn.SendError(ErrCannotWhileMatched, txid)
 		return
 	}
 
 	if len(data) == 0 {
-		conn.SendResponseMessage("201", txid, []byte{})
+		conn.SendError(ErrBadCharacterInfo, txid)
 		return
 	}
 
@@ -1183,18 +1169,18 @@ func (conn *ClientConnection) OnRemoveCharacter(txid int, data []byte) {
 	err := Unmarshal(data, &character_message)
 
 	if err != nil {
-		conn.SendResponseMessage("201", txid, []byte{})
+		conn.SendError(ErrBadCharacterInfo, txid)
 		return
 	}
 
 	character := characterCache.Get(BattleNetRegion(character_message.GetRegion()), int(character_message.GetSubregion()), int(character_message.GetProfileId()))
 	if character == nil {
-		conn.SendResponseMessage("201", txid, []byte{})
+		conn.SendError(ErrBadCharacterInfo, txid)
 		return
 	}
 
 	if character.ClientId == nil || *character.ClientId != conn.client.Id {
-		conn.SendResponseMessage("201", txid, []byte{})
+		conn.SendError(ErrBadCharacterInfo, txid)
 		return
 	}
 
@@ -1203,7 +1189,7 @@ func (conn *ClientConnection) OnRemoveCharacter(txid int, data []byte) {
 	// _, err = dbMap.Update(character)
 	_, err = dbMap.Exec("UPDATE battle_net_characters SET Enabled=? WHERE Region=? and SubRegion=? and ProfileId=?", false, BattleNetRegion(character_message.GetRegion()), int(character_message.GetSubregion()), int(character_message.GetProfileId()))
 	if err != nil {
-		conn.SendResponseMessage("102", txid, []byte{})
+		conn.SendError(ErrDatabaseWrite, txid)
 		conn.logger.Println(err)
 		return
 	}
@@ -1295,14 +1281,14 @@ func (conn *ClientConnection) OnQueueMatchmaking(txid int, data []byte) {
 
 		for _, region := range queue.GetRegion() {
 			if !conn.client.HasRegion(BattleNetRegion(region)) {
-				conn.SendResponseMessage("401", txid, []byte{})
+				conn.SendError(ErrNoCharacterInRegion, txid)
 				return
 			}
 			conn.client.LadderSearchRegions = append(conn.client.LadderSearchRegions, BattleNetRegion(region))
 		}
 
 		if len(conn.client.LadderSearchRegions) == 0 {
-			conn.SendResponseMessage("401", txid, []byte{})
+			conn.SendError(ErrNoCharacterInRegion, txid)
 			return
 		}
 		conn.client.LadderSearchRadius = queue.GetRadius()
@@ -1325,7 +1311,7 @@ func (conn *ClientConnection) OnQueueMatchmaking(txid int, data []byte) {
 			select {
 			case <-el.abort:
 				// We've been cancelled somewhere. Abort out.
-				conn.SendResponseMessage("402", txid, data)
+				conn.SendError(ErrMatchmakingRequestCancelled, txid)
 				return
 			case match := <-el.match:
 				opponent := el.opponent
@@ -1375,19 +1361,19 @@ func (conn *ClientConnection) OnForfeitMatchmaking(txid int, data []byte) {
 
 func (conn *ClientConnection) OnSimulation(txid int, data []byte) {
 	if !allowsimulations {
-		conn.SendResponseMessage("105", txid, []byte{})
+		conn.SendError(ErrAuthentication, txid)
 		return
 	}
 	// This is a sqlite query. Wont work elsewhere.
 	row, err := dbMap.Select(&Client{}, "SELECT * FROM clients WHERE id != ? ORDER BY RANDOM() LIMIT 1;", conn.client.Id)
 
 	if len(row) == 0 {
-		conn.SendResponseMessage("101", txid, []byte{})
+		conn.SendError(ErrDatabaseRead, txid)
 		return
 	}
 	client := (row[0]).(*Client)
 	if len(data) == 0 {
-		conn.SendResponseMessage("106", txid, []byte{})
+		conn.SendError(ErrGeneric, txid)
 		return
 	}
 	if err == nil {
@@ -1430,9 +1416,7 @@ func (conn *ClientConnection) OnSimulation(txid int, data []byte) {
 		data, _ := Marshal(&res)
 		conn.SendResponseMessage("SIM", txid, data)
 
-		stats := conn.client.UserStatsMessage()
-		data, _ = Marshal(stats)
-		conn.SendServerMessage("USU", data)
+		conn.SendMarshalledServerMessage("USU", txid, conn.client.UserStatsMessage())
 	}
 }
 
@@ -1586,4 +1570,35 @@ func (conn *ClientConnection) SendResponseMessage(command string, txid int, data
 
 func (conn *ClientConnection) SendServerMessage(command string, data []byte) error {
 	return conn.SendResponseMessage(command, -9001, data)
+}
+
+func (conn *ClientConnection) SendMarshalledResponseMessage(command string, txid int, msg proto.Message) error {
+	data, err := Marshal(msg)
+	if err != nil {
+		conn.SendError(ErrGeneric, txid)
+		return err
+	}
+	return conn.SendResponseMessage(command, txid, data)
+}
+
+func (conn *ClientConnection) SendMarshalledServerMessage(command string, txid int, msg proto.Message) error {
+	data, err := Marshal(msg)
+	if err != nil {
+		conn.SendError(ErrGeneric, txid)
+		return err
+	}
+	return conn.SendServerMessage(command, data)
+}
+
+func (conn *ClientConnection) SendError(err error, txid int) {
+	e, ok := err.(ErosError)
+	if ok {
+		conn.SendResponseMessage(fmt.Sprintf("%03v", e.Code()), txid, []byte(e.Error()))
+	} else {
+		conn.SendResponseMessage(fmt.Sprintf("%03v", ErrGeneric.Code()), txid, []byte(e.Error()))
+	}
+}
+
+func (conn *ClientConnection) SendErrorWithCustomMessage(err ErosError, txid int, message string) {
+	conn.SendResponseMessage(fmt.Sprintf("%03v", err.Code()), txid, []byte(message))
 }

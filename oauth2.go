@@ -228,7 +228,7 @@ func AddOAuthProfile(oar *OAuthRequest) (profile Sc2Char, character *BattleNetCh
 	count, err := dbMap.SelectInt("SELECT COUNT(*) FROM battle_net_characters WHERE Region=? and SubRegion=? and ProfileId=?", region, subregion, id)
 
 	if err != nil {
-		err = ErosErrors(101)
+		err = ErrDatabaseRead
 		return
 	}
 
@@ -239,13 +239,13 @@ func AddOAuthProfile(oar *OAuthRequest) (profile Sc2Char, character *BattleNetCh
 
 		if err != nil {
 			oar.conn.logger.Println(err)
-			err = ErosErrors(101)
+			err = ErrDatabaseRead
 			return
 		}
 
 		if count == 0 {
 			// Profile exists and is already enabled
-			err = ErosErrors(202)
+			err = ErrCharacterAlreadyExists
 			return
 		}
 	}
@@ -257,7 +257,7 @@ func AddOAuthProfile(oar *OAuthRequest) (profile Sc2Char, character *BattleNetCh
 
 	if err != nil {
 		oar.conn.logger.Println(err)
-		err = ErosErrors(203)
+		err = ErrCommunicatingWithBattleNet
 		return
 	}
 
@@ -275,7 +275,7 @@ func AddOAuthProfile(oar *OAuthRequest) (profile Sc2Char, character *BattleNetCh
 
 	if err != nil {
 		oar.conn.logger.Println("Error inserting character", err)
-		err = ErosErrors(102)
+		err = ErrDatabaseWrite
 		return
 	}
 
