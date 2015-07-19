@@ -307,7 +307,11 @@ func main() {
 		switch sig {
 		case os.Interrupt, os.Kill:
 			SendBroadcastAlert(1, "")
-			//os.Exit(0)
+			if testMode {
+				log.Println("Interrupt signal received; quitting due to test mode")
+				os.Exit(1)
+			}
+
 		case syscall.SIGHUP:
 			break
 		}
